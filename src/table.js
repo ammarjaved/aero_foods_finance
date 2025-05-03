@@ -197,10 +197,10 @@ function Table({ onRowClick }) {
       headerStyle: { backgroundColor: '#C0392B' },
     cellStyle: { backgroundColor: '#C0392B' }  
   },
-    { key: 'next_day_balance', label: 'Next Day Balance',
-      headerStyle: { backgroundColor: '#C0392B' },
-    cellStyle: { backgroundColor: '#C0392B' }  
-   },
+  //   { key: 'next_day_balance', label: 'Next Day Balance',
+  //     headerStyle: { backgroundColor: '#C0392B' },
+  //   cellStyle: { backgroundColor: '#C0392B' }  
+  //  },
     { key: 'actual_bank_amount', label: 'Actual Bank Amount',
       headerStyle: { backgroundColor: '#C0392B' },
     cellStyle: { backgroundColor: '#C0392B' }  

@@ -9,6 +9,7 @@ function Timetable({ onRowClick }) {
   const [filteredData, setFilteredData] = useState([]);
   const [editRowId, setEditRowId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  const [names, setNames] = useState([]);
 
 
   // Filter states
@@ -42,6 +43,15 @@ function Timetable({ onRowClick }) {
 
   useEffect(() => {
     fetchData();
+
+    fetch('http://121.121.232.54:88/aero-foods/fetchNames.php')
+  .then(response => response.json())
+  .then(data => {
+    setNames(data); // assuming data is the array of names
+  })
+  .catch(error => {
+    console.error('Error fetching names:', error);
+  });
 
     window.addEventListener('newRecordAdded', handleNewRecord);
     window.addEventListener('recordUpdated', handleRecordUpdate);
@@ -378,7 +388,7 @@ function Timetable({ onRowClick }) {
                                 value={editFormData[col.key] || ''}
                                 onChange={(e) => handleEditChange(e, col.key)}
                               >
-                                <option value="">Select Name</option>
+                                {/* <option value="">Select Name</option>
                                 <option value="Janna">Janna</option>
                                 <option value="Lia">Lia</option>
                                 <option value="Khai">Khai</option>
@@ -386,7 +396,12 @@ function Timetable({ onRowClick }) {
                                 <option value="Remi">Remi</option>
                                 <option value="Ahmad">Ahmad</option>
                                 <option value="Iman">Iman</option>
-                                <option value="Zikri">Zikri</option>
+                                <option value="Zikri">Zikri</option> */}
+                                <option value="">Select Name</option>
+                                
+                                {names?.length > 0 && names.map((name, index) => (
+                                    <option key={index} value={name}>{name}</option>
+                                  ))}
                               </select>
                             ) : col.key === 'start_time' || col.key === 'end_time' ? (
                               <input
