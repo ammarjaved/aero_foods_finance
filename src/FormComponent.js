@@ -809,7 +809,7 @@ function FormComponent() {
 
              
 
-              <div className="col-md-6" style={{backgroundColor:'#C0392B'}}>
+              <div className="col-md-6" style={{backgroundColor:'#C0392B',display:'none'}}>
                 <div className="form-group">
                   <label className="form-label">Prev Day Balance</label>
                   <input

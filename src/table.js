@@ -193,10 +193,10 @@ function Table({ onRowClick }) {
       headerStyle: { backgroundColor: '#8E44AD' },
     cellStyle: { backgroundColor: '#8E44AD' }  
      },
-    { key: 'prev_day_balance', label: 'Previous Day Balance' ,
-      headerStyle: { backgroundColor: '#C0392B' },
-    cellStyle: { backgroundColor: '#C0392B' }  
-  },
+  //   { key: 'prev_day_balance', label: 'Previous Day Balance' ,
+  //     headerStyle: { backgroundColor: '#C0392B' },
+  //   cellStyle: { backgroundColor: '#C0392B' }  
+  // },
   //   { key: 'next_day_balance', label: 'Next Day Balance',
   //     headerStyle: { backgroundColor: '#C0392B' },
   //   cellStyle: { backgroundColor: '#C0392B' }  
