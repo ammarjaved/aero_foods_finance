@@ -69,6 +69,13 @@ function Sidebar({ sidebarOpen }) {
                 Daily Sheet
               </a>
               <a
+                href="/aero_foods_finance/wastage"
+                style={{ borderBottom: "1px white solid", cursor: "pointer" }}
+                className="nav-link text-white py-2"
+              >
+                Daily Wastage
+              </a>
+              <a
                 onClick={handleLogout}
                 style={{ borderBottom: "1px white solid", cursor: "pointer" }}
                 className="nav-link text-white py-2"
