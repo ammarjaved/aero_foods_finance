@@ -198,6 +198,7 @@ function Table({ onRowClick }) {
     },
     { key: "transaction_count", label: "Transaction Count" },
     { key: "avg_transaction_value", label: "Avg Transaction" },
+    { key: "discount", label: "100% Discount" },
     {
       key: "labour_hours_used",
       label: "Labour Hours",
@@ -450,7 +451,11 @@ function Table({ onRowClick }) {
                               {days[record[column.key]]}
                             </td>
                           );
-                        } else if (column.key === "variance") {
+                        } else if (
+                          column.key === "variance" ||
+                          column.key === "month_date_sales" ||
+                          column.key === "sales_walk_in"
+                        ) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
