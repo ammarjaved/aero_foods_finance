@@ -333,7 +333,7 @@ function WastageComponent() {
     formData.total_before_discount = total_before_discount;
 
     const final_total = parseFloat(
-      parseFloat(formData.discount || 0) + total_before_discount
+      parseFloat(formData.discount || 0) + parseFloat(total_before_discount)
     ).toFixed(2);
     formData.final_total = final_total;
   };
