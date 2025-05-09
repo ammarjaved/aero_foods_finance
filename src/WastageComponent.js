@@ -815,13 +815,28 @@ function WastageComponent() {
                 </div>
               </div>
 
+              <div className="col-md-12 d-flex justify-content-center">
+                <div className={`form-group badge bg-success`}>
+                  <label className="form-label">Total Wastage</label>
+                  <input
+                    type="number"
+                    name="total_before_discount"
+                    value={formData.total_before_discount}
+                    onChange={handleChange}
+                    className="form-control"
+                    readOnly
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="col-md-6 d-flex justify-content-center">
                 <div className={`form-group badge bg-success`}>
                   <label className="form-label">100% Discount Amount</label>
                   <input
                     type="number"
-                    name="total_before_discount"
-                    value={formData.total_before_discount}
+                    name="discount"
+                    value={formData.discount}
                     onChange={handleChange}
                     className="form-control"
                     readOnly
@@ -837,21 +852,6 @@ function WastageComponent() {
                     type="number"
                     name="final_total"
                     value={formData.final_total}
-                    onChange={handleChange}
-                    className="form-control"
-                    readOnly
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-12 d-flex justify-content-center">
-                <div className={`form-group badge bg-success`}>
-                  <label className="form-label">Total Discount</label>
-                  <input
-                    type="number"
-                    name="total_before_discount"
-                    value={formData.total_before_discount}
                     onChange={handleChange}
                     className="form-control"
                     readOnly
