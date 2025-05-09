@@ -134,16 +134,10 @@ function TableWastage({ onRowClick }) {
       classBody: "bg-dark text-light",
     },
     {
-      key: "utilities",
-      label: "Utilities",
-      classHead: "bg-primary text-light",
-      classBody: "bg-primary text-light text-end",
-    },
-    {
-      key: "rental",
-      label: "Rental",
-      classHead: "bg-primary text-light",
-      classBody: "bg-primary text-light text-end",
+      key: "final_total",
+      label: "Total Wastage",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "total_before_discount",
@@ -154,12 +148,6 @@ function TableWastage({ onRowClick }) {
     {
       key: "discount",
       label: "100% Discount Amount",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "final_total",
-      label: "Total Discount",
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
     },
