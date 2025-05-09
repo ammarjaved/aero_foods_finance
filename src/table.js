@@ -452,9 +452,15 @@ function Table({ onRowClick }) {
                             </td>
                           );
                         } else if (
-                          column.key === "variance" ||
+                          column.key === "sales_walk_in" ||
+                          column.key === "total_sales" ||
+                          column.key === "sales_delivery" ||
                           column.key === "month_date_sales" ||
-                          column.key === "sales_walk_in"
+                          column.key === "avg_transaction_value" ||
+                          column.key === "transaction_count" ||
+                          column.key === "labour_hours_used" ||
+                          column.key === "sales_per_labour_hours" ||
+                          column.key === "variance"
                         ) {
                           return (
                             <td

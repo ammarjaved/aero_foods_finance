@@ -76,19 +76,19 @@ function WastageComponent() {
       key: "jasmine_tea_wastage",
       label: "Jasmine Tea Wastage",
       isReadOnly: false,
-      badge: "bg-primary",
+      badge: "bg-danger",
     },
     {
       key: "jasmine_tea_cost",
       label: "Jasmine Tea Cost",
       isReadOnly: true,
-      badge: "bg-primary",
+      badge: "bg-secondary",
     },
     {
       key: "black_tea_wastage",
       label: "Black Tea Wastage",
       isReadOnly: false,
-      badge: "bg-secondary",
+      badge: "bg-danger",
     },
     {
       key: "black_tea_cost",
@@ -100,13 +100,13 @@ function WastageComponent() {
       key: "milk_tea_wastage",
       label: "Milk Tea Wastage",
       isReadOnly: false,
-      badge: "bg-success",
+      badge: "bg-danger",
     },
     {
       key: "milk_tea_cost",
       label: "Milk Tea Cost",
       isReadOnly: true,
-      badge: "bg-success",
+      badge: "bg-secondary",
     },
     {
       key: "coffee_wastage",
@@ -118,61 +118,61 @@ function WastageComponent() {
       key: "coffee_cost",
       label: "Coffee Cost",
       isReadOnly: true,
-      badge: "bg-danger",
+      badge: "bg-secondary",
     },
     {
       key: "ctc_wastage",
       label: "CTC Wastage",
       isReadOnly: false,
-      badge: "bg-warning",
+      badge: "bg-danger",
     },
     {
       key: "ctc_cost",
       label: "CTC Cost",
       isReadOnly: true,
-      badge: "bg-warning",
+      badge: "bg-secondary",
     },
     {
       key: "yellow_peach_jelly_wastage",
       label: "Yellow Peach Jelly Wastage",
       isReadOnly: false,
-      badge: "bg-info",
+      badge: "bg-danger",
     },
     {
       key: "yellow_peach_jelly_cost",
       label: "Yellow Peach Jelly Cost",
       isReadOnly: true,
-      badge: "bg-info",
+      badge: "bg-secondary",
     },
     {
       key: "brown_sugar_jelly_wastage",
       label: "Brown Sugar Jelly Wastage",
       isReadOnly: false,
-      badge: "bg-dark text-light",
+      badge: "bg-danger",
     },
     {
       key: "brown_sugar_jelly_cost",
       label: "Brown Sugar Jelly Cost",
       isReadOnly: true,
-      badge: "bg-dark text-light",
+      badge: "bg-secondary",
     },
     {
       key: "peal_wastage",
       label: "Peal Wastage",
       isReadOnly: false,
-      badge: "bg-primary",
+      badge: "bg-danger",
     },
     {
       key: "peal_cost",
       label: "Peal Cost",
       isReadOnly: true,
-      badge: "bg-primary",
+      badge: "bg-secondary",
     },
     {
       key: "ice_cream_wastage",
       label: "Ice Cream Wastage",
       isReadOnly: false,
-      badge: "bg-secondary",
+      badge: "bg-danger",
     },
     {
       key: "ice_cream_cost",
@@ -184,13 +184,13 @@ function WastageComponent() {
       key: "melon_ice_cream_wastage",
       label: "Melon Ice Cream Wastage",
       isReadOnly: false,
-      badge: "bg-success",
+      badge: "bg-danger",
     },
     {
       key: "melon_ice_cream_cost",
       label: "Melon Ice Cream Cost",
       isReadOnly: true,
-      badge: "bg-success",
+      badge: "bg-secondary",
     },
     {
       key: "oreo_wastage",
@@ -202,61 +202,61 @@ function WastageComponent() {
       key: "oreo_cost",
       label: "Oreo Cost",
       isReadOnly: true,
-      badge: "bg-danger",
+      badge: "bg-secondary",
     },
     {
       key: "yellow_peach_jam_wastage",
       label: "Yellow Peach Jam Wastage",
       isReadOnly: false,
-      badge: "bg-warning",
+      badge: "bg-danger",
     },
     {
       key: "yellow_peach_jam_cost",
       label: "Yellow Peach Jam Cost",
       isReadOnly: true,
-      badge: "bg-warning",
+      badge: "bg-secondary",
     },
     {
       key: "pink_peach_jam_wastage",
       label: "Pink Peach Jam Wastage",
       isReadOnly: false,
-      badge: "bg-info",
+      badge: "bg-danger",
     },
     {
       key: "pink_peach_jam_cost",
       label: "Pink Peach Jam Cost",
       isReadOnly: true,
-      badge: "bg-info",
+      badge: "bg-secondary",
     },
     {
       key: "kiwi_jam_wastage",
       label: "Kiwi Jam Wastage",
       isReadOnly: false,
-      badge: "bg-dark text-light",
+      badge: "bg-danger",
     },
     {
       key: "kiwi_jam_cost",
       label: "Kiwi Jam Cost",
       isReadOnly: true,
-      badge: "bg-dark text-light",
+      badge: "bg-secondary",
     },
     {
       key: "strawberry_jam_wastage",
       label: "Strawberry Jam Wastage",
       isReadOnly: false,
-      badge: "bg-primary",
+      badge: "bg-danger",
     },
     {
       key: "strawberry_jam_cost",
       label: "Strawberry Jam Cost",
       isReadOnly: true,
-      badge: "bg-primary",
+      badge: "bg-secondary",
     },
     {
       key: "mango_jam_wastage",
       label: "Mango Jam Wastage",
       isReadOnly: false,
-      badge: "bg-secondary",
+      badge: "bg-danger",
     },
     {
       key: "mango_jam_cost",
@@ -268,13 +268,13 @@ function WastageComponent() {
       key: "passion_fruit_jam_wastage",
       label: "Passion Fruit Jam Wastage",
       isReadOnly: false,
-      badge: "bg-success",
+      badge: "bg-danger",
     },
     {
       key: "passion_fruit_jam_cost",
       label: "Passion Fruit Jam Cost",
       isReadOnly: true,
-      badge: "bg-success",
+      badge: "bg-secondary",
     },
     {
       key: "nata_de_coco_wastage",
@@ -286,19 +286,19 @@ function WastageComponent() {
       key: "nata_de_coco_cost",
       label: "Nata De Coco Cost",
       isReadOnly: true,
-      badge: "bg-danger",
+      badge: "bg-secondary",
     },
     {
       key: "lemon_wastage",
       label: "Lemon Wastage",
       isReadOnly: false,
-      badge: "bg-warning",
+      badge: "bg-danger",
     },
     {
       key: "lemon_cost",
       label: "Lemon Cost",
       isReadOnly: true,
-      badge: "bg-warning",
+      badge: "bg-secondary",
     },
   ];
 
@@ -592,8 +592,8 @@ function WastageComponent() {
         updatedFormData.lemon_cost = calculate_value;
       }
 
-      handleSum();
       setFormData(updatedFormData);
+      handleSum();
     }
   };
 
@@ -810,40 +810,61 @@ function WastageComponent() {
                     value={formData.month_date}
                     onChange={handleChange}
                     className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group badge bg-success">
-                  <label className="form-label">Utilities</label>
-                  <input
-                    type="number"
-                    name="utilities"
-                    value={formData.utilities}
-                    onChange={handleChange}
-                    className="form-control"
                     readOnly
                   />
                 </div>
               </div>
 
-              <div className="col-md-6">
-                <div className="form-group badge bg-success">
-                  <label className="form-label">Rental Amount</label>
+              <div className="col-md-6 d-flex justify-content-center">
+                <div className={`form-group badge bg-success`}>
+                  <label className="form-label">100% Discount Amount</label>
                   <input
                     type="number"
-                    name="rental"
-                    value={formData.rental}
+                    name="total_before_discount"
+                    value={formData.total_before_discount}
                     onChange={handleChange}
                     className="form-control"
                     readOnly
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="col-md-6 d-flex justify-content-center">
+                <div className={`form-group badge bg-success`}>
+                  <label className="form-label">Wastage Amount</label>
+                  <input
+                    type="number"
+                    name="final_total"
+                    value={formData.final_total}
+                    onChange={handleChange}
+                    className="form-control"
+                    readOnly
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="col-md-12 d-flex justify-content-center">
+                <div className={`form-group badge bg-success`}>
+                  <label className="form-label">Total Discount</label>
+                  <input
+                    type="number"
+                    name="total_before_discount"
+                    value={formData.total_before_discount}
+                    onChange={handleChange}
+                    className="form-control"
+                    readOnly
+                    required
                   />
                 </div>
               </div>
 
               {formMembers.map((item, index) => (
-                <div className="col-md-6" key={index}>
+                <div
+                  className="col-md-6 d-flex justify-content-center"
+                  key={index}
+                >
                   <div className={`form-group badge ${item.badge}`}>
                     <label className="form-label">{item.label}</label>
                     <input
