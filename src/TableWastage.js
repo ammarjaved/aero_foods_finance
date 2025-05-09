@@ -121,32 +121,47 @@ function TableWastage({ onRowClick }) {
 
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
-    { key: "month_date", label: "Month Date" },
-    { key: "day", label: "Day" },
+    {
+      key: "month_date",
+      label: "Month Date",
+      classHead: "bg-dark text-light",
+      classBody: "bg-dark text-light",
+    },
+    {
+      key: "day",
+      label: "Day",
+      classHead: "bg-dark text-light",
+      classBody: "bg-dark text-light",
+    },
     {
       key: "utilities",
       label: "Utilities",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
     },
     {
       key: "rental",
       label: "Rental",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
     },
-    { key: "total_before_discount", label: "Total Before Discount" },
+    {
+      key: "total_before_discount",
+      label: "Wastage Amount",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
     {
       key: "discount",
-      label: "Discount",
-      headerStyle: { backgroundColor: "Tomato" },
-      cellStyle: { backgroundColor: "Tomato" },
+      label: "100% Discount Amount",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "final_total",
-      label: "Final Total",
-      headerStyle: { backgroundColor: "Tomato" },
-      cellStyle: { backgroundColor: "Tomato" },
+      label: "Total Discount",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     // {
     //   key: "jasmine_tea_value",
@@ -157,14 +172,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "jasmine_tea_wastage",
       label: "Jasmine Tea Wastage",
-      headerStyle: { backgroundColor: "#2E86C1" },
-      cellStyle: { backgroundColor: "#2E86C1" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "jasmine_tea_cost",
       label: "Jasmine Tea Cost",
-      headerStyle: { backgroundColor: "#2E86C1" },
-      cellStyle: { backgroundColor: "#2E86C1" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "black_tea_value",
@@ -175,14 +190,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "black_tea_wastage",
       label: "Black Tea Wastage",
-      headerStyle: { backgroundColor: "#B7950B" },
-      cellStyle: { backgroundColor: "#B7950B" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "black_tea_cost",
       label: "Black Tea Cost",
-      headerStyle: { backgroundColor: "#B7950B" },
-      cellStyle: { backgroundColor: "#B7950B" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "milk_tea_value",
@@ -193,14 +208,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "milk_tea_wastage",
       label: "Milk Tea Wastage",
-      headerStyle: { backgroundColor: "#8E44AD" },
-      cellStyle: { backgroundColor: "#8E44AD" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "milk_tea_cost",
       label: "Milk Tea Cost",
-      headerStyle: { backgroundColor: "#8E44AD" },
-      cellStyle: { backgroundColor: "#8E44AD" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "coffee_value",
@@ -211,14 +226,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "coffee_wastage",
       label: "Coffee Wastage",
-      headerStyle: { backgroundColor: "#C0392B" },
-      cellStyle: { backgroundColor: "#C0392B" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "coffee_cost",
       label: "Coffee Cost",
-      headerStyle: { backgroundColor: "#C0392B" },
-      cellStyle: { backgroundColor: "#C0392B" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "ctc_value",
@@ -229,14 +244,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "ctc_wastage",
       label: "CTC Wastage",
-      headerStyle: { backgroundColor: "MediumSeaGreen" },
-      cellStyle: { backgroundColor: "MediumSeaGreen" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "ctc_cost",
       label: "CTC Cost",
-      headerStyle: { backgroundColor: "MediumSeaGreen" },
-      cellStyle: { backgroundColor: "MediumSeaGreen" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "yellow_peach_jelly_value",
@@ -247,14 +262,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "yellow_peach_jelly_wastage",
       label: "Yellow Peach Jelly Wastage",
-      headerStyle: { backgroundColor: "DodgerBlue" },
-      cellStyle: { backgroundColor: "DodgerBlue" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "yellow_peach_jelly_cost",
       label: "Yellow Peach Jelly Cost",
-      headerStyle: { backgroundColor: "DodgerBlue" },
-      cellStyle: { backgroundColor: "DodgerBlue" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "brown_sugar_jelly_value",
@@ -265,14 +280,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "brown_sugar_jelly_wastage",
       label: "Brown Sugar Jelly Wastage",
-      headerStyle: { backgroundColor: "Orange" },
-      cellStyle: { backgroundColor: "Orange" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "brown_sugar_jelly_cost",
       label: "Brown Sugar Jelly Cost",
-      headerStyle: { backgroundColor: "Orange" },
-      cellStyle: { backgroundColor: "Orange" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "peal_value",
@@ -283,14 +298,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "peal_wastage",
       label: "Peal Wastage",
-      headerStyle: { backgroundColor: "SlateBlue" },
-      cellStyle: { backgroundColor: "SlateBlue" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "peal_cost",
       label: "Peal Cost",
-      headerStyle: { backgroundColor: "SlateBlue" },
-      cellStyle: { backgroundColor: "SlateBlue" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "ice_cream_value",
@@ -301,14 +316,14 @@ function TableWastage({ onRowClick }) {
     {
       key: "ice_cream_wastage",
       label: "Ice Cream Wastage",
-      headerStyle: { backgroundColor: "Violet" },
-      cellStyle: { backgroundColor: "Violet" },
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
       key: "ice_cream_cost",
       label: "Ice Cream Cost",
-      headerStyle: { backgroundColor: "Violet" },
-      cellStyle: { backgroundColor: "Violet" },
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
     // {
     //   key: "melon_ice_cream_value",
@@ -316,35 +331,135 @@ function TableWastage({ onRowClick }) {
     //   headerStyle: { backgroundColor: "Violet" },
     //   cellStyle: { backgroundColor: "Violet" },
     // },
-    { key: "melon_ice_cream_wastage", label: "Melon Ice Cream Wastage" },
-    { key: "melon_ice_cream_cost", label: "Melon Ice Cream Cost" },
+    {
+      key: "melon_ice_cream_wastage",
+      label: "Melon Ice Cream Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "melon_ice_cream_cost",
+      label: "Melon Ice Cream Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "oreo_value", label: "Oreo Value" },
-    { key: "oreo_wastage", label: "Oreo Wastage" },
-    { key: "oreo_cost", label: "Oreo Cost" },
+    {
+      key: "oreo_wastage",
+      label: "Oreo Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "oreo_cost",
+      label: "Oreo Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "yellow_peach_jam_value", label: "Yellow Peach Jam Value" },
-    { key: "yellow_peach_jam_wastage", label: "Yellow Peach Jam Wastage" },
-    { key: "yellow_peach_jam_cost", label: "Yellow Peach Jam Cost" },
+    {
+      key: "yellow_peach_jam_wastage",
+      label: "Yellow Peach Jam Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "yellow_peach_jam_cost",
+      label: "Yellow Peach Jam Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "pink_peach_jam_value", label: "Pink Peach Jam Value" },
-    { key: "pink_peach_jam_wastage", label: "Pink Peach Jam Wastage" },
-    { key: "pink_peach_jam_cost", label: "Pink Peach Jam Cost" },
+    {
+      key: "pink_peach_jam_wastage",
+      label: "Pink Peach Jam Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "pink_peach_jam_cost",
+      label: "Pink Peach Jam Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "kiwi_jam_value", label: "Kiwi Jam Value" },
-    { key: "kiwi_jam_wastage", label: "Kiwi Jam Wastage" },
-    { key: "kiwi_jam_cost", label: "Kiwi Jam Cost" },
+    {
+      key: "kiwi_jam_wastage",
+      label: "Kiwi Jam Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kiwi_jam_cost",
+      label: "Kiwi Jam Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "strawberry_jam_value", label: "Strawberry Jam Value" },
-    { key: "strawberry_jam_wastage", label: "Strawberry Jam Wastage" },
-    { key: "strawberry_jam_cost", label: "Strawberry Jam Cost" },
+    {
+      key: "strawberry_jam_wastage",
+      label: "Strawberry Jam Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "strawberry_jam_cost",
+      label: "Strawberry Jam Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "mango_jam_value", label: "Mango Jam Value" },
-    { key: "mango_jam_wastage", label: "Mango Jam Wastage" },
-    { key: "mango_jam_cost", label: "Mango Jam Cost" },
+    {
+      key: "mango_jam_wastage",
+      label: "Mango Jam Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "mango_jam_cost",
+      label: "Mango Jam Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "passion_fruit_jam_value", label: "Passion Fruit Jam Value" },
-    { key: "passion_fruit_jam_wastage", label: "Passion Fruit Jam Wastage" },
-    { key: "passion_fruit_jam_cost", label: "Passion Fruit Jam Cost" },
+    {
+      key: "passion_fruit_jam_wastage",
+      label: "Passion Fruit Jam Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "passion_fruit_jam_cost",
+      label: "Passion Fruit Jam Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "nata_de_coco_value", label: "Nata De Coco Value" },
-    { key: "nata_de_coco_wastage", label: "Nata De Coco Wastage" },
-    { key: "nata_de_coco_cost", label: "Nata De Coco Cost" },
+    {
+      key: "nata_de_coco_wastage",
+      label: "Nata De Coco Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "nata_de_coco_cost",
+      label: "Nata De Coco Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
     // { key: "lemon_value", label: "Lemon Value" },
-    { key: "lemon_wastage", label: "Lemon Wastage" },
-    { key: "lemon_cost", label: "Lemon Cost" },
+    {
+      key: "lemon_wastage",
+      label: "Lemon Wastage",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "lemon_cost",
+      label: "Lemon Cost",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
   ];
 
   // Specify which columns you want to include in the filter
@@ -508,20 +623,28 @@ function TableWastage({ onRowClick }) {
           {/* Table */}
           <div className="table-responsive shadow rounded-3">
             <table className="table table-striped table-hover table-bordered mb-0">
-              <thead className="table-dark">
+              <thead>
                 <tr>
                   {columns.map((column, index) => {
                     const prevColumn = columns[index - 1];
 
                     if (column.key === "month_date") {
                       return (
-                        <th key={column.key} style={{}}>
+                        <th
+                          key={column.key}
+                          className={`${column.classHead}`}
+                          style={{}}
+                        >
                           {column.label}
                         </th>
                       );
                     } else {
                       return (
-                        <th key={column.key} style={{}}>
+                        <th
+                          key={column.key}
+                          className={`${column.classHead}`}
+                          style={{}}
+                        >
                           {column.label}
                         </th>
                       );
@@ -543,7 +666,7 @@ function TableWastage({ onRowClick }) {
                             <td
                               key={`${record.id}-${column.key}`}
                               style={{}}
-                              className="bg-dark text-light"
+                              className={`${column.classBody}`}
                             >
                               {record[column.key]}
                             </td>
@@ -553,7 +676,7 @@ function TableWastage({ onRowClick }) {
                             <td
                               key={`${record.id}-${column.key}`}
                               style={{}}
-                              className="bg-dark text-light"
+                              className={`${column.classBody}`}
                             >
                               {days[record[column.key]]}
                             </td>
@@ -564,7 +687,11 @@ function TableWastage({ onRowClick }) {
                           column.key === "sales_walk_in"
                         ) {
                           return (
-                            <td key={`${record.id}-${column.key}`} style={{}}>
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={{}}
+                              className={`${column.classBody}`}
+                            >
                               {parseFloat(record[column.key])
                                 .toFixed(2)
                                 .toString()}
@@ -575,7 +702,7 @@ function TableWastage({ onRowClick }) {
                             <td
                               key={`${record.id}-${column.key}`}
                               style={{}}
-                              className="text-end"
+                              className={`${column.classBody}`}
                             >
                               {record[column.key]}
                             </td>
