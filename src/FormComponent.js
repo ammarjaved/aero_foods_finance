@@ -150,7 +150,7 @@ function FormComponent() {
           parseFloat(updatedFormData.cash_box_amount || 0) -
           updatedFormData.cash;
         // Update sales_walk_in with the calculated sum
-        updatedFormData.variance = remaing;
+        updatedFormData.variance = parseFloat(remaing).toFixed(2);
       }
 
       let c_month = 0;
@@ -185,9 +185,12 @@ function FormComponent() {
             updatedFormData.labour_hours_used || 0
         ).toFixed(2);
         updatedFormData.sales_per_labour_hours = sum;
-        updatedFormData.month_date_sales =
-          updatedFormData.total_sales + parseFloat(results.data.mtd);
-        updatedFormData.prev_day_balance = parseFloat(results.data.pre);
+        updatedFormData.month_date_sales = parseFloat(
+          updatedFormData.total_sales + parseFloat(results.data.mtd)
+        ).toFixed(2);
+        updatedFormData.prev_day_balance = parseFloat(results.data.pre).toFixed(
+          2
+        );
       }
 
       setFormData(updatedFormData);
@@ -209,7 +212,35 @@ function FormComponent() {
             submitData.append(key, formData[key]);
           }
         } else {
-          submitData.append(key, formData[key]);
+          let floatKeys = [
+            "cash",
+            "touch_n_go",
+            "duit_now",
+            "voucher",
+            "visa_master",
+            "sales_walk_in",
+            "shopee",
+            "grab",
+            "panda",
+            "sales_delivery",
+            "total_sales",
+            "month_date_sales",
+            "transaction_count",
+            "avg_transaction_value",
+            "discount",
+            "labour_hours_used",
+            "sales_per_labour_hours",
+            "prev_day_balance",
+            "next_day_balance",
+            "actual_bank_amount",
+            "cash_box_amount",
+            "variance",
+          ];
+          if (floatKeys.includes(key)) {
+            submitData.append(key, parseFloat(formData[key]).toFixed(2));
+          } else {
+            submitData.append(key, formData[key]);
+          }
         }
       });
 
