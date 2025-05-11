@@ -59,7 +59,7 @@ function Sidebar({ sidebarOpen }) {
                 style={{ borderBottom: "1px white solid", cursor: "pointer" }}
                 className="nav-link text-white py-2"
               >
-                Timesheet
+                Time Sheet
               </a>
               <a
                 href="/aero_foods_finance/dashboard"
