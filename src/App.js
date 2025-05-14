@@ -4,6 +4,7 @@ import Dashboard from "./Dashboard";
 import Landing from "./Landing";
 import Timesheet from "./Timesheet";
 import DailyWastage from "./DailyWastage";
+import DailyBankReconciliation from "./DailyBankReconciliation";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/timesheet" element={<Timesheet />} />
         <Route path="/wastage" element={<DailyWastage />} />
+        <Route path="/reconciliation" element={<DailyBankReconciliation />} />
         <Route path="/" element={<LoginForm />} />
       </Routes>
     </BrowserRouter>
