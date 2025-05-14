@@ -195,7 +195,7 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
 
       updatedForm[key] = formattedDateTime;
     } else {
-      updatedForm.key = e.target.value;
+      updatedForm[key] = e.target.value;
     }
 
     if (["start_time", "end_time", "break_time"].includes(key)) {
@@ -513,7 +513,7 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
                 <label className="form-label">Total Hour(s)</label>
                 <div className="col-md-3 mb-2">
                   <label className="form-label fw-bold text-danger mb-0">
-                    {hours.total_hr}
+                    {parseFloat(hours.total_hr).toFixed(2)}
                   </label>
                 </div>
               </div>
@@ -521,7 +521,7 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
                 <label className="form-label">Total Over Time</label>
                 <div className="col-md-3 mb-2">
                   <label className="form-label fw-bold text-danger mb-0">
-                    {hours.ot}
+                    {parseFloat(hours.ot).toFixed(2)}
                   </label>
                 </div>
               </div>
