@@ -592,7 +592,7 @@ function FormComponent() {
 
               <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
                 <div className="form-group">
-                  <label className="form-label">cash</label>
+                  <label className="form-label">Cash</label>
                   <input
                     type="number"
                     name="cash"
@@ -648,7 +648,7 @@ function FormComponent() {
 
               <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
                 <div className="form-group">
-                  <label className="form-label">visa_master</label>
+                  <label className="form-label">Bank Card</label>
                   <input
                     type="number"
                     name="visa_master"

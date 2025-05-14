@@ -76,6 +76,13 @@ function Sidebar({ sidebarOpen }) {
                 Daily Wastage
               </a>
               <a
+                href="/aero_foods_finance/reconciliation"
+                style={{ borderBottom: "1px white solid", cursor: "pointer" }}
+                className="nav-link text-white py-2"
+              >
+                Bank Reconciliation
+              </a>
+              <a
                 onClick={handleLogout}
                 style={{ borderBottom: "1px white solid", cursor: "pointer" }}
                 className="nav-link text-white py-2"

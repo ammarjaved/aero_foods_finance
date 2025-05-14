@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function Table({ onRowClick }) {
+function TableBankReconciliation({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,7 +50,10 @@ function Table({ onRowClick }) {
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch("http://121.121.232.54:88/aero-foods/fetchData.php?month=" + month)
+    fetch(
+      "http://121.121.232.54:88/aero-foods/fetch_bank_reconciliation_sheet.php?month=" +
+        month
+    )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -118,128 +121,215 @@ function Table({ onRowClick }) {
 
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
-    // { key: 'id', label: 'ID' },
-    { key: "month_date", label: "Month Date" },
-    { key: "day", label: "Day" },
-    // { key: 'month', label: 'Month' },
-    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
+    {
+      key: "month_date",
+      label: "Month Date",
+      classHead: "bg-dark text-light",
+      classBody: "bg-dark text-light",
+    },
+    {
+      key: "day",
+      label: "Day",
+      classHead: "bg-dark text-light",
+      classBody: "bg-dark text-light",
+    },
+    //Constants
     {
       key: "cash",
       label: "Cash",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "touch_n_go",
-      label: "Touch n Go",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      label: "Touch N Go",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "duit_now",
-      label: "DuitNow",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      label: "Duit Now",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "voucher",
       label: "Voucher",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "visa_master",
       label: "Bank Card",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "sales_walk_in",
-      label: "Walk-in Sales",
-      headerStyle: { backgroundColor: "#196F3D" },
-      cellStyle: { backgroundColor: "#196F3D" },
+      label: "Net Sales Walk In",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "shopee",
       label: "Shopee",
-      headerStyle: { backgroundColor: "#2E86C1" },
-      cellStyle: { backgroundColor: "#2E86C1" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "grab",
       label: "Grab",
-      headerStyle: { backgroundColor: "#2E86C1" },
-      cellStyle: { backgroundColor: "#2E86C1" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "panda",
-      label: "Foodpanda",
-      headerStyle: { backgroundColor: "#2E86C1" },
-      cellStyle: { backgroundColor: "#2E86C1" },
+      label: "Panda",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "sales_delivery",
-      label: "Delivery Sales",
-      headerStyle: { backgroundColor: "#2E86C1" },
-      cellStyle: { backgroundColor: "#2E86C1" },
+      label: "Net Sales Delivery",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
-
     {
       key: "total_sales",
-      label: "Total Sales",
-      headerStyle: { backgroundColor: "#B7950B" },
-      cellStyle: { backgroundColor: "#B7950B" },
+      label: "Total Sales POS",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+
+    //Form Values
+    {
+      key: "visa",
+      label: "Visa",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
-      key: "month_date_sales",
-      label: "Month To Date Sales",
-      headerStyle: { backgroundColor: "#B7950B" },
-      cellStyle: { backgroundColor: "#B7950B" },
-    },
-    { key: "transaction_count", label: "Transaction Count" },
-    { key: "avg_transaction_value", label: "Avg Transaction" },
-    { key: "discount", label: "100% Discount" },
-    {
-      key: "labour_hours_used",
-      label: "Labour Hours",
-      headerStyle: { backgroundColor: "#8E44AD" },
-      cellStyle: { backgroundColor: "#8E44AD" },
+      key: "master",
+      label: "Master",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
     {
-      key: "sales_per_labour_hours",
-      label: "Sales/Labour Hour",
-      headerStyle: { backgroundColor: "#8E44AD" },
-      cellStyle: { backgroundColor: "#8E44AD" },
+      key: "my_debit",
+      label: "Mydebit",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
-    //   { key: 'prev_day_balance', label: 'Previous Day Balance' ,
-    //     headerStyle: { backgroundColor: '#C0392B' },
-    //   cellStyle: { backgroundColor: '#C0392B' }
-    // },
-    //   { key: 'next_day_balance', label: 'Next Day Balance',
-    //     headerStyle: { backgroundColor: '#C0392B' },
-    //   cellStyle: { backgroundColor: '#C0392B' }
-    //  },
     {
-      key: "actual_bank_amount",
-      label: "Actual Bank Amount",
-      headerStyle: { backgroundColor: "#C0392B" },
-      cellStyle: { backgroundColor: "#C0392B" },
+      key: "total_terminal",
+      label: "Total Terminal",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
     },
+    {
+      key: "comission",
+      label: "Comission",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    //Constants
     {
       key: "cash_box_amount",
       label: "Cash Box Amount",
-      headerStyle: { backgroundColor: "#C0392B" },
-      cellStyle: { backgroundColor: "#C0392B" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
       key: "variance",
       label: "Variance",
-      headerStyle: { backgroundColor: "#C0392B" },
-      cellStyle: { backgroundColor: "#C0392B" },
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
-    { key: "bank_in_date", label: "Bank-in Date" },
-    { key: "recipt_ref_no", label: "Receipt Ref No." },
-    { key: "remarks", label: "Remarks" },
+
+    {
+      key: "tng",
+      label: "TNG",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "variance_1",
+      label: "Variance",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "dr_1",
+      label: "DR/1",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "dr_2",
+      label: "DR/2",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "cr",
+      label: "CR",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "total_bank_card",
+      label: "Total Bank Card",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "variance_2",
+      label: "Variance",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "shopee_1",
+      label: "Shopee",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "grab_1",
+      label: "Grab",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "panda_1",
+      label: "Panda",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "total_delivery",
+      label: "Total Delivery",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "variance_3",
+      label: "Variance",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "actual_total",
+      label: "Actual Total",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "total_variance",
+      label: "Total Variance",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
   ];
 
   // Specify which columns you want to include in the filter
@@ -401,8 +491,8 @@ function Table({ onRowClick }) {
           </div>
 
           {/* Table */}
-          <div className="table-responsive">
-            <table className="table table-striped table-hover table-bordered">
+          <div className="table-responsive shadow rounded-3">
+            <table className="table table-striped table-hover table-bordered mb-0">
               <thead>
                 <tr>
                   {columns.map((column, index) => {
@@ -410,13 +500,21 @@ function Table({ onRowClick }) {
 
                     if (column.key === "month_date") {
                       return (
-                        <th key={column.key} style={column.headerStyle || {}}>
+                        <th
+                          key={column.key}
+                          className={`${column.classHead}`}
+                          style={{}}
+                        >
                           {column.label}
                         </th>
                       );
                     } else {
                       return (
-                        <th key={column.key} style={column.headerStyle || {}}>
+                        <th
+                          key={column.key}
+                          className={`${column.classHead}`}
+                          style={{}}
+                        >
                           {column.label}
                         </th>
                       );
@@ -437,7 +535,8 @@ function Table({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
+                              style={{}}
+                              className={`${column.classBody}`}
                             >
                               {record[column.key]}
                             </td>
@@ -446,26 +545,22 @@ function Table({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
+                              style={{}}
+                              className={`${column.classBody}`}
                             >
                               {days[record[column.key]]}
                             </td>
                           );
                         } else if (
-                          column.key === "sales_walk_in" ||
-                          column.key === "total_sales" ||
-                          column.key === "sales_delivery" ||
+                          column.key === "variance" ||
                           column.key === "month_date_sales" ||
-                          column.key === "avg_transaction_value" ||
-                          column.key === "transaction_count" ||
-                          column.key === "labour_hours_used" ||
-                          column.key === "sales_per_labour_hours" ||
-                          column.key === "variance"
+                          column.key === "sales_walk_in"
                         ) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
+                              style={{}}
+                              className={`${column.classBody}`}
                             >
                               {parseFloat(record[column.key])
                                 .toFixed(2)
@@ -476,7 +571,8 @@ function Table({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
+                              style={{}}
+                              className={`${column.classBody}`}
                             >
                               {record[column.key]}
                             </td>
@@ -576,4 +672,4 @@ function Table({ onRowClick }) {
   );
 }
 
-export default Table;
+export default TableBankReconciliation;
