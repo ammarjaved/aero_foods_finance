@@ -256,7 +256,7 @@ function TableBankReconciliation({ onRowClick }) {
       key: "variance_1",
       label: "Variance",
       classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
+      classBody: "bg-secondary fw-bold text-end",
     },
     {
       key: "dr_1",
@@ -286,7 +286,7 @@ function TableBankReconciliation({ onRowClick }) {
       key: "variance_2",
       label: "Variance",
       classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
+      classBody: "bg-secondary fw-bold text-end",
     },
     {
       key: "shopee_1",
@@ -316,7 +316,7 @@ function TableBankReconciliation({ onRowClick }) {
       key: "variance_3",
       label: "Variance",
       classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
+      classBody: "bg-secondary fw-bold text-end",
     },
     {
       key: "actual_total",
@@ -328,7 +328,7 @@ function TableBankReconciliation({ onRowClick }) {
       key: "total_variance",
       label: "Total Variance",
       classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
+      classBody: "bg-secondary fw-bold text-end",
     },
   ];
 
@@ -535,7 +535,6 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {record[column.key]}
@@ -545,7 +544,6 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {days[record[column.key]]}
@@ -553,14 +551,19 @@ function TableBankReconciliation({ onRowClick }) {
                           );
                         } else if (
                           column.key === "variance" ||
-                          column.key === "month_date_sales" ||
-                          column.key === "sales_walk_in"
+                          column.key === "variance_1" ||
+                          column.key === "variance_2" ||
+                          column.key === "variance_3" ||
+                          column.key === "total_variance"
                         ) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              className={
+                                parseFloat(record[column.key]) < 0
+                                  ? `${column.classBody} text-danger`
+                                  : `${column.classBody} text-success`
+                              }
                             >
                               {parseFloat(record[column.key])
                                 .toFixed(2)
@@ -571,7 +574,6 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {record[column.key]}
