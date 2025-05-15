@@ -564,7 +564,11 @@ function BankReconciliationComponent() {
       >
         <div className="p-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3>{isEditing ? "Edit Wastage Record" : "New Wastage Record"}</h3>
+            <h3>
+              {isEditing
+                ? "Edit Bank Reconciliation Record"
+                : "New Bank Reconciliation Record"}
+            </h3>
             <button
               className="btn btn-sm btn-outline-danger"
               onClick={closeForm}
@@ -596,15 +600,37 @@ function BankReconciliationComponent() {
                 >
                   <div className={`form-group badge ${item.badge}`}>
                     <label className="form-label">{item.label}</label>
-                    <input
-                      type="number"
-                      name={item.key}
-                      value={formData[item.key]}
-                      onChange={handleChange}
-                      className="form-control"
-                      readOnly={item.isReadOnly}
-                      required
-                    />
+                    {[
+                      "variance",
+                      "variance_1",
+                      "variance_2",
+                      "variance_3",
+                      "total_variance",
+                    ].includes(item.key) ? (
+                      <input
+                        type="number"
+                        name={item.key}
+                        value={formData[item.key]}
+                        onChange={handleChange}
+                        className={
+                          parseFloat(formData[item.key]) < 0
+                            ? `form-control text-danger`
+                            : `form-control text-success`
+                        }
+                        readOnly={item.isReadOnly}
+                        required
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        name={item.key}
+                        value={formData[item.key]}
+                        onChange={handleChange}
+                        className="form-control"
+                        readOnly={item.isReadOnly}
+                        required
+                      />
+                    )}
                   </div>
                 </div>
               ))}
