@@ -171,6 +171,12 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
   const handleEditChange = (e, key) => {
     const updatedForm = { ...editFormData, [key]: e.target.value };
 
+    if (["is_off"].includes(key)) {
+      if (e.target.value === "no") {
+        updatedForm["off_type"] = "none";
+      }
+    }
+
     if (["start_time", "end_time"].includes(key)) {
       const options = {
         year: "numeric",
@@ -398,6 +404,8 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
     { key: "ot", label: "Over Time" },
     { key: "image_start_time", label: "Clock-In Image" },
     { key: "image_end_time", label: "Clock-Out Image" },
+    { key: "is_off", label: "Off ?" },
+    { key: "off_type", label: "Off Type" },
 
     // { key: 'meal', label: 'Meal' },
   ];
@@ -609,56 +617,7 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
                                 }
                                 onChange={(e) => handleEditChange(e, col.key)}
                               />
-                            ) : //
-                            // <div>
-                            //   <select
-                            //     style={{ margin: 5 }}
-                            //     className="form-select form-select-sm"
-                            //     value={editFormData[col.key] || ""}
-                            //     onChange={(e) => handleEditChange(e, col.key)}
-                            //   >
-                            //     <option value="">Select Hour(s)</option>
-                            //     <option value="00">00</option>
-                            //     <option value="01">01</option>
-                            //     <option value="02">02</option>
-                            //     <option value="03">03</option>
-                            //     <option value="04">04</option>
-                            //     <option value="05">05</option>
-                            //     <option value="06">06</option>
-                            //     <option value="07">07</option>
-                            //     <option value="08">08</option>
-                            //     <option value="09">09</option>
-                            //     <option value="10">10</option>
-                            //     <option value="11">11</option>
-                            //     <option value="12">12</option>
-                            //     <option value="13">13</option>
-                            //     <option value="14">14</option>
-                            //     <option value="15">15</option>
-                            //     <option value="16">16</option>
-                            //     <option value="17">17</option>
-                            //     <option value="18">18</option>
-                            //     <option value="19">19</option>
-                            //     <option value="20">20</option>
-                            //     <option value="21">21</option>
-                            //     <option value="22">22</option>
-                            //     <option value="23">23</option>
-                            //   </select>
-
-                            //   <select
-                            //     style={{ margin: 5 }}
-                            //     className="form-select form-select-sm"
-                            //     value={editFormData[col.key] || ""}
-                            //     onChange={(e) => handleEditChange(e, col.key)}
-                            //   >
-                            //     <option value="">Select Minute(s)</option>
-
-                            //     <option value="0">00</option>
-                            //     <option value="15">15</option>
-                            //     <option value="30">30</option>
-                            //     <option value="45">45</option>
-                            //   </select>
-                            // </div>
-                            col.key === "image_start_time" ||
+                            ) : col.key === "image_start_time" ||
                               col.key === "image_end_time" ? (
                               <div className="d-flex flex-column gap-1">
                                 <input
@@ -715,6 +674,28 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
                                 value={editFormData[col.key] || 0}
                                 readOnly
                               />
+                            ) : col.key === "is_off" ? (
+                              <select
+                                className="form-select form-select-sm"
+                                value={editFormData[col.key] || ""}
+                                onChange={(e) => handleEditChange(e, col.key)}
+                              >
+                                <option value="">Select</option>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                              </select>
+                            ) : col.key === "off_type" &&
+                              editFormData["is_off"] === "yes" ? (
+                              <select
+                                className="form-select form-select-sm"
+                                value={editFormData[col.key] || ""}
+                                onChange={(e) => handleEditChange(e, col.key)}
+                              >
+                                <option value="">Select Type</option>
+                                <option value="none">None</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="holiday">Holiday</option>
+                              </select>
                             ) : (
                               <input
                                 type="text"

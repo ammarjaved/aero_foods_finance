@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import BankReconciliationComponent from "./BankReconciliationComponent";
-import Navbar from "./Navbar";
-import Sidebar from "./Sidebar";
+import WastageComponent from "./WastageComponent";
+import Navbar from "../../Navbar";
+import Sidebar from "../../Sidebar";
 
-function DailyBankReconciliation() {
+function DailyWastage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -32,7 +32,7 @@ function DailyBankReconciliation() {
               overflowY: "auto", // Ensure the content is scrollable if it overflows
             }}
           >
-            <BankReconciliationComponent />
+            <WastageComponent />
           </div>
         </div>
       </div>
@@ -40,4 +40,4 @@ function DailyBankReconciliation() {
   );
 }
 
-export default DailyBankReconciliation;
+export default DailyWastage;
