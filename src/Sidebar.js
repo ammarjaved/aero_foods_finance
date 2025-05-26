@@ -83,6 +83,13 @@ function Sidebar({ sidebarOpen }) {
                 Bank Reconciliation
               </a>
               <a
+                href="/aero_foods_finance/materials"
+                style={{ borderBottom: "1px white solid", cursor: "pointer" }}
+                className="nav-link text-white py-2"
+              >
+                Materials
+              </a>
+              <a
                 onClick={handleLogout}
                 style={{ borderBottom: "1px white solid", cursor: "pointer" }}
                 className="nav-link text-white py-2"

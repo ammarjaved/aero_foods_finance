@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import WastageComponent from "./WastageComponent";
-import Navbar from "./Navbar";
-import Sidebar from "./Sidebar";
+import TimeFormComponent from "./TimeFormComponent";
+import Navbar from "../../Navbar";
+import Sidebar from "../../Sidebar";
 
-function DailyWastage() {
+function Timesheet() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -32,7 +32,7 @@ function DailyWastage() {
               overflowY: "auto", // Ensure the content is scrollable if it overflows
             }}
           >
-            <WastageComponent />
+            <TimeFormComponent />
           </div>
         </div>
       </div>
@@ -40,4 +40,4 @@ function DailyWastage() {
   );
 }
 
-export default DailyWastage;
+export default Timesheet;

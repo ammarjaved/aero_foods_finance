@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginForm from "./LoginForm";
-import Dashboard from "./Dashboard";
+import Dashboard from "./components/daily-sheet/Dashboard";
 import Landing from "./Landing";
-import Timesheet from "./Timesheet";
-import DailyWastage from "./DailyWastage";
-import DailyBankReconciliation from "./DailyBankReconciliation";
+import Timesheet from "./components/time-sheet/Timesheet";
+import DailyWastage from "./components/wastage/DailyWastage";
+import DailyBankReconciliation from "./components/bank-reconciliation/DailyBankReconciliation";
+import MonthlyMaterials from "./components/materials/MonthlyMaterials";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/timesheet" element={<Timesheet />} />
         <Route path="/wastage" element={<DailyWastage />} />
         <Route path="/reconciliation" element={<DailyBankReconciliation />} />
+        <Route path="/materials" element={<MonthlyMaterials />} />
         <Route path="/" element={<LoginForm />} />
       </Routes>
     </BrowserRouter>

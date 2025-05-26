@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableBankReconciliation({ onRowClick }) {
+function TableMaterials({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -19,6 +21,18 @@ function TableBankReconciliation({ onRowClick }) {
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
     fetchData(monthValue); // Call your fetchData function with the selected month value
+  };
+
+  const handleCategoryChange = (e) => {
+    const categoryValue = e.target.value;
+    localStorage.setItem("category", categoryValue);
+    setCategory(categoryValue);
+
+    const filteredItems = data.filter(
+      (item) => item.category === categoryValue
+    );
+
+    setFilteredData(filteredItems);
   };
 
   // Subscribe to a custom event for new records
@@ -47,17 +61,30 @@ function TableBankReconciliation({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
+  const getDistinctCategories = (arr) => {
+    if (!Array.isArray(arr)) return [];
+
+    return [
+      ...new Set(
+        arr
+          .filter((item) => item && typeof item === "object")
+          .map((item) => item.category)
+          .filter((cat) => typeof cat === "string" && cat.trim() !== "")
+      ),
+    ];
+  };
+
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_bank_reconciliation_sheet.php?month=" +
-        month
+      "http://121.121.232.54:88/aero-foods/fetch_materials.php?month=" + month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
         setFilteredData(fetchedData);
+        setCategories(getDistinctCategories(fetchedData));
         setLoading(false);
       })
       .catch((error) => {
@@ -133,202 +160,47 @@ function TableBankReconciliation({ onRowClick }) {
       classHead: "bg-dark text-light",
       classBody: "bg-dark text-light",
     },
-    //Constants
     {
-      key: "cash",
-      label: "Cash",
+      key: "code",
+      label: "Item Code",
       classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      classBody: "bg-success text-light",
     },
     {
-      key: "touch_n_go",
-      label: "Touch N Go",
+      key: "name",
+      label: "Item name",
       classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      classBody: "bg-success text-light",
     },
     {
-      key: "duit_now",
-      label: "Duit Now",
+      key: "description",
+      label: "Item Description",
       classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      classBody: "bg-success text-light",
     },
     {
-      key: "voucher",
-      label: "Voucher",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      key: "category",
+      label: "Category",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light",
     },
     {
-      key: "visa_master",
-      label: "Bank Card",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "sales_walk_in",
-      label: "Net Sales Walk In",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "shopee",
-      label: "Shopee",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "grab",
-      label: "Grab",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "panda",
-      label: "Panda",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "sales_delivery",
-      label: "Net Sales Delivery",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "total_sales",
-      label: "Total Sales POS",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-
-    //Form Values
-    {
-      key: "visa",
-      label: "Visa",
+      key: "unit_price",
+      label: "Unit Price",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light text-end",
     },
     {
-      key: "master",
-      label: "Master",
+      key: "packet",
+      label: "Packet(s)",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light text-end",
     },
     {
-      key: "my_debit",
-      label: "Mydebit",
+      key: "unit",
+      label: "Unit",
       classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "total_terminal",
-      label: "Total Terminal",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "comission",
-      label: "Comission",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    //Constants
-    {
-      key: "cash_box_amount",
-      label: "Cash Box Amount",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "variance",
-      label: "Variance",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-
-    {
-      key: "tng",
-      label: "TNG",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "variance_1",
-      label: "Variance",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary fw-bold text-end",
-    },
-    {
-      key: "dr_1",
-      label: "DR/1",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "dr_2",
-      label: "DR/2",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "cr",
-      label: "CR",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "total_bank_card",
-      label: "Total Bank Card",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "variance_2",
-      label: "Variance",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary fw-bold text-end",
-    },
-    {
-      key: "shopee_1",
-      label: "Shopee",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "grab_1",
-      label: "Grab",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "panda_1",
-      label: "Panda",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "total_delivery",
-      label: "Total Delivery",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "variance_3",
-      label: "Variance",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary fw-bold text-end",
-    },
-    {
-      key: "actual_total",
-      label: "Actual Total",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "total_variance",
-      label: "Total Variance",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary fw-bold text-end",
+      classBody: "bg-danger text-light",
     },
   ];
 
@@ -398,7 +270,7 @@ function TableBankReconciliation({ onRowClick }) {
                   ></i>
                 </button>
                 <h5 className="mb-0">
-                  Filters{" "}
+                  Filters
                   {hasActiveFilters && (
                     <span className="badge bg-primary ms-2">Active</span>
                   )}
@@ -418,25 +290,26 @@ function TableBankReconciliation({ onRowClick }) {
             {isFilterPanelOpen && (
               <div className="card-body" id="filterPanel">
                 <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  {filterableColumns.map((column) => (
-                    <div className="col" key={`filter-${column.key}`}>
-                      <div className="form-floating">
-                        <input
-                          type="date"
-                          className="form-control"
-                          id={`filter-${column.key}`}
-                          placeholder={column.label}
-                          value={filterValues[column.key] || ""}
-                          onChange={(e) =>
-                            handleFilterChange(column.key, e.target.value)
-                          }
-                        />
-                        <label htmlFor={`filter-${column.key}`}>
-                          {column.label}
-                        </label>
+                  {false &&
+                    filterableColumns.map((column) => (
+                      <div className="col" key={`filter-${column.key}`}>
+                        <div className="form-floating">
+                          <input
+                            type="date"
+                            className="form-control"
+                            id={`filter-${column.key}`}
+                            placeholder={column.label}
+                            value={filterValues[column.key] || ""}
+                            onChange={(e) =>
+                              handleFilterChange(column.key, e.target.value)
+                            }
+                          />
+                          <label htmlFor={`filter-${column.key}`}>
+                            {column.label}
+                          </label>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
                   <div className="col">
                     <div className="form-floating">
@@ -461,6 +334,26 @@ function TableBankReconciliation({ onRowClick }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
+                    </div>
+                  </div>
+                </div>
+                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
+                  <div className="col">
+                    <div className="form-floating" style={{ marginTop: 5 }}>
+                      <select
+                        className="form-select"
+                        id="categorySelect"
+                        value={category}
+                        onChange={handleCategoryChange}
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((item, index) => (
+                          <option key={index} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                      <label htmlFor="monthSelect">Category</label>
                     </div>
                   </div>
                 </div>
@@ -535,6 +428,7 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
+                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {record[column.key]}
@@ -544,36 +438,17 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
+                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {days[record[column.key]]}
-                            </td>
-                          );
-                        } else if (
-                          column.key === "variance" ||
-                          column.key === "variance_1" ||
-                          column.key === "variance_2" ||
-                          column.key === "variance_3" ||
-                          column.key === "total_variance"
-                        ) {
-                          return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              className={
-                                parseFloat(record[column.key]) < 0
-                                  ? `${column.classBody} text-danger`
-                                  : `${column.classBody} text-success`
-                              }
-                            >
-                              {parseFloat(record[column.key])
-                                .toFixed(2)
-                                .toString()}
                             </td>
                           );
                         } else {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
+                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {record[column.key]}
@@ -674,4 +549,4 @@ function TableBankReconciliation({ onRowClick }) {
   );
 }
 
-export default TableBankReconciliation;
+export default TableMaterials;
