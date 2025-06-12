@@ -117,14 +117,14 @@ function FormComponent() {
           parseFloat(updatedFormData.panda || 0);
 
         // Update sales_walk_in with the calculated sum
-        updatedFormData.sales_delivery = sum;
+        updatedFormData.sales_delivery = parseFloat(sum).toFixed(2);
       }
 
       const totalSales =
         parseFloat(updatedFormData.sales_walk_in || 0) +
         parseFloat(updatedFormData.sales_delivery || 0);
 
-      updatedFormData.total_sales = totalSales;
+      updatedFormData.total_sales = parseFloat(totalSales).toFixed(2);
       // updatedFormData.month_date_sales = totalSales;
 
       // if (['labour_hours_used'].includes(name)) {
@@ -175,10 +175,6 @@ function FormComponent() {
       const results = await response.json();
 
       if (response.ok) {
-        //updatedFormData.month_date_sales=results.data.
-        // if(results.data.tlh==="0"){
-        // alert("please enter timesheet first");
-        // }
         updatedFormData.labour_hours_used = results.data.tlh;
         const sum = (
           parseFloat(updatedFormData.total_sales) /
@@ -393,18 +389,16 @@ function FormComponent() {
     const results = await response.json();
 
     if (response.ok) {
-      //updatedFormData.month_date_sales=results.data.
-      // if(results.data.tlh==="0"){
-      // alert("please enter timesheet first");
-      // }
-      formData.labour_hours_used = results.data.tlh;
+      updatedRecord.labour_hours_used = results.data.tlh;
       const sum = (
-        parseFloat(formData.total_sales) / formData.labour_hours_used || 0
+        parseFloat(updatedRecord.total_sales) /
+          updatedRecord.labour_hours_used || 0
       ).toFixed(2);
-      formData.sales_per_labour_hours = sum;
-      formData.month_date_sales =
-        formData.total_sales + parseFloat(results.data.mtd);
-      formData.prev_day_balance = parseFloat(results.data.pre);
+      updatedRecord.sales_per_labour_hours = sum;
+      updatedRecord.month_date_sales = parseFloat(
+        updatedRecord.total_sales + parseFloat(results.data.mtd)
+      ).toFixed(2);
+      updatedRecord.prev_day_balance = parseFloat(results.data.pre).toFixed(2);
     }
 
     setFormData(updatedRecord);
@@ -930,7 +924,7 @@ function FormComponent() {
                 </div>
               </div> */}
 
-              <div className="col-md-6" style={{ backgroundColor: "#C0392B" }}>
+              <div className="col-md-6" style={{ backgroundColor: "#fff" }}>
                 <div className="form-group">
                   <label className="form-label">Variance</label>
                   <input
@@ -939,6 +933,11 @@ function FormComponent() {
                     value={formData.variance}
                     onChange={handleChange}
                     className="form-control"
+                    style={{
+                      color:
+                        parseFloat(formData.variance) > 0 ? "green" : "red",
+                      fontWeight: "bold",
+                    }}
                   />
                 </div>
               </div>

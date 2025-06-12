@@ -24,6 +24,8 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
 
+  const [sortBy, setSortBy] = useState("");
+
   const [selectedImage, setSelectedImage] = useState(null);
 
   const handleImageView = (imageUrl) => {
@@ -171,12 +173,6 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
   const handleEditChange = (e, key) => {
     const updatedForm = { ...editFormData, [key]: e.target.value };
 
-    if (["is_off"].includes(key)) {
-      if (e.target.value === "no") {
-        updatedForm["off_type"] = "none";
-      }
-    }
-
     if (["start_time", "end_time"].includes(key)) {
       const options = {
         year: "numeric",
@@ -259,29 +255,14 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
     }
   };
 
-  // const handleSave = (id) => {
-
-  //   fetch('http://121.121.232.54:88/aero-foods/log_sheet.php', {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify(editFormData),
-  //   })
-  //     .then(res => res.json())
-  //     .then((response) => {
-  //       if (response.success) {
-  //         const updatedData = data.map(item => (item.id === id ? editFormData : item));
-  //         setData(updatedData);
-  //         setFilteredData(updatedData);
-  //         setEditRowId(null);
-  //       } else {
-  //         alert(response.error);
-  //       }
-  //     })
-  //     .catch(err => console.error('Update error:', err));
-  // };
-
   const handleSave = (id) => {
     const formData = new FormData();
+
+    if (editFormData["off_type"] != "none") {
+      editFormData["is_break"] = "no";
+      editFormData["break_time"] = 0;
+      editFormData["total_hr"] = 0;
+    }
 
     for (const key in editFormData) {
       // Handle File objects (images)
@@ -393,6 +374,26 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
     setCurrentPage(1);
   };
 
+  const handleFilters = (sortAlgo) => {
+    if (sortAlgo === "date_new_old") {
+      handleDateChange(true);
+    } else if (sortAlgo === "date_old_new") {
+      handleDateChange(false);
+    }
+  };
+
+  const handleDateChange = (reverse) => {
+    const sortedTasks = [...filteredData].sort((a, b) =>
+      a.month_date.localeCompare(b.month_date)
+    );
+
+    if (reverse) {
+      setFilteredData(sortedTasks.reverse());
+    } else {
+      setFilteredData(sortedTasks);
+    }
+  };
+
   const columns = [
     // { key: 'id', label: 'ID' },
     { key: "name", label: "Name" },
@@ -404,8 +405,7 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
     { key: "ot", label: "Over Time" },
     { key: "image_start_time", label: "Clock-In Image" },
     { key: "image_end_time", label: "Clock-Out Image" },
-    { key: "is_off", label: "Off ?" },
-    { key: "off_type", label: "Off Type" },
+    { key: "off_type", label: "Leave Type" },
 
     // { key: 'meal', label: 'Meal' },
   ];
@@ -504,6 +504,23 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
               <button className="btn btn-secondary me-2" onClick={resetFilters}>
                 Reset Filters
               </button>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-3 mb-2">
+              <label className="form-label">Sort By</label>
+              <select
+                className="form-select"
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  handleFilters(e.target.value);
+                }}
+              >
+                <option value="">Select</option>
+                <option value="date_new_old">Date Latest First</option>
+                <option value="date_old_new">Date Oldest First</option>
+              </select>
             </div>
           </div>
         </div>
@@ -674,18 +691,7 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
                                 value={editFormData[col.key] || 0}
                                 readOnly
                               />
-                            ) : col.key === "is_off" ? (
-                              <select
-                                className="form-select form-select-sm"
-                                value={editFormData[col.key] || ""}
-                                onChange={(e) => handleEditChange(e, col.key)}
-                              >
-                                <option value="">Select</option>
-                                <option value="no">No</option>
-                                <option value="yes">Yes</option>
-                              </select>
-                            ) : col.key === "off_type" &&
-                              editFormData["is_off"] === "yes" ? (
+                            ) : col.key === "off_type" ? (
                               <select
                                 className="form-select form-select-sm"
                                 value={editFormData[col.key] || ""}
@@ -693,8 +699,10 @@ function Timetable({ onRowClick, onFilter, sortFilter, isFetch }) {
                               >
                                 <option value="">Select Type</option>
                                 <option value="none">None</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="holiday">Holiday</option>
+                                <option value="anual_leave">Anual Leave</option>
+                                <option value="mc">Medical Leave</option>
+                                <option value="weekly_off">Weekly Off</option>
+                                <option value="upl">Unpaid Leave</option>
                               </select>
                             ) : (
                               <input

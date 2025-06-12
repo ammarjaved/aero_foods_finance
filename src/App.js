@@ -6,6 +6,7 @@ import Timesheet from "./components/time-sheet/Timesheet";
 import DailyWastage from "./components/wastage/DailyWastage";
 import DailyBankReconciliation from "./components/bank-reconciliation/DailyBankReconciliation";
 import MonthlyMaterials from "./components/materials/MonthlyMaterials";
+import StockIn from "./components/stock-in/StockIn";
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
         <Route path="/wastage" element={<DailyWastage />} />
         <Route path="/reconciliation" element={<DailyBankReconciliation />} />
         <Route path="/materials" element={<MonthlyMaterials />} />
+        <Route path="/stockin" element={<StockIn />} />
+
         <Route path="/" element={<LoginForm />} />
       </Routes>
     </BrowserRouter>

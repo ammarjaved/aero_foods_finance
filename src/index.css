@@ -61,3 +61,14 @@ code {
 .fixed-column {
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
+
+.icon-highlight {
+  font-size: 2.5rem;
+  color: #e80000;
+  filter: drop-shadow(0 0 4px #fff);
+  transition: transform 0.3s ease;
+}
+
+.icon-highlight:hover {
+  transform: scale(1.1);
+}
