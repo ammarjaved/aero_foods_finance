@@ -234,8 +234,8 @@ function Table({ onRowClick }) {
     {
       key: "variance",
       label: "Variance",
-      headerStyle: { backgroundColor: "#C0392B" },
-      cellStyle: { backgroundColor: "#C0392B" },
+      headerStyle: { backgroundColor: "#fff" },
+      cellStyle: { backgroundColor: "#fff" },
     },
     { key: "bank_in_date", label: "Bank-in Date" },
     { key: "recipt_ref_no", label: "Receipt Ref No." },
@@ -459,13 +459,30 @@ function Table({ onRowClick }) {
                           column.key === "avg_transaction_value" ||
                           column.key === "transaction_count" ||
                           column.key === "labour_hours_used" ||
-                          column.key === "sales_per_labour_hours" ||
-                          column.key === "variance"
+                          column.key === "sales_per_labour_hours"
                         ) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
                               style={column.cellStyle || {}}
+                            >
+                              {parseFloat(record[column.key])
+                                .toFixed(2)
+                                .toString()}
+                            </td>
+                          );
+                        } else if (column.key === "variance") {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={{
+                                ...(column.cellStyle || {}),
+                                color:
+                                  parseFloat(record[column.key]).toFixed(2) > 0
+                                    ? "green"
+                                    : "red",
+                                fontWeight: "bold",
+                              }}
                             >
                               {parseFloat(record[column.key])
                                 .toFixed(2)
