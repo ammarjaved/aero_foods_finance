@@ -125,14 +125,6 @@ function FormComponent() {
         parseFloat(updatedFormData.sales_delivery || 0);
 
       updatedFormData.total_sales = parseFloat(totalSales).toFixed(2);
-      // updatedFormData.month_date_sales = totalSales;
-
-      // if (['labour_hours_used'].includes(name)) {
-      //   // Calculate the sum for sales_walk_in
-      //   const sum = (parseFloat(updatedFormData.total_sales)/updatedFormData.labour_hours_used || 0).toFixed(2);
-      //   // Update sales_walk_in with the calculated sum
-      //   updatedFormData.sales_per_labour_hours = sum;
-      // }
 
       if (["actual_bank_amount"].includes(name)) {
         // Calculate the sum for sales_walk_in
@@ -182,7 +174,7 @@ function FormComponent() {
         ).toFixed(2);
         updatedFormData.sales_per_labour_hours = sum;
         updatedFormData.month_date_sales = parseFloat(
-          updatedFormData.total_sales + parseFloat(results.data.mtd)
+          parseFloat(updatedFormData.total_sales) + parseFloat(results.data.mtd)
         ).toFixed(2);
         updatedFormData.prev_day_balance = parseFloat(results.data.pre).toFixed(
           2
@@ -396,7 +388,7 @@ function FormComponent() {
       ).toFixed(2);
       updatedRecord.sales_per_labour_hours = sum;
       updatedRecord.month_date_sales = parseFloat(
-        updatedRecord.total_sales + parseFloat(results.data.mtd)
+        parseFloat(updatedRecord.total_sales) + parseFloat(results.data.mtd)
       ).toFixed(2);
       updatedRecord.prev_day_balance = parseFloat(results.data.pre).toFixed(2);
     }
