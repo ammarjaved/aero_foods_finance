@@ -77,9 +77,9 @@ function StockInComponent() {
           </Tab>
         </Tabs>
 
-        <Button variant="primary" onClick={handleShow}>
+        {/* <Button variant="primary" onClick={handleShow}>
           Launch
-        </Button>
+        </Button> */}
 
         <Offcanvas
           show={show}

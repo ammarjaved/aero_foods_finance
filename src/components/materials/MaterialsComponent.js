@@ -221,7 +221,7 @@ function MaterialsComponent() {
 
     setMapKey(Date.now());
     setIsEditing(true);
-    //setIsFormOpen(true);
+    setIsFormOpen(true);
   };
 
   const closeForm = () => {
