@@ -8,9 +8,9 @@ function StockInDash({ data, materials }) {
 
   const iconsList = {
     Equipment: { icon: "bi bi-gear" },
-    Food: { icon: "bi bi-egg-fried" },
-    Operation: { icon: "bi bi-cone" },
-    Packaging: { icon: "bi bi-box2" },
+    Food: { icon: "bi bi-gear" },
+    Operation: { icon: "bi bi-gear" },
+    Packaging: { icon: "bi bi-gear" },
   };
 
   const getDistinctCategories = (data) => {
@@ -62,9 +62,10 @@ function StockInDash({ data, materials }) {
               >
                 <Card>
                   <Card.Header>
+                 
                     <i
                       className={`${
-                        iconsList[item.category]["icon"]
+                        iconsList[item.category]
                       } icon-highlight`}
                     ></i>
                   </Card.Header>
