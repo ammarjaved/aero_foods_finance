@@ -64,9 +64,7 @@ function StockInDash({ data, materials }) {
                   <Card.Header>
                  
                     <i
-                      className={`${
-                        iconsList[item.category]
-                      } icon-highlight`}
+                      className={`${iconsList[item.category]} icon-highlight`}
                     ></i>
                   </Card.Header>
                   <Card.Body>

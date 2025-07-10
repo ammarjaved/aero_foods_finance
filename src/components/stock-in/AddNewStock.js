@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
+import BootstrapChip from "../core/BootstrapChip";
+import { FiUser } from "react-icons/fi";
 
 function AddNewStock({ data, materials }) {
   const [localMaterials, setLocalMaterials] = useState([]);
   const [categories, setCategories] = useState([]);
   const [names, setNames] = useState([]);
+
+  console.log("DATA", data);
+  console.log("MATERIALS", materials);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedName, setSelectedName] = useState("");
@@ -76,7 +81,30 @@ function AddNewStock({ data, materials }) {
   return (
     <div className="container-fluid">
       <div className="row">
-        <div className="col-3" style={{ padding: 5 }}>
+        <div className="col-12">
+          <label>
+            <strong>Categories</strong>
+          </label>
+          <div>
+            {categories &&
+              categories.map((item, index) => (
+                <BootstrapChip
+                  key={index}
+                  label={item.category}
+                  onPress={() => console.log(item.category)}
+                  selectedVariant="danger"
+                  unselectedVariant="outline-danger"
+                />
+              ))}
+          </div>
+        </div>
+        <div className="col-12">
+          <label>
+            <strong>Items</strong>
+          </label>
+          <div></div>
+        </div>
+        {/* <div className="col-3" style={{ padding: 5 }}>
           <Form.Group controlId="selectInput" className="mb-3">
             <Form.Label>Select Category</Form.Label>
             <Form.Select
@@ -93,7 +121,7 @@ function AddNewStock({ data, materials }) {
                 ))}
             </Form.Select>
           </Form.Group>
-        </div>
+        </div> 
 
         <div className="col-3" style={{ padding: 5 }}>
           <Form.Group controlId="selectInput" className="mb-3">
@@ -112,9 +140,9 @@ function AddNewStock({ data, materials }) {
                 ))}
             </Form.Select>
           </Form.Group>
-        </div>
+        </div> */}
 
-        <InputGroup className="mb-3">
+        {/* <InputGroup className="mb-3">
           <InputGroup.Text id="basic-addon1">@</InputGroup.Text>
           <Form.Control
             placeholder="Username"
@@ -161,7 +189,7 @@ function AddNewStock({ data, materials }) {
             aria-describedby="basic-addon1"
             type="password"
           />
-        </InputGroup>
+        </InputGroup> */}
       </div>
     </div>
   );
