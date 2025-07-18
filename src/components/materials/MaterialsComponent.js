@@ -7,17 +7,17 @@ function MaterialsComponent() {
   const [formData, setFormData] = useState({
     month_date: new Date().toISOString().split("T")[0],
     day: new Date().getDate(),
-    month: 1,
-    year: 2025,
-    code: "3010009",
-    name: "Ice Cream Machine",
-    description: "冰淇淋机Ice Cream Machine",
-    category: "Equipment",
-    unit_price: "16800",
-    packet: "1",
-    unit: "pcs",
-    created_at: "2025-05-23 13:51:08.528691",
-    updated_at: "2025-05-23 13:51:08.528691",
+    month: new Date().getMonth() + 1, // Fixed: getMonth() returns 0-11, need to add 1
+    year: new Date().getFullYear(), // Fixed: use getFullYear() instead of getYear()
+    code: "",
+    name: "",
+    description: "",
+    category: "",
+    unit_price: "",
+    packet: "",
+    unit: "",
+    created_at: "",
+    updated_at: "",
     created_by: "",
     updated_by: "",
   });
@@ -61,7 +61,7 @@ function MaterialsComponent() {
     {
       key: "unit",
       label: "Unit",
-      isReadOnly: true,
+      isReadOnly: false, // Fixed: should be editable for new materials
       badge: "bg-danger",
       type: "dropdown",
       options: ["can", "bottle", "pcs", "roll", "box", "pack", "set", "kg"],
@@ -74,150 +74,197 @@ function MaterialsComponent() {
 
   const API_BASE_URL = "http://121.121.232.54:88/aero-foods";
 
-  const handleSum = () => {
-    const total_before_discount = parseFloat(
-      parseFloat(formData.jasmine_tea_cost || 0) +
-        parseFloat(formData.black_tea_cost || 0) +
-        parseFloat(formData.milk_tea_cost || 0) +
-        parseFloat(formData.coffee_cost || 0) +
-        parseFloat(formData.ctc_cost || 0) +
-        parseFloat(formData.yellow_peach_jelly_cost || 0) +
-        parseFloat(formData.brown_sugar_jelly_cost || 0) +
-        parseFloat(formData.peal_cost || 0) +
-        parseFloat(formData.ice_cream_cost || 0) +
-        parseFloat(formData.melon_ice_cream_cost || 0) +
-        parseFloat(formData.oreo_cost || 0) +
-        parseFloat(formData.yellow_peach_jam_cost || 0) +
-        parseFloat(formData.pink_peach_jam_cost || 0) +
-        parseFloat(formData.kiwi_jam_cost || 0) +
-        parseFloat(formData.strawberry_jam_cost || 0) +
-        parseFloat(formData.mango_jam_cost || 0) +
-        parseFloat(formData.passion_fruit_jam_cost || 0) +
-        parseFloat(formData.nata_de_coco_cost || 0) +
-        parseFloat(formData.lemon_cost || 0)
-    ).toFixed(2);
-    formData.total_before_discount = total_before_discount;
-
-    const final_total = parseFloat(
-      parseFloat(formData.discount || 0) + parseFloat(total_before_discount)
-    ).toFixed(2);
-    formData.final_total = final_total;
-  };
+  // Fixed: Removed handleSum function as it's not relevant to materials
+  // The sum logic was for a different form (tea costs, etc.)
 
   const handleChange = async (e) => {
     const { name, value, type } = e.target;
 
     if (type !== "file") {
-      // Create updated form data
-      const updatedFormData = {
-        ...formData,
+      setFormData(prevData => ({
+        ...prevData,
         [name]: value,
-      };
-
-      setFormData(updatedFormData);
-      handleSum();
+      }));
     }
   };
 
-  const handleSubmit = async (e) => {
-    handleSum();
-    e.preventDefault();
-
-    try {
-      // Create a FormData object for handling file uploads
-      const submitData = new FormData();
-
-      // Append all form fields to the FormData
-      Object.keys(formData).forEach((key) => {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  try {
+    // Create a FormData object for handling file uploads
+    const submitData = new FormData();
+    
+    // Append all form fields to the FormData
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
         submitData.append(key, formData[key]);
-      });
-
-      // Make the API call with FormData
-      const response = await fetch(
-        "http://121.121.232.54:88/aero-foods/materials.php",
-        {
-          method: "POST",
-          body: submitData, // No need to set Content-Type header; browser will set it properly with boundary
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok) {
-        // alert(result.message);
-
-        // Create a complete record with the returned ID
-        const updatedRecord = {
-          ...formData,
-          id: result.id,
-        };
-
-        // Dispatch appropriate event based on operation type
-        if (isEditing) {
-          window.dispatchEvent(
-            new CustomEvent("recordUpdated", {
-              detail: updatedRecord,
-            })
-          );
-        } else {
-          window.dispatchEvent(
-            new CustomEvent("newRecordAdded", {
-              detail: updatedRecord,
-            })
-          );
-        }
-
-        resetForm();
-        setIsFormOpen(false);
-        window.location.reload();
-      } else {
-        throw new Error(result.error || "Failed to save data");
       }
-    } catch (error) {
-      console.error("Error saving data:", error);
-      alert("Error saving data. Please try again.");
+    });
+    
+    // Add operation type to help backend distinguish between insert/update
+    submitData.append('operation', isEditing ? 'update' : 'insert');
+    
+    // If editing, ensure ID is included
+    if (isEditing && formData.id) {
+      submitData.append('id', formData.id);
     }
-  };
+    
+    // Debug: Log what we're sending
+    console.log('Sending data:', Object.fromEntries(submitData));
+    
+    // Make the API call with FormData
+    const response = await fetch(`${API_BASE_URL}/materials.php`, {
+      method: "POST",
+      body: submitData,
+      // Don't set Content-Type header - let the browser set it for FormData
+    });
+    
+    // Check if response is ok before parsing JSON
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    
+    // Check if the operation was successful
+    if (!result.success) {
+      throw new Error(result.error || 'Operation failed');
+    }
+    
+    // Create a complete record with the returned ID (for new records)
+    const updatedRecord = {
+      ...formData,
+      id: result.id || formData.id, // Use returned ID for new records, keep existing for updates
+    };
+    
+    // Dispatch appropriate event based on operation type
+    const eventName = isEditing ? "recordUpdated" : "newRecordAdded";
+    window.dispatchEvent(
+      new CustomEvent(eventName, {
+        detail: updatedRecord,
+      })
+    );
+    
+    // Reset form and close modal
+    resetForm();
+    setIsFormOpen(false);
+    
+    // Show success message
+    alert(isEditing ? "Record updated successfully!" : "Record created successfully!");
+    
+  } catch (error) {
+    console.error("Error saving data:", error);
+    alert(`Error saving data: ${error.message}. Please try again.`);
+  }
+};
+
+// Alternative version using REST conventions (if you can modify your backend)
+const handleSubmitREST = async (e) => {
+  e.preventDefault();
+  
+  try {
+    const submitData = new FormData();
+    
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null && formData[key] !== undefined) {
+        submitData.append(key, formData[key]);
+      }
+    });
+    
+    // Use different HTTP methods and URLs for insert vs update
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing 
+      ? `${API_BASE_URL}/materials.php?id=${formData.id}`
+      : `${API_BASE_URL}/materials.php`;
+    
+    const response = await fetch(url, {
+      method: method,
+      body: submitData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    const updatedRecord = {
+      ...formData,
+      id: result.id || formData.id,
+    };
+    
+    const eventName = isEditing ? "recordUpdated" : "newRecordAdded";
+    window.dispatchEvent(
+      new CustomEvent(eventName, {
+        detail: updatedRecord,
+      })
+    );
+    
+    resetForm();
+    setIsFormOpen(false);
+    
+  } catch (error) {
+    console.error("Error saving data:", error);
+    alert(`Error saving data: ${error.message}. Please try again.`);
+  }
+};
 
   const resetForm = () => {
-    // Clean up existing preview URLs
-
-    // Reset form data
+    // Reset form data to initial empty state
     setFormData({
       month_date: new Date().toISOString().split("T")[0],
       day: new Date().getDate(),
-      month: 1,
-      year: 2025,
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
       code: "",
       name: "",
       description: "",
       category: "",
       unit_price: "",
-      packet: "1",
-      unit: "pcs",
+      packet: "",
+      unit: "",
+      created_at: "",
+      updated_at: "",
+      created_by: "",
+      updated_by: "",
     });
 
     setMapKey(Date.now());
     setIsEditing(false);
   };
 
+  const handleNewMaterial = () => {
+    resetForm(); // Use resetForm to ensure clean state
+    setIsEditing(false); // Fixed: set to false for new material
+    setIsFormOpen(true);
+  };
+
   const handleRowClick = async (record) => {
-    // First completely reset the form to clear any previous values
+    // Reset form first to ensure clean state
     resetForm();
-
-    // Create a new object with all form fields explicitly set
-    const updatedRecord = {
-      ...formData, // Start with the default empty values
-      ...record, // Override with record values
-    };
-
-    let c_month = 0;
-    if (localStorage.getItem("month")) {
-      c_month = localStorage.getItem("month");
-    } else {
-      c_month = parseInt(new Date().getMonth()) + 1;
-    }
-    setFormData(updatedRecord);
+    
+    // Set the form data with the record values
+    setFormData({
+      month_date: record.month_date || new Date().toISOString().split("T")[0],
+      day: record.day || new Date().getDate(),
+      month: record.month || new Date().getMonth() + 1,
+      year: record.year || new Date().getFullYear(),
+      code: record.code || "",
+      name: record.name || "",
+      description: record.description || "",
+      category: record.category || "",
+      unit_price: record.unit_price || "",
+      packet: record.packet || "",
+      unit: record.unit || "",
+      created_at: record.created_at || "",
+      updated_at: record.updated_at || "",
+      created_by: record.created_by || "",
+      updated_by: record.updated_by || "",
+      id: record.id, // Important: preserve the ID for updates
+    });
 
     setMapKey(Date.now());
     setIsEditing(true);
@@ -226,7 +273,56 @@ function MaterialsComponent() {
 
   const closeForm = () => {
     setIsFormOpen(false);
+    resetForm(); // Reset form when closing
   };
+
+  const handledeleteData=async ()=>{
+  const isConfirmed = window.confirm(
+    `Are you sure you want to delete `
+  );
+  
+  if (!isConfirmed) {
+    return; // User cancelled
+  }
+  
+  try {
+   
+    // Make the DELETE request
+    const response = await fetch(`${API_BASE_URL}/materials.php?id=${formData.id}`, {
+      method: "DELETE",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    // Check if response is ok before parsing JSON
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    
+    // Check if the operation was successful
+    if (!result.success) {
+      throw new Error(result.error || 'Delete operation failed');
+    }
+    
+ 
+    
+    // Show success message
+    alert(`Record Deleted successfully!`);
+    window.location.reload();
+    
+    // Optional: Refresh the data or remove from UI
+    // You might want to call a function to refresh your data list here
+    
+  } catch (error) {
+    console.error("Error deleting data:", error);
+    alert(`Error deleting ${error.message}. Please try again.`);
+  }
+  }
 
   return (
     <div className="container-fluid">
@@ -235,13 +331,19 @@ function MaterialsComponent() {
           <div className="card">
             <div
               style={{ backgroundColor: "#e80000" }}
-              className="card-header  text-white d-flex justify-content-between align-items-center"
+              className="card-header text-white d-flex justify-content-between align-items-center"
             >
               <h2 className="mb-0">Materials</h2>
+              <button
+                className="btn btn-light"
+                onClick={handleNewMaterial}
+              >
+                Add New Material
+              </button>
             </div>
-          </div>
-          <div className="card-body">
-            <TableMaterials onRowClick={handleRowClick} />
+            <div className="card-body">
+              <TableMaterials onRowClick={handleRowClick} />
+            </div>
           </div>
         </div>
       </div>
@@ -259,7 +361,7 @@ function MaterialsComponent() {
       >
         <div className="p-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3>{isEditing ? "Edit Wastage Record" : "New Wastage Record"}</h3>
+            <h3>{isEditing ? "Edit Material" : "New Material"}</h3>
             <button
               className="btn btn-sm btn-outline-danger"
               onClick={closeForm}
@@ -293,10 +395,11 @@ function MaterialsComponent() {
                     <div className={`form-group badge ${item.badge}`}>
                       <label className="form-label">{item.label}</label>
                       <select
+                        name={item.key} // Fixed: added name attribute
                         className="form-select"
                         value={formData[item.key]}
                         onChange={handleChange}
-                        readOnly={item.isReadOnly}
+                        disabled={item.isReadOnly} // Fixed: use disabled instead of readOnly for select
                         required
                       >
                         <option value="">Select</option>
@@ -321,7 +424,7 @@ function MaterialsComponent() {
                         value={formData[item.key]}
                         onChange={handleChange}
                         className="form-control"
-                        readOnly={item.isReadOnly}
+                        // readOnly={item.isReadOnly}
                         required
                       />
                     </div>
@@ -336,6 +439,10 @@ function MaterialsComponent() {
               </button>
             </div>
           </form>
+          {formData.id &&(
+          <button  className="btn btn-danger" onClick={()=>handledeleteData()}>
+                Delete
+              </button>)}
         </div>
       </div>
 
