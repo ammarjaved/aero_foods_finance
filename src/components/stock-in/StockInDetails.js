@@ -1,7 +1,10 @@
+import React, { useEffect, useState } from "react";
+import TableStockIn from "./TableStockIn";
+
 function StockInDetails({ data, materials }) {
   return (
     <div className="container-fluid">
-      <div className="row">Render Stick In Component</div>
+  <TableStockIn />
     </div>
   );
 }
