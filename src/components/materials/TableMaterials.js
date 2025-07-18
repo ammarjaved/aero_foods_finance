@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableMaterials({ onRowClick }) {
+function TableMaterials({ onRowClick,setCatG }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +44,7 @@ function TableMaterials({ onRowClick }) {
     } else {
       fetchData(selectedMonth);
     }
+        setCatG(categories);
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -59,6 +60,8 @@ function TableMaterials({ onRowClick }) {
   // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
+    setCatG(categories);
+
   }, [data, filterValues]);
 
   const getDistinctCategories = (arr) => {
