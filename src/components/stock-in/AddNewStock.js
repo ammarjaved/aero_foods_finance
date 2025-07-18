@@ -5,15 +5,81 @@ import BootstrapChip from "../core/BootstrapChip";
 // import { FiUser } from "react-icons/fi";
 
 function AddNewStock({ data, materials }) {
-  const [localMaterials, setLocalMaterials] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [names, setNames] = useState([]);
-
   console.log("DATA", data);
   console.log("MATERIALS", materials);
 
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedName, setSelectedName] = useState("");
+  const [subForm, setSubForm] = useState([]);
+  const handleSubFormChange = (key, value) => {
+    let tempForm = subForm;
+    let item = { key: key, value: value };
+    const index = tempForm.findIndex((_item) => _item.key === item.key);
+
+    if (index !== -1) {
+      tempForm[index] = item;
+    } else {
+      tempForm.push(item);
+    }
+
+    setSubForm(tempForm);
+  };
+  const handleMathsChange = (key, newValue) => {
+    if (newValue >= 0) {
+      setSubForm((prev) =>
+        prev.map((item) =>
+          item.key === key ? { ...item, value: newValue } : item
+        )
+      );
+    }
+  };
+
+  const [enableSort, setEnableSort] = useState(true);
+  const [sortRelevance, setSortRelevance] = useState(false);
+  const toggleRelevance = () => {
+    setSortRelevance((prev) => !prev);
+  };
+  const sortR = () => {
+    const itemNames = materials
+      .filter((item) => selectedCategory.includes(item.category))
+      .sort((a, b) => parseInt(a.sort_key) - parseInt(b.sort_key))
+      .map((item) => item.name);
+    setNames(itemNames);
+  };
+
+  const [selectAll, setSelectAll] = useState(false);
+  const toggleSelectAll = () => {
+    setSelectAll((prev) => !prev);
+  };
+
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState([]);
+  const toggleCategory = (chip) => {
+    setSelectedCategory((prev) =>
+      prev.includes(chip)
+        ? prev.filter((item) => item !== chip)
+        : [...prev, chip]
+    );
+    setSelectAll(false);
+  };
+
+  const [names, setNames] = useState([]);
+  const [selectedNames, setSelectedNames] = useState([]);
+  const toggleNames = (chip) => {
+    if (selectedNames.includes(chip)) {
+      setSelectedNames((prev) =>
+        prev.includes(chip)
+          ? prev.filter((item) => item !== chip)
+          : [...prev, chip]
+      );
+      handleSubFormChange(chip, "");
+    } else {
+      setSelectedNames((prev) =>
+        prev.includes(chip)
+          ? prev.filter((item) => item !== chip)
+          : [...prev, chip]
+      );
+      handleSubFormChange(chip, "");
+    }
+  };
 
   const [form, setForm] = useState({});
 
@@ -34,6 +100,22 @@ function AddNewStock({ data, materials }) {
     }));
   };
 
+  const filterItems = (filterArr) => {
+    try {
+      const itemNames = materials
+        .filter((item) => filterArr.includes(item.category))
+        .map((item) => item.name)
+        .sort();
+
+      setNames(itemNames);
+    } catch (error) {
+      setNames([]);
+      setSelectedNames([]);
+      setSubForm([]);
+      setSelectAll(false);
+    }
+  };
+
   const handleCardClick = (item) => {
     console.log(item);
   };
@@ -45,7 +127,7 @@ function AddNewStock({ data, materials }) {
         setSelectedCategory(e.target.value);
         tempForm[key] = e.target.value;
       } else if (key === "name") {
-        setSelectedName(e.target.value);
+        setSelectedNames(e.target.value);
         tempForm[key] = e.target.value;
       }
       setForm(tempForm);
@@ -78,6 +160,46 @@ function AddNewStock({ data, materials }) {
     }));
   }, [form.category]);
 
+  useEffect(() => {
+    if (sortRelevance) {
+      sortR();
+    } else {
+      filterItems(selectedCategory);
+    }
+  }, [sortRelevance]);
+
+  useEffect(() => {
+    if (selectedCategory.includes("Food")) {
+      setEnableSort(true);
+    } else {
+      setEnableSort(false);
+      setSortRelevance(false);
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      if (selectedCategory.length > 0) {
+        filterItems(selectedCategory);
+      } else {
+        setNames([]);
+        setSelectedNames([]);
+        setSubForm([]);
+        setSelectAll(false);
+      }
+    } else {
+      setNames([]);
+      setSelectedNames([]);
+      setSubForm([]);
+      setSelectAll(false);
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    let tempForm = subForm;
+    setSubForm(tempForm.filter((_item) => selectedNames.includes(_item.key)));
+  }, [selectedNames]);
+
   return (
     <div className="container-fluid">
       <div className="row">
@@ -91,7 +213,7 @@ function AddNewStock({ data, materials }) {
                 <BootstrapChip
                   key={index}
                   label={item.category}
-                  onPress={() => console.log(item.category)}
+                  onPress={() => toggleCategory(item.category)}
                   selectedVariant="danger"
                   unselectedVariant="outline-danger"
                 />
@@ -102,7 +224,18 @@ function AddNewStock({ data, materials }) {
           <label>
             <strong>Items</strong>
           </label>
-          <div></div>
+          <div>
+            {names &&
+              names.map((item, index) => (
+                <BootstrapChip
+                  key={index}
+                  label={item}
+                  onPress={() => toggleNames(item)}
+                  selectedVariant="danger"
+                  unselectedVariant="outline-danger"
+                />
+              ))}
+          </div>
         </div>
         {/* <div className="col-3" style={{ padding: 5 }}>
           <Form.Group controlId="selectInput" className="mb-3">
