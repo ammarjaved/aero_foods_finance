@@ -21,6 +21,7 @@ function MaterialsComponent() {
     created_by: "",
     updated_by: "",
   });
+    const [catG, setCatG] = useState([]);
 
   const formMembers = [
     {
@@ -65,12 +66,20 @@ function MaterialsComponent() {
       badge: "bg-danger",
       type: "dropdown",
       options: ["can", "bottle", "pcs", "roll", "box", "pack", "set", "kg"],
+    }, {
+      key: "category",
+      label: "categories",
+      isReadOnly: false, // Fixed: should be editable for new materials
+      badge: "bg-warning",
+      type: "dropdown",
+      options: catG,
     },
   ];
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [mapKey, setMapKey] = useState(Date.now());
+
 
   const API_BASE_URL = "http://121.121.232.54:88/aero-foods";
 
@@ -342,7 +351,7 @@ const handleSubmitREST = async (e) => {
               </button>
             </div>
             <div className="card-body">
-              <TableMaterials onRowClick={handleRowClick} />
+              <TableMaterials onRowClick={handleRowClick} setCatG={setCatG}/>
             </div>
           </div>
         </div>
@@ -388,29 +397,30 @@ const handleSubmitREST = async (e) => {
 
               {formMembers.map((item, index) => {
                 return item.type === "dropdown" ? (
-                  <div
-                    className="col-md-6 d-flex justify-content-center"
-                    key={index}
-                  >
-                    <div className={`form-group badge ${item.badge}`}>
-                      <label className="form-label">{item.label}</label>
-                      <select
-                        name={item.key} // Fixed: added name attribute
-                        className="form-select"
-                        value={formData[item.key]}
-                        onChange={handleChange}
-                        disabled={item.isReadOnly} // Fixed: use disabled instead of readOnly for select
-                        required
-                      >
-                        <option value="">Select</option>
-                        {item.options.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                <div
+                  className="col-md-6 d-flex justify-content-center"
+                  key={index}
+                >
+                  <div className={`form-group badge ${item.badge}`}>
+                    <label className="form-label">{item.label}</label>
+                    <select
+                      name={item.key} // Fixed: added name attribute
+                      className="form-select"
+                      style={{ width: '200px' }} // Custom width of 300px
+                      value={formData[item.key]}
+                      onChange={handleChange}
+                      disabled={item.isReadOnly} // Fixed: use disabled instead of readOnly for select
+                      required
+                    >
+                      <option value="">Select</option>
+                      {item.options.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                </div>
                 ) : (
                   <div
                     className="col-md-6 d-flex justify-content-center"
