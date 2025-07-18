@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import BootstrapChip from "../core/BootstrapChip";
-import { FiUser } from "react-icons/fi";
+// import { FiUser } from "react-icons/fi";
 
 function AddNewStock({ data, materials }) {
   const [localMaterials, setLocalMaterials] = useState([]);
