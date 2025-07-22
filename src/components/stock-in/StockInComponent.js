@@ -66,13 +66,13 @@ function StockInComponent() {
           className="mb-3"
           justify
         >
-          <Tab eventKey="home" title="Dash">
+          <Tab eventKey="home" title="Stock Availablility">
             <StockInDash data={stockInData} materials={materials} />
           </Tab>
           <Tab eventKey="stockin" title="Stock In">
             <StockInDetails data={stockInData} materials={materials} />
           </Tab>
-          <Tab eventKey="new" title="Add New">
+          <Tab eventKey="new" title="Add New Stock">
             <AddNewStock data={stockInData} materials={materials} />
           </Tab>
         </Tabs>
