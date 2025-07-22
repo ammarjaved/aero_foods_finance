@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableStockIn() {
+function TableStockAvailable() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
-  const [groupedData, setGroupedData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
-  const [selectedDateDetails, setSelectedDateDetails] = useState(null);
+  const [selectedProductDetails, setSelectedProductDetails] = useState(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   
   const date = new Date();
@@ -20,63 +19,40 @@ function TableStockIn() {
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
 
-  // Group data by date and sum prices
-  const groupDataByDate = (dataArray) => {
-    const grouped = dataArray.reduce((acc, item) => {
-      const dateKey = item.month_date;
-      if (!acc[dateKey]) {
-        acc[dateKey] = {
-          month_date: dateKey,
-          total_price: 0,
-          items: []
-        };
-      }
-      acc[dateKey].total_price += parseFloat(item.total_value || 0);
-      acc[dateKey].items.push(item);
-      return acc;
-    }, {});
-
-    return Object.values(grouped).sort((a, b) => new Date(b.month_date) - new Date(a.month_date));
-  };
-
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
-    localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
     fetchData(monthValue);
   };
 
   const handleCategoryChange = (e) => {
     const categoryValue = e.target.value;
-    localStorage.setItem("category", categoryValue);
     setCategory(categoryValue);
 
-    const filteredItems = data.filter(
-      (item) => item.category === categoryValue
-    );
-
-    setFilteredData(filteredItems);
+    if (categoryValue === "") {
+      setFilteredData(data);
+    } else {
+      const filteredItems = data.filter(
+        (item) => item.category === categoryValue
+      );
+      setFilteredData(filteredItems);
+    }
   };
 
-  // Handle row click to show details
-  const handleRowClick = (dateGroup) => {
-    setSelectedDateDetails(dateGroup);
+  // Handle row click to show product details
+  const handleRowClick = (product) => {
+    setSelectedProductDetails(product);
     setIsDetailPanelOpen(true);
   };
 
   const closeDetailPanel = () => {
     setIsDetailPanelOpen(false);
-    setTimeout(() => setSelectedDateDetails(null), 300); // Wait for animation
+    setTimeout(() => setSelectedProductDetails(null), 300); // Wait for animation
   };
 
   useEffect(() => {
-    const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
-      setSelectedMonth(monthvalue);
-    } else {
-      fetchData(selectedMonth);
-    }
+    const monthvalue = selectedMonth;
+    fetchData(monthvalue);
 
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
@@ -89,20 +65,15 @@ function TableStockIn() {
 
   useEffect(() => {
     applyFilters();
+    // Extract unique categories from data
+    const uniqueCategories = [...new Set(data.map(item => item.category))];
+    setCategories(uniqueCategories);
   }, [data, filterValues]);
-
-  // Update grouped data when filtered data changes
-  useEffect(() => {
-    const grouped = groupDataByDate(filteredData);
-    setGroupedData(grouped);
-  }, [filteredData]);
 
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_stockin.php?month=" + month
-    )
+    fetch("http://121.121.232.54:88/aero-foods/stock_avail.php")
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -155,6 +126,7 @@ function TableStockIn() {
 
   const clearFilters = () => {
     setFilterValues({});
+    setCategory("");
   };
 
   const toggleFilterPanel = () => {
@@ -163,30 +135,43 @@ function TableStockIn() {
 
   const columns = [
     {
-      key: "month_date",
-      label: "Date",
+      key: "name",
+      label: "Name",
       classHead: "bg-dark text-light",
       classBody: "bg-dark text-light",
     },
     {
-      key: "total_price",
-      label: "Total Purchase",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      key: "remaining_boxes",
+      label: "Remaining Boxes",
+      classHead: "bg-dark text-light",
+      classBody: "bg-dark text-light",
+    },
+    {
+      key: "remaining_loose_packets",
+      label: "Remaining Loose Packets",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "remaining_percentage",
+      label: "Remaining Percentage",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     }
   ];
 
   const filterableColumns = [
-    { key: "month_date", label: "Month Date" },
+    { key: "name", label: "Product Name" },
+    { key: "code", label: "Product Code" },
   ];
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = groupedData.slice(
+  const currentRecords = filteredData.slice(
     indexOfFirstRecord,
     indexOfLastRecord
   );
-  const totalPages = Math.ceil(groupedData.length / recordsPerPage);
+  const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -204,7 +189,7 @@ function TableStockIn() {
 
   const hasActiveFilters = Object.values(filterValues).some(
     (value) => value && value.trim() !== ""
-  );
+  ) || category !== "";
 
   return (
     <div className="container-fluid mt-2 position-relative">
@@ -216,77 +201,69 @@ function TableStockIn() {
         </div>
       ) : (
         <>
-          {/* Filter section */}
-          <div className="card mb-3">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <div className="d-flex align-items-center">
-                <button
-                  className="btn btn-sm btn-link p-0 me-2"
-                  onClick={toggleFilterPanel}
-                  aria-expanded={isFilterPanelOpen}
-                  aria-controls="filterPanel"
-                >
-                  <span style={{ fontSize: '16px' }}>
-                    {isFilterPanelOpen ? '▼' : '▶'}
-                  </span>
-                </button>
-                <h5 className="mb-0">
-                  Filters
-                  {hasActiveFilters && (
-                    <span className="badge bg-primary ms-2">Active</span>
-                  )}
-                </h5>
-              </div>
-              <div>
-                {hasActiveFilters && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary"
-                    onClick={clearFilters}
-                  >
-                    Clear Filters
-                  </button>
-                )}
-              </div>
+          {/* Filter Panel Toggle */}
+          <div className="mb-2">
+            <button
+              className="btn btn-outline-primary btn-sm"
+              onClick={toggleFilterPanel}
+            >
+              {isFilterPanelOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+          </div>
+
+          {/* Filter Panel */}
+          <div className={`card mb-3 ${isFilterPanelOpen ? "" : "d-none"}`}>
+            <div className="card-header">
+              <h6 className="mb-0">Filters</h6>
             </div>
-            {isFilterPanelOpen && (
-              <div className="card-body" id="filterPanel">
-                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  <div className="col">
-                    <div className="form-floating">
-                      <select
-                        className="form-select"
-                        id="monthSelect"
-                        value={selectedMonth}
-                        onChange={handleMonthChange}
-                      >
-                        <option value="">Select month</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                      </select>
-                      <label htmlFor="monthSelect">Month</label>
-                    </div>
-                  </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-3">
+                  <label className="form-label">Category</label>
+                  <select
+                    className="form-select"
+                    value={category}
+                    onChange={handleCategoryChange}
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                {filterableColumns.map((column) => (
+                  <div key={column.key} className="col-md-3">
+                    <label className="form-label">{column.label}</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder={`Filter by ${column.label}`}
+                      value={filterValues[column.key] || ""}
+                      onChange={(e) =>
+                        handleFilterChange(column.key, e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
               </div>
-            )}
+              {hasActiveFilters && (
+                <div className="mt-2">
+                  <button className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Pagination controls - top */}
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div>
               Showing {indexOfFirstRecord + 1} to{" "}
-              {Math.min(indexOfLastRecord, groupedData.length)} of{" "}
-              {groupedData.length} records
+              {Math.min(indexOfLastRecord, filteredData.length)} of{" "}
+              {filteredData.length} records
             </div>
             <div className="d-flex align-items-center">
               <label className="me-2">Records per page:</label>
@@ -296,6 +273,8 @@ function TableStockIn() {
                 onChange={(e) => setRecordsPerPage(Number(e.target.value))}
                 style={{ width: "auto" }}
               >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
                 <option value={31}>31</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
@@ -312,10 +291,7 @@ function TableStockIn() {
                   <thead>
                     <tr>
                       {columns.map((column) => (
-                        <th
-                          key={column.key}
-                          className={column.classHead}
-                        >
+                        <th key={column.key} className={column.classHead}>
                           {column.label}
                         </th>
                       ))}
@@ -325,16 +301,22 @@ function TableStockIn() {
                     {currentRecords.length > 0 ? (
                       currentRecords.map((record, index) => (
                         <tr
-                          key={`${record.month_date}-${index}`}
+                          key={`${record.code || record.id}-${index}`}
                           style={{ cursor: "pointer" }}
                           onClick={() => handleRowClick(record)}
                           className="hover-row"
                         >
                           <td className={columns[0].classBody}>
-                            {record.month_date}
+                            {record.name}
                           </td>
                           <td className={columns[1].classBody}>
-                            RM{record.total_price.toFixed(2)}
+                            {record.remaining_boxes}
+                          </td>
+                          <td className={columns[2].classBody}>
+                            {record.remaining_loose_packets}
+                          </td>
+                          <td className={columns[3].classBody}>
+                            {record.remaining_percentage}%
                           </td>
                         </tr>
                       ))
@@ -430,7 +412,7 @@ function TableStockIn() {
                 <div className="p-3">
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="mb-0">
-                      Details for {selectedDateDetails?.month_date}
+                      Product Details
                     </h5>
                     <button
                       type="button"
@@ -440,41 +422,66 @@ function TableStockIn() {
                     ></button>
                   </div>
 
-                  {selectedDateDetails && (
+                  {selectedProductDetails && (
                     <>
                       <div className="mb-3">
                         <div className="card">
                           <div className="card-body">
-                            <h6 className="card-title">Summary</h6>
+                            <h6 className="card-title">{selectedProductDetails.name}</h6>
                             <p className="card-text">
-                              <strong>Date:</strong> {selectedDateDetails.month_date}<br/>
-                              <strong>Total Items:</strong> {selectedDateDetails.items.length}<br/>
-                              <strong>Total Value:</strong> RM{selectedDateDetails.total_price.toFixed(2)}
+                              <strong>Code:</strong> {selectedProductDetails.code}<br/>
+                              <strong>Category:</strong> {selectedProductDetails.category}<br/>
+                              <strong>Unit Price:</strong> RM{selectedProductDetails.unit_price}<br/>
+                              <strong>Unit:</strong> {selectedProductDetails.unit}
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="table-responsive">
-                        <table className="table table-sm table-striped">
-                          <thead>
-                            <tr>
-                              <th className="bg-success text-light">Item Name</th>
-                              <th className="bg-success text-light">Stock In</th>
-                              <th className="bg-danger text-light">Price</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedDateDetails.items.map((item, index) => (
-                              <tr key={`detail-${item.id}-${index}`}>
-                                <td className="bg-success text-light">{item.name}</td>
-                                <td className="bg-success text-light">{item.stock_in}</td>
-                                <td className="bg-danger text-light">RM{parseFloat(item.total_value || 0).toFixed(2)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                      <div className="card mb-3">
+                        <div className="card-header">
+                          <h6 className="mb-0">Stock Information</h6>
+                        </div>
+                        <div className="card-body">
+                          <div className="row">
+                            <div className="col-6">
+                              <small className="text-muted">Total Boxes</small>
+                              <div className="fw-bold">{selectedProductDetails.total_boxes}</div>
+                            </div>
+                            <div className="col-6">
+                              <small className="text-muted">Total Packets</small>
+                              <div className="fw-bold">{selectedProductDetails.total_packets}</div>
+                            </div>
+                            <div className="col-6 mt-2">
+                              <small className="text-muted">Remaining Boxes</small>
+                              <div className="fw-bold text-warning">{selectedProductDetails.remaining_boxes}</div>
+                            </div>
+                            <div className="col-6 mt-2">
+                              <small className="text-muted">Remaining Packets</small>
+                              <div className="fw-bold text-warning">{selectedProductDetails.remaining_packets}</div>
+                            </div>
+                            <div className="col-6 mt-2">
+                              <small className="text-muted">Loose Packets</small>
+                              <div className="fw-bold text-info">{selectedProductDetails.remaining_loose_packets}</div>
+                            </div>
+                            <div className="col-6 mt-2">
+                              <small className="text-muted">Remaining %</small>
+                              <div className="fw-bold text-success">{selectedProductDetails.remaining_percentage}%</div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
+
+                      {selectedProductDetails.description && (
+                        <div className="card">
+                          <div className="card-header">
+                            <h6 className="mb-0">Description</h6>
+                          </div>
+                          <div className="card-body">
+                            <p className="card-text small">{selectedProductDetails.description}</p>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -535,4 +542,4 @@ function TableStockIn() {
   );
 }
 
-export default TableStockIn;
+export default TableStockAvailable;

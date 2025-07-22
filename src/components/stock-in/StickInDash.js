@@ -1,59 +1,62 @@
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
 import Card from "react-bootstrap/Card";
+import TableStockAvailable from "./TableStockAvailble";
+
+
 
 function StockInDash({ data, materials }) {
   const [localMaterials, setLocalMaterials] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  const iconsList = {
-    Equipment: { icon: "bi bi-gear" },
-    Food: { icon: "bi bi-gear" },
-    Operation: { icon: "bi bi-gear" },
-    Packaging: { icon: "bi bi-gear" },
-  };
+  // const iconsList = {
+  //   Equipment: { icon: "bi bi-gear" },
+  //   Food: { icon: "bi bi-gear" },
+  //   Operation: { icon: "bi bi-gear" },
+  //   Packaging: { icon: "bi bi-gear" },
+  // };
 
-  const getDistinctCategories = (data) => {
-    const categoryCounts = new Map();
+  // const getDistinctCategories = (data) => {
+  //   const categoryCounts = new Map();
 
-    data.forEach((item) => {
-      const category = item.category;
-      if (category) {
-        categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
-      }
-    });
+  //   data.forEach((item) => {
+  //     const category = item.category;
+  //     if (category) {
+  //       categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
+  //     }
+  //   });
 
     // Return as array of objects with category and count
-    return Array.from(categoryCounts, ([category, count]) => ({
-      category,
-      count,
-    }));
-  };
+  //   return Array.from(categoryCounts, ([category, count]) => ({
+  //     category,
+  //     count,
+  //   }));
+  // };
 
-  const handleCardClick = (item) => {
-    console.log(item);
-  };
+  // const handleCardClick = (item) => {
+  //   console.log(item);
+  // };
 
-  const organizeMaterials = () => {
-    const categoriesWithCounts = getDistinctCategories(materials);
-    setCategories(categoriesWithCounts);
+  // const organizeMaterials = () => {
+  //   const categoriesWithCounts = getDistinctCategories(materials);
+  //   setCategories(categoriesWithCounts);
 
-    const distinctCategories = [
-      ...new Set(materials.map((item) => item.category).filter(Boolean)),
-    ];
+  //   const distinctCategories = [
+  //     ...new Set(materials.map((item) => item.category).filter(Boolean)),
+  //   ];
 
-    //console.log(distinctCategories);
-  };
-  useEffect(() => {
-    setLocalMaterials(localMaterials);
-    organizeMaterials();
-    console.log(materials);
-  }, [materials]);
+  //   //console.log(distinctCategories);
+  // };
+  // useEffect(() => {
+  //   setLocalMaterials(localMaterials);
+  //   organizeMaterials();
+  //   console.log(materials);
+  // }, [materials]);
 
   return (
     <div className="container-fluid">
       <div className="row">
-        {categories &&
+        {/* {categories &&
           categories.map((item, index) => (
             <div key={index} className="col-3" style={{ padding: 5 }}>
               <Button
@@ -78,6 +81,8 @@ function StockInDash({ data, materials }) {
               </Button>
             </div>
           ))}
+           */}
+          <TableStockAvailable />
       </div>
     </div>
   );
