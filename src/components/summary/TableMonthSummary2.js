@@ -1,0 +1,573 @@
+import React, { useEffect, useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts';
+
+function TableMonthSummary2() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(31);
+  const [filterValues, setFilterValues] = useState({});
+  const [filteredData, setFilteredData] = useState([]);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
+    const [showChart, setShowChart] = useState(true);
+  
+  const date = new Date();
+  const monthIndex = date.getMonth();
+  const monthNumber = monthIndex + 1;
+  const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+
+  const handleMonthChange = (e) => {
+    const monthValue = e.target.value;
+    localStorage.setItem("month", monthValue);
+    setSelectedMonth(monthValue);
+    fetchData(monthValue);
+  };
+
+ const toggleChart = () => {
+    setShowChart(!showChart);
+  };
+
+ 
+
+  useEffect(() => {
+    const monthvalue = localStorage.getItem("month");
+    if (monthvalue) {
+      fetchData(monthvalue);
+      setSelectedMonth(monthvalue);
+
+
+
+
+
+    } else {
+      fetchData(selectedMonth);
+    }
+
+    window.addEventListener("newRecordAdded", handleNewRecord);
+    window.addEventListener("recordUpdated", handleRecordUpdate);
+
+    return () => {
+      window.removeEventListener("newRecordAdded", handleNewRecord);
+      window.removeEventListener("recordUpdated", handleRecordUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [data, filterValues]);
+
+  const fetchData = (month) => {
+    setLoading(true);
+    // Fetch data from PHP backend
+    fetch(
+      "http://121.121.232.54:88/aero-foods/mon-sum-mixiue2.php?month=" + month
+    )
+      .then((response) => response.json())
+      .then((fetchedData) => {
+        // Convert string values to numbers and sort by date descending
+       
+        const processedData = fetchedData
+          .map(item => ({
+            ...item,
+            total_sales: parseFloat(item.total_sales || 0),
+            total_actual: parseFloat(item.total_actual || 0),
+            total_variance: parseFloat(item.total_variance || 0),
+            total_expense: item.total_expense ? parseFloat(item.total_expense) : null,
+            day_of_week:new Date(item.month_date).toLocaleDateString("en-US", { weekday: "long" }),
+            chart_date: new Date(item.month_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+
+          }))
+          .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
+        
+        setData(processedData);
+        setFilteredData(processedData);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
+  };
+
+  const handleNewRecord = (event) => {
+    const newRecord = event.detail;
+    setData((prevData) => [newRecord, ...prevData]);
+  };
+
+  const handleRecordUpdate = (event) => {
+    const updatedRecord = event.detail;
+    setData((prevData) =>
+      prevData.map((record) =>
+        record.id === updatedRecord.id ? updatedRecord : record
+      )
+    );
+  };
+
+  const applyFilters = () => {
+    let filtered = [...data];
+
+    Object.entries(filterValues).forEach(([key, value]) => {
+      if (value && value.trim() !== "") {
+        filtered = filtered.filter(
+          (record) =>
+            record[key] &&
+            record[key].toString().toLowerCase().includes(value.toLowerCase())
+        );
+      }
+    });
+
+    setFilteredData(filtered);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilterValues({});
+  };
+
+  const toggleFilterPanel = () => {
+    setIsFilterPanelOpen(!isFilterPanelOpen);
+  };
+
+  const columns = [
+    {
+      key: "month_date",
+      label: "Date",
+      classHead: "bg-dark text-white",
+      classBody: "bg-dark text-white",
+    },
+    {
+    key: "day_of_week",
+    label: "Day",
+    classHead: "bg-secondary text-white",
+    classBody: "bg-secondary text-white",
+     },
+    {
+      key: "total_sales",
+      label: "Total Sales",
+      classHead: "bg-primary text-white",
+      classBody: "bg-primary text-white",
+    },
+    {
+      key: "total_actual",
+      label: "Total Actual",
+      classHead: "bg-success text-white",
+      classBody: "bg-success text-white",
+    },
+    {
+      key: "total_variance",
+      label: "Variance",
+      classHead: "bg-warning text-dark",
+      classBody: "bg-warning text-dark",
+    },
+    {
+      key: "total_expense",
+      label: "Total Expense",
+      classHead: "bg-danger text-white",
+      classBody: "bg-danger text-white",
+    }
+  ];
+
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = filteredData.slice(
+    indexOfFirstRecord,
+    indexOfLastRecord
+  );
+  const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+
+
+  const totals = filteredData.reduce(
+  (acc, item) => {
+    acc.total_sales += item.total_sales || 0;
+    acc.total_actual += item.total_actual || 0;
+    acc.total_variance += item.total_variance || 0;
+    acc.total_expense += item.total_expense || 0;
+    return acc;
+  },
+  { total_sales: 0, total_actual: 0, total_variance: 0, total_expense: 0 }
+);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const hasActiveFilters = Object.values(filterValues).some(
+    (value) => value && value.trim() !== ""
+  );
+
+   const formatCurrency = (value) => {
+  if (value === null || value === undefined) return "N/A";
+  // Use toLocaleString to add commas, specify minimumFractionDigits and maximumFractionDigits for two decimals
+  return `RM${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+  const getVarianceColor = (variance) => {
+    if (variance > 0) return "text-success";
+    if (variance < 0) return "text-danger";
+    return "text-muted";
+  };
+
+
+    const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border rounded shadow">
+          <p className="fw-bold mb-2">{`Date: ${label}`}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color, margin: '4px 0' }}>
+              {`${entry.dataKey === 'total_sales' ? 'Total Sales' : 
+                 entry.dataKey === 'total_actual' ? 'Total Actual' : 
+                 'Total Expense'}: ${formatCurrency(entry.value)}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+
+
+  return (
+    <div className="container-fluid mt-2 position-relative">
+      {loading ? (
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Filter section */}
+          <div className="card mb-3">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center">
+                <button
+                  className="btn btn-sm btn-link p-0 me-2"
+                  onClick={toggleFilterPanel}
+                  aria-expanded={isFilterPanelOpen}
+                  aria-controls="filterPanel"
+                >
+                  <span style={{ fontSize: '16px' }}>
+                    {isFilterPanelOpen ? '▼' : '▶'}
+                  </span>
+                </button>
+                <h5 className="mb-0">
+                  Filters
+                  {hasActiveFilters && (
+                    <span className="badge bg-primary ms-2">Active</span>
+                  )}
+                </h5>
+              </div>
+              <div>
+                  <button
+                  className="btn btn-sm btn-outline-info me-2"
+                  onClick={toggleChart}
+                >
+                  {showChart ? 'Hide Chart' : 'Show Chart'}
+                </button>
+                {hasActiveFilters && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={clearFilters}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+            {isFilterPanelOpen && (
+              <div className="card-body" id="filterPanel">
+                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="monthSelect"
+                        value={selectedMonth}
+                        onChange={handleMonthChange}
+                      >
+                        <option value="">Select month</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                      </select>
+                      <label htmlFor="monthSelect">Month</label>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="form-floating">
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="dateFilter"
+                        placeholder="Filter by date"
+                        value={filterValues.month_date || ""}
+                        onChange={(e) => handleFilterChange("month_date", e.target.value)}
+                      />
+                      <label htmlFor="dateFilter">Filter by Date</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+
+               {showChart && (
+                      <div className="card mb-3">
+                        <div className="card-header">
+                          <h5 className="mb-0">Sales vs Actual vs Expense</h5>
+                        </div>
+                        <div className="card-body">
+                          <div style={{ width: '100%', height: '400px' }}>
+                            <ResponsiveContainer>
+                              <LineChart
+                                data={filteredData}
+                                margin={{
+                                  top: 20,
+                                  right: 30,
+                                  left: 20,
+                                  bottom: 80
+                                }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="chart_date" 
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={80}
+                                  interval={0}
+                                />
+                                <YAxis 
+                                  tickFormatter={(value) => `RM${value.toLocaleString()}`}
+                                />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="total_sales" 
+                                  stroke="#0d6efd" 
+                                  strokeWidth={2}
+                                  name="Total Sales"
+                                  dot={{ fill: '#0d6efd', strokeWidth: 2, r: 4 }}
+                                  activeDot={{ r: 6 }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="total_actual" 
+                                  stroke="#198754" 
+                                  strokeWidth={2}
+                                  name="Total Actual"
+                                  dot={{ fill: '#198754', strokeWidth: 2, r: 4 }}
+                                  activeDot={{ r: 6 }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="total_expense" 
+                                  stroke="#dc3545" 
+                                  strokeWidth={2}
+                                  name="Total Expense"
+                                  dot={{ fill: '#dc3545', strokeWidth: 2, r: 4 }}
+                                  activeDot={{ r: 6 }}
+                                  connectNulls={false}
+                                />
+                                <Brush 
+                                  dataKey="chart_date" 
+                                  height={30} 
+                                  stroke="#8884d8"
+                                  fill="#f0f0f0"
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+          {/* Pagination controls - top */}
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              Showing {indexOfFirstRecord + 1} to{" "}
+              {Math.min(indexOfLastRecord, filteredData.length)} of{" "}
+              {filteredData.length} records
+            </div>
+            <div className="d-flex align-items-center">
+              <label className="me-2">Records per page:</label>
+              <select
+                className="form-select form-select-sm"
+                value={recordsPerPage}
+                onChange={(e) => setRecordsPerPage(Number(e.target.value))}
+                style={{ width: "auto" }}
+              >
+                <option value={31}>31</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Main content area */}
+          <div className="row">
+            <div className={`col-12 } transition-all`}>
+              {/* Table */}
+              <div className="table-responsive shadow rounded-3">
+                <table className="table table-striped table-hover table-bordered mb-0">
+                  <thead>
+                    <tr>
+                      {columns.map((column) => (
+                        <th
+                          key={column.key}
+                          className={column.classHead}
+                        >
+                          {column.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentRecords.length > 0 ? (
+                      currentRecords.map((record, index) => (
+                        <tr
+                          key={`${record.month_date}-${index}`}
+                          style={{ cursor: "pointer" }}
+                          className="hover-row"
+                        >
+                          <td className={columns[0].classBody}>
+                            {record.month_date}
+                          </td>
+                            <td className={columns[1].classBody}>
+                            {record.day_of_week}
+                          </td>
+                          <td className={columns[2].classBody}>
+                            {formatCurrency(record.total_sales)}
+                          </td>
+                          <td className={columns[3].classBody}>
+                            {formatCurrency(record.total_actual)}
+                          </td>
+                          <td className={`${columns[4].classBody} ${getVarianceColor(record.total_variance)}`}>
+                            {formatCurrency(record.total_variance)}
+                          </td>
+                          <td className={columns[5].classBody}>
+                            {record.total_expense !== null ? formatCurrency(record.total_expense) : "N/A"}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={columns.length} className="text-center">
+                          No records found
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="fw-bold bg-light">
+                    <td colSpan={2} className="text-end">Total</td> {/* Day + Date columns */}
+                    <td>{formatCurrency(totals.total_sales)}</td>
+                    <td>{formatCurrency(totals.total_actual)}</td>
+                    <td className={getVarianceColor(totals.total_variance)}>{formatCurrency(totals.total_variance)}</td>
+                    <td>{totals.total_expense ? formatCurrency(totals.total_expense) : "N/A"}</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination controls - bottom */}
+              <nav aria-label="Page navigation" className="mt-3">
+                <ul className="pagination justify-content-center">
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link"
+                      style={{ backgroundColor: "#F8D7DA" }}
+                      onClick={goToPreviousPage}
+                    >
+                      Previous
+                    </button>
+                  </li>
+
+                  {Array.from({ length: totalPages }).map((_, index) => {
+                    const pageNumber = index + 1;
+
+                    if (
+                      pageNumber === 1 ||
+                      pageNumber === totalPages ||
+                      (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                    ) {
+                      return (
+                        <li
+                          key={pageNumber}
+                          className={`page-item ${currentPage === pageNumber ? "active" : ""}`}
+                        >
+                          <button
+                            style={{ backgroundColor: "#E80000" }}
+                            className="page-link"
+                            onClick={() => paginate(pageNumber)}
+                          >
+                            {pageNumber}
+                          </button>
+                        </li>
+                      );
+                    } else if (
+                      (pageNumber === 2 && currentPage > 3) ||
+                      (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
+                    ) {
+                      return (
+                        <li key={pageNumber} className="page-item disabled">
+                          <span className="page-link">...</span>
+                        </li>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      style={{ backgroundColor: "#F8D7DA" }}
+                      className="page-link"
+                      onClick={goToNextPage}
+                    >
+                      Next
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+
+          
+          </div>
+
+         
+        </>
+      )}
+
+    
+    </div>
+  );
+}
+
+export default TableMonthSummary2;

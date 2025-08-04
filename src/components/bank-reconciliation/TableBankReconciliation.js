@@ -16,20 +16,22 @@ function TableBankReconciliation({ onRowClick }) {
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
-    localStorage.setItem("month", monthValue);
+    // Note: localStorage is not available in Claude artifacts
+    // localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
     fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
   // Subscribe to a custom event for new records
   useEffect(() => {
-    const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
-      setSelectedMonth(monthvalue);
-    } else {
+    // Note: localStorage is not available in Claude artifacts
+    // const monthvalue = localStorage.getItem("month");
+    // if (monthvalue) {
+    //   fetchData(monthvalue);
+    //   setSelectedMonth(monthvalue);
+    // } else {
       fetchData(selectedMonth);
-    }
+    // }
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -117,6 +119,29 @@ function TableBankReconciliation({ onRowClick }) {
   // Toggle filter panel
   const toggleFilterPanel = () => {
     setIsFilterPanelOpen(!isFilterPanelOpen);
+  };
+
+  // Calculate summary totals for numeric columns
+  const calculateSummary = () => {
+    const numericColumns = [
+      'cash', 'touch_n_go', 'duit_now', 'voucher', 'visa_master', 'sales_walk_in',
+      'shopee', 'grab', 'panda', 'sales_delivery', 'total_sales', 'visa', 'master',
+      'my_debit', 'total_terminal', 'comission', 'cash_box_amount', 'variance',
+      'tng', 'variance_1', 'dr_1', 'dr_2', 'cr', 'total_bank_card', 'variance_2',
+      'shopee_1', 'grab_1', 'panda_1', 'total_delivery', 'variance_3', 'actual_total',
+      'total_variance'
+    ];
+
+    const summary = {};
+    
+    numericColumns.forEach(column => {
+      summary[column] = filteredData.reduce((sum, record) => {
+        const value = parseFloat(record[column]) || 0;
+        return sum + value;
+      }, 0);
+    });
+
+    return summary;
   };
 
   // Column definitions with friendly names and custom styling for specific columns
@@ -371,6 +396,9 @@ function TableBankReconciliation({ onRowClick }) {
     (value) => value && value.trim() !== ""
   );
 
+  // Get summary data
+  const summaryData = calculateSummary();
+
   return (
     <div className="container-fluid mt-2">
       {loading ? (
@@ -456,7 +484,7 @@ function TableBankReconciliation({ onRowClick }) {
                         <option value="7">July</option>
                         <option value="8">August</option>
                         <option value="9">September</option>
-                        <option value="0">October</option>
+                        <option value="10">October</option>
                         <option value="11">November</option>
                         <option value="12">December</option>
                       </select>
@@ -590,6 +618,81 @@ function TableBankReconciliation({ onRowClick }) {
                     </td>
                   </tr>
                 )}
+                
+                {/* Summary Row */}
+                <tr className="table-info fw-bold border-top border-3 border-primary">
+                  {columns.map((column) => {
+                    if (column.key === "month_date") {
+                      return (
+                        <td
+                          key={`summary-${column.key}`}
+                          className="bg-info text-dark fw-bold text-center"
+                        >
+                          TOTAL
+                        </td>
+                      );
+                    } else if (column.key === "day") {
+                      return (
+                        <td
+                          key={`summary-${column.key}`}
+                          className="bg-info text-dark fw-bold text-center"
+                        >
+                          -
+                        </td>
+                      );
+                    } else if (
+                      column.key === "variance" ||
+                      column.key === "variance_1" ||
+                      column.key === "variance_2" ||
+                      column.key === "variance_3" ||
+                      column.key === "total_variance"
+                    ) {
+                      const value = summaryData[column.key] || 0;
+                      return (
+                        <td
+                          key={`summary-${column.key}`}
+                          className={
+                            value < 0
+                              ? "bg-info text-danger fw-bold text-end"
+                              : "bg-info text-success fw-bold text-end"
+                          }
+                        >
+                          {value.toFixed(2)}
+                        </td>
+                      );
+                    } else {
+                      // Check if this is a numeric column
+                      const isNumericColumn = [
+                        'cash', 'touch_n_go', 'duit_now', 'voucher', 'visa_master', 'sales_walk_in',
+                        'shopee', 'grab', 'panda', 'sales_delivery', 'total_sales', 'visa', 'master',
+                        'my_debit', 'total_terminal', 'comission', 'cash_box_amount', 'tng', 'dr_1', 
+                        'dr_2', 'cr', 'total_bank_card', 'shopee_1', 'grab_1', 'panda_1', 
+                        'total_delivery', 'actual_total'
+                      ].includes(column.key);
+
+                      if (isNumericColumn) {
+                        const value = summaryData[column.key] || 0;
+                        return (
+                          <td
+                            key={`summary-${column.key}`}
+                            className="bg-info text-dark fw-bold text-end"
+                          >
+                            {value.toFixed(2)}
+                          </td>
+                        );
+                      } else {
+                        return (
+                          <td
+                            key={`summary-${column.key}`}
+                            className="bg-info text-dark fw-bold text-center"
+                          >
+                            -
+                          </td>
+                        );
+                      }
+                    }
+                  })}
+                </tr>
               </tbody>
             </table>
           </div>

@@ -12,7 +12,7 @@ function Navbar({sidebarOpen}){
             >
               <span className="navbar-toggler-icon"></span>
             </button>
-            <a className="navbar-brand fw-bold" href="#">MRB Mixue Jakel Mall</a>
+            <a className="navbar-brand fw-bold" href="#">MRB SDS</a>
           </div>
         </div>
       </nav>
