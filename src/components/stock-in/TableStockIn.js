@@ -15,6 +15,15 @@ function TableStockIn() {
   const [selectedDateDetails, setSelectedDateDetails] = useState(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   
+  // Edit functionality states
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    stock_in: '',
+    month_date: ''
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
@@ -60,13 +69,164 @@ function TableStockIn() {
 
   // Handle row click to show details
   const handleRowClick = (dateGroup) => {
+    console.log(dateGroup);
     setSelectedDateDetails(dateGroup);
     setIsDetailPanelOpen(true);
+    setEditingItem(null); // Reset editing state
+    setDeleteConfirm(null); // Reset delete confirmation
   };
 
   const closeDetailPanel = () => {
     setIsDetailPanelOpen(false);
+    setEditingItem(null);
+    setDeleteConfirm(null);
     setTimeout(() => setSelectedDateDetails(null), 300); // Wait for animation
+  };
+
+  // Edit functionality
+  const handleEditClick = (item, e) => {
+    console.log(item)
+    e.stopPropagation();
+    setEditingItem(item.name);
+    setEditForm({
+      name: item.name || '',
+      stock_in: item.stock_in || '',
+      month_date: item.month_date || ''
+    });
+  };
+
+  const handleEditFormChange = (field, value) => {
+    setEditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveEdit = async (itemId) => {
+    try {
+      const response = await fetch('http://121.121.232.54:88/aero-foods/update_stockin_trans.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: itemId,
+          stock_in: editForm.stock_in,
+          month_date: editForm.month_date
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local data
+        alert("Data Updated successfully")
+        const updatedData = data.map(item => 
+          item.name === itemId 
+            ? { ...item, ...editForm }
+            : item
+        );
+        setData(updatedData);
+        
+        // Update filtered data
+        const updatedFilteredData = filteredData.map(item => 
+          item.name === itemId 
+            ? { ...item, ...editForm }
+            : item
+        );
+        setFilteredData(updatedFilteredData);
+        
+        // Update selected date details
+        if (selectedDateDetails) {
+          const updatedItems = selectedDateDetails.items.map(item =>
+            item.name === itemId 
+              ? { ...item, ...editForm }
+              : item
+          );
+          const newTotal = updatedItems.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0);
+          setSelectedDateDetails({
+            ...selectedDateDetails,
+            items: updatedItems,
+            total_price: newTotal
+          });
+        }
+        
+        setEditingItem(null);
+        fetchData(localStorage.getItem("month"));
+        // Dispatch update event
+        window.dispatchEvent(new CustomEvent('recordUpdated', {
+          detail: { name: itemId, ...editForm }
+        }));
+      } else {
+        alert('Error updating record: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error updating record:', error);
+      alert('Error updating record');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+    setEditForm({ name: '', stock_in: '', total_value: '' });
+  };
+
+  // Delete functionality
+  const handleDeleteClick = (item, e) => {
+    e.stopPropagation();
+    setDeleteConfirm(item.name);
+  };
+
+  const handleConfirmDelete = async (itemId,month_date) => {
+    try {
+      const response = await fetch('http://121.121.232.54:88/aero-foods/del_stock.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: itemId,date:month_date })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Remove from local data
+        alert("Record deleted Successfully")
+        const updatedData = data.filter(item => item.name !== itemId);
+        setData(updatedData);
+        
+        // Remove from filtered data
+        const updatedFilteredData = filteredData.filter(item => item.name !== itemId);
+        setFilteredData(updatedFilteredData);
+        
+        // Update selected date details
+        if (selectedDateDetails) {
+          const updatedItems = selectedDateDetails.items.filter(item => item.name !== itemId);
+          const newTotal = updatedItems.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0);
+          setSelectedDateDetails({
+            ...selectedDateDetails,
+            items: updatedItems,
+            total_price: newTotal
+          });
+        }
+        
+        setDeleteConfirm(null);
+        
+        // Dispatch delete event
+        window.dispatchEvent(new CustomEvent('recordDeleted', {
+          detail: { name: itemId }
+        }));
+      } else {
+        alert('Error deleting record: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      alert('Error deleting record');
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirm(null);
   };
 
   useEffect(() => {
@@ -461,15 +621,125 @@ function TableStockIn() {
                             <tr>
                               <th className="bg-success text-light">Item Name</th>
                               <th className="bg-success text-light">Stock In</th>
-                              <th className="bg-danger text-light">Price</th>
+                              <th className="bg-danger text-light">Month Date</th>
+                              <th className="bg-warning text-dark">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {selectedDateDetails.items.map((item, index) => (
-                              <tr key={`detail-${item.id}-${index}`}>
-                                <td className="bg-success text-light">{item.name}</td>
-                                <td className="bg-success text-light">{item.stock_in}</td>
-                                <td className="bg-danger text-light">RM{parseFloat(item.total_value || 0).toFixed(2)}</td>
+                              <tr key={`detail-${item.name}-${index}`}>
+                                <td className="bg-success text-light">
+                                  {editingItem === item.name ? (
+                                    <input
+                                      type="text"
+                                      className="form-control form-control-sm"
+                                      value={editForm.name}
+                                      onChange={(e) => handleEditFormChange('name', e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : (
+                                    item.name
+                                  )}
+                                </td>
+                                <td className="bg-success text-light">
+                                  {editingItem === item.name ? (
+                                    <input
+                                      type="number"
+                                      className="form-control form-control-sm"
+                                      value={editForm.stock_in}
+                                      onChange={(e) => handleEditFormChange('stock_in', e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : (
+                                    item.stock_in
+                                  )}
+                                </td>
+                                <td className="bg-danger text-light">
+                                  {editingItem === item.month_date ? (
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      className="form-control form-control-sm"
+                                      value={editForm.month_date}
+                                      onChange={(e) => handleEditFormChange('month_date', e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : (
+                                    item.month_date 
+                                  )}
+                                </td>
+                                <td className="bg-warning text-dark">
+                                  {editingItem === item.name ? (
+                                    <div className="btn-group-vertical btn-group-sm" role="group">
+                                      <button
+                                        type="button"
+                                        className="btn btn-success btn-sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSaveEdit(item.name);
+                                        }}
+                                        title="Save"
+                                      >
+                                        ✓
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancelEdit();
+                                        }}
+                                        title="Cancel"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ) : deleteConfirm === item.name ? (
+                                    <div className="btn-group-vertical btn-group-sm" role="group">
+                                      <button
+                                        type="button"
+                                        className="btn btn-danger btn-sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleConfirmDelete(item.name,item.month_date);
+                                        }}
+                                        title="Confirm Delete"
+                                      >
+                                        ✓
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancelDelete();
+                                        }}
+                                        title="Cancel Delete"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="btn-group-vertical btn-group-sm" role="group">
+                                      <button
+                                        type="button"
+                                        className="btn btn-primary btn-sm"
+                                        onClick={(e) => handleEditClick(item, e)}
+                                        title="Edit"
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-danger btn-sm"
+                                        onClick={(e) => handleDeleteClick(item, e)}
+                                        title="Delete"
+                                      >
+                                        🗑️
+                                      </button>
+                                    </div>
+                                  )}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -529,6 +799,12 @@ function TableStockIn() {
           to {
             right: -400px;
           }
+        }
+        .btn-group-vertical .btn {
+          margin-bottom: 2px;
+        }
+        .btn-group-vertical .btn:last-child {
+          margin-bottom: 0;
         }
       `}</style>
     </div>

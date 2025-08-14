@@ -170,6 +170,31 @@ function TableSDS() {
       
       // Convert to array and sort by date
       const processedData = Object.values(groupedData)
+        .map(item => ({
+          ...item,
+          // Set values to null if they're 0, null, undefined, or 'N/A' to exclude them from the chart lines
+          total_sales: (item.total_sales === null || 
+                       item.total_sales === undefined || 
+                       item.total_sales === 'N/A' || 
+                       parseFloat(item.total_sales) === 0 || 
+                       isNaN(parseFloat(item.total_sales))) 
+                       ? null 
+                       : parseFloat(item.total_sales),
+          total_actual: (item.total_actual === null || 
+                        item.total_actual === undefined || 
+                        item.total_actual === 'N/A' || 
+                        parseFloat(item.total_actual) === 0 || 
+                        isNaN(parseFloat(item.total_actual))) 
+                        ? null 
+                        : parseFloat(item.total_actual),
+          total_expense: (item.total_expense === null || 
+                         item.total_expense === undefined || 
+                         item.total_expense === 'N/A' || 
+                         parseFloat(item.total_expense) === 0 || 
+                         isNaN(parseFloat(item.total_expense))) 
+                         ? null 
+                         : parseFloat(item.total_expense)
+        }))
         .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
       
       setData(processedData);
