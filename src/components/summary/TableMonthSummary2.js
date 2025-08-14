@@ -69,10 +69,10 @@ function TableMonthSummary2() {
         const processedData = fetchedData
           .map(item => ({
             ...item,
-            total_sales: parseFloat(item.total_sales || 0),
-            total_actual: parseFloat(item.total_actual || 0),
-            total_variance: parseFloat(item.total_variance || 0),
-            total_expense: item.total_expense ? parseFloat(item.total_expense) : null,
+              total_sales: parseFloat(item.total_sales) === 0 ? null : parseFloat(item.total_sales),
+            total_actual: parseFloat(item.total_actual) === 0 ? null : parseFloat(item.total_actual),
+            total_variance: parseFloat(item.total_variance) === 0 ? null : parseFloat(item.total_variance),
+             total_expense: parseFloat(item.total_expense) === 0 ? null : parseFloat(item.total_expense),
             day_of_week:new Date(item.month_date).toLocaleDateString("en-US", { weekday: "long" }),
             chart_date: new Date(item.month_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
 

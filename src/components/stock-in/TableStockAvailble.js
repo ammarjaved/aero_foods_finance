@@ -13,6 +13,7 @@ function TableStockAvailable() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const [selectedProductDetails, setSelectedProductDetails] = useState(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -37,6 +38,15 @@ function TableStockAvailable() {
       );
       setFilteredData(filteredItems);
     }
+  };
+
+  // Handle sorting
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
   };
 
   // Handle row click to show product details
@@ -69,6 +79,50 @@ function TableStockAvailable() {
     const uniqueCategories = [...new Set(data.map(item => item.category))];
     setCategories(uniqueCategories);
   }, [data, filterValues]);
+
+  // Apply sorting to filtered data
+  useEffect(() => {
+    if (sortConfig.key) {
+      const sortedData = [...filteredData].sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Handle percentage columns specifically
+        if (sortConfig.key === 'remaining_percentage') {
+          // Convert to number (the data might come as string or number from backend)
+          aValue = parseFloat(aValue) || 0;
+          bValue = parseFloat(bValue) || 0;
+        }
+        // Handle other numeric columns
+        else if (sortConfig.key === 'remaining_boxes' || sortConfig.key === 'remaining_loose_packets') {
+          aValue = parseFloat(aValue) || 0;
+          bValue = parseFloat(bValue) || 0;
+        }
+        // Handle string columns
+        else if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+          return sortConfig.direction === 'asc' ? comparison : -comparison;
+        }
+        // Default numeric handling
+        else {
+          aValue = parseFloat(aValue) || 0;
+          bValue = parseFloat(bValue) || 0;
+        }
+
+        // Numeric comparison
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          if (sortConfig.direction === 'asc') {
+            return aValue - bValue;
+          } else {
+            return bValue - aValue;
+          }
+        }
+
+        return 0;
+      });
+      setFilteredData(sortedData);
+    }
+  }, [sortConfig]);
 
   const fetchData = (month) => {
     setLoading(true);
@@ -127,10 +181,19 @@ function TableStockAvailable() {
   const clearFilters = () => {
     setFilterValues({});
     setCategory("");
+    setSortConfig({ key: null, direction: 'asc' }); // Reset sorting when clearing filters
   };
 
   const toggleFilterPanel = () => {
     setIsFilterPanelOpen(!isFilterPanelOpen);
+  };
+
+  // Get sort icon for column headers
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return '↕️'; // Both arrows when not sorted
+    }
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
   const columns = [
@@ -139,24 +202,28 @@ function TableStockAvailable() {
       label: "Name",
       classHead: "bg-dark text-light",
       classBody: "bg-dark text-light",
+      sortable: true,
     },
     {
       key: "remaining_boxes",
       label: "Remaining Boxes",
       classHead: "bg-dark text-light",
       classBody: "bg-dark text-light",
+      sortable: true,
     },
     {
       key: "remaining_loose_packets",
       label: "Remaining Loose Packets",
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
+      sortable: true,
     },
     {
       key: "remaining_percentage",
       label: "Remaining Percentage",
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
+      sortable: true,
     }
   ];
 
@@ -291,8 +358,20 @@ function TableStockAvailable() {
                   <thead>
                     <tr>
                       {columns.map((column) => (
-                        <th key={column.key} className={column.classHead}>
-                          {column.label}
+                        <th 
+                          key={column.key} 
+                          className={`${column.classHead} ${column.sortable ? 'sortable-header' : ''}`}
+                          onClick={column.sortable ? () => handleSort(column.key) : undefined}
+                          style={column.sortable ? { cursor: 'pointer', userSelect: 'none' } : {}}
+                        >
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span>{column.label}</span>
+                            {column.sortable && (
+                              <span className="sort-icon ms-1">
+                                {getSortIcon(column.key)}
+                              </span>
+                            )}
+                          </div>
                         </th>
                       ))}
                     </tr>
@@ -316,7 +395,7 @@ function TableStockAvailable() {
                             {record.remaining_loose_packets}
                           </td>
                           <td className={columns[3].classBody}>
-                            {record.remaining_percentage}%
+                            {parseFloat(record.remaining_percentage) || 0}%
                           </td>
                         </tr>
                       ))
@@ -520,6 +599,25 @@ function TableStockAvailable() {
         }
         .slide-out {
           animation: slideOut 0.3s ease-in-out;
+        }
+        .sortable-header:hover {
+          background-color: rgba(0, 0, 0, 0.2) !important;
+          color: #fff !important;
+        }
+        .bg-dark.sortable-header:hover {
+          background-color: rgba(255, 255, 255, 0.3) !important;
+          color: #000 !important;
+        }
+        .bg-success.sortable-header:hover {
+          background-color: rgba(0, 0, 0, 0.2) !important;
+          color: #fff !important;
+        }
+        .sort-icon {
+          font-size: 0.8em;
+          opacity: 0.7;
+        }
+        .sortable-header:hover .sort-icon {
+          opacity: 1;
         }
         @keyframes slideIn {
           from {
