@@ -74,15 +74,33 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
   ];
 
   const menuItems_abe = [
-            { href: "/landing-yus", label: "Home" },
+    { href: "/landing-yus", label: "Home" },
     { href: "/TimesheetABE", label: "Time Sheet" },
-     { href: "/dashboard-yus", label: "Daily Sheet" },
+    { href: "/dashboard-yus", label: "Daily Sheet" },
+    { href: "/wastage-yus", label: "Daily Wastage" },
+    { href: "/reconciliation-yus", label: "Bank Reconciliation" },
+    { href: "/materials-yus", label: "Materials" },
+        { href: "/stockin-yus", label: "Stock In" },
+            { href: "/Expenses-yus", label: "Expenditure" }
+
+
+
+
   ];
 
   const menuItems_amz = [
-     { href: "/landing-amz", label: "Home" },
+    { href: "/landing-amz", label: "Home" },
     { href: "/TimesheetAmazon", label: "Time Sheet" },
-     { href: "/dashboard-amz", label: "Daily Sheet" },
+    { href: "/dashboard-amz", label: "Daily Sheet" },
+    { href: "/wastage-amz", label: "Daily Wastage" },
+    { href: "/reconciliation-amz", label: "Bank Reconciliation" },
+    { href: "/materials-amz", label: "Materials" },
+        { href: "/stockin-amz", label: "Stock In" },
+            { href: "/Expenses-amz", label: "Expenditure" }
+
+
+
+
   ];
 
   // Function to check if current page matches the menu item
