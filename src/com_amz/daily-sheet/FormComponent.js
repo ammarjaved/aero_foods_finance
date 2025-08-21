@@ -77,14 +77,6 @@ function FormComponent() {
   const handleChange = async (e) => {
     const { name, value, type } = e.target;
 
-    // Only process non-file inputs here
-    // if (type !== 'file') {
-    //   setFormData(prevState => ({
-    //     ...prevState,
-    //     [name]: value
-    //   }));
-    // }
-
     if (type !== "file") {
       // Create updated form data
       const updatedFormData = {
@@ -345,10 +337,6 @@ function FormComponent() {
     setIsFormOpen(true);
   };
 
-  // const handleMonthTodate=async (date)=>{
-
-  // }
-
   const handleRowClick = async (record) => {
     // First completely reset the form to clear any previous values
     resetForm();
@@ -480,37 +468,48 @@ function FormComponent() {
           <div className="card">
             <div
               style={{ backgroundColor: "#e80000" }}
-              className="card-header  text-white d-flex justify-content-between align-items-center"
+              className="card-header text-white d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2"
             >
-              <h2 className="mb-0">Daily Sheet</h2>
-              {/* <button 
-                className="btn btn-light" 
+              <h2 className="mb-0 text-center text-sm-start">Daily Sheet</h2>
+              <button
+                className="btn btn-light btn-sm d-md-none"
                 onClick={openNewForm}
               >
                 Add New Record
-              </button> */}
+              </button>
             </div>
           </div>
-          <div className="card-body">
+          <div className="card-body p-2 p-md-3">
             <Table onRowClick={handleRowClick} />
           </div>
         </div>
       </div>
 
-      {/* Sliding Form */}
+      {/* Responsive Sliding Form */}
       <div
-        className="position-fixed top-0 end-0 h-100 bg-white shadow-lg"
+        className="position-fixed bg-white shadow-lg"
         style={{
-          width: "500px",
+          top: 0,
+          right: 0,
+          height: "100vh",
+          width: isFormOpen ? "100%" : "0",
+          maxWidth: isFormOpen
+            ? window.innerWidth < 768
+              ? "100%"
+              : "600px"
+            : "0",
           transform: isFormOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.3s ease-in-out",
+          transition: "all 0.3s ease-in-out",
           zIndex: 1050,
           overflowY: "auto",
+          overflowX: "hidden",
         }}
       >
-        <div className="p-3">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3>{isEditing ? "Edit Record" : "New Record"}</h3>
+        <div className="p-3 p-md-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 sticky-top bg-white py-2">
+            <h3 className="h4 h-md-3 mb-0">
+              {isEditing ? "Edit Record" : "New Record"}
+            </h3>
             <button
               className="btn btn-sm btn-outline-secondary"
               onClick={closeForm}
@@ -520,500 +519,590 @@ function FormComponent() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="row g-2">
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Month Date</label>
-                  <input
-                    type="date"
-                    name="month_date"
-                    value={formData.month_date}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              {/* <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Month</label>
-                  <input
-                    type="number"
-                    name="month"
-                    value={formData.month}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div> */}
-
-              {/* <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Year</label>
-                  <input
-                    type="number"
-                    name="year"
-                    value={formData.year}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div> */}
-
-              <div style={{ display: "none" }} className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Day</label>
-                  <input
-                    type="number"
-                    name="day"
-                    value={formData.day}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Cash</label>
-                  <input
-                    type="number"
-                    name="cash"
-                    value={formData.cash}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Touch N GO</label>
-                  <input
-                    type="number"
-                    name="touch_n_go"
-                    value={formData.touch_n_go}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Duit Now</label>
-                  <input
-                    type="number"
-                    name="duit_now"
-                    value={formData.duit_now}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Voucher</label>
-                  <input
-                    type="number"
-                    name="voucher"
-                    value={formData.voucher}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Bank Card</label>
-                  <input
-                    type="number"
-                    name="visa_master"
-                    value={formData.visa_master}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#196F3D" }}>
-                <div className="form-group">
-                  <label className="form-label">Sales Walk In</label>
-                  <input
-                    type="number"
-                    name="sales_walk_in"
-                    value={formData.sales_walk_in}
-                    onChange={handleChange}
-                    className="form-control"
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#2E86C1" }}>
-                <div className="form-group">
-                  <label className="form-label">Shopee</label>
-                  <input
-                    type="number"
-                    name="shopee"
-                    value={formData.shopee}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#2E86C1" }}>
-                <div className="form-group">
-                  <label className="form-label">Grab</label>
-                  <input
-                    type="number"
-                    name="grab"
-                    value={formData.grab}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#2E86C1" }}>
-                <div className="form-group">
-                  <label className="form-label">Panda</label>
-                  <input
-                    type="number"
-                    name="panda"
-                    value={formData.panda}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#2E86C1" }}>
-                <div className="form-group">
-                  <label className="form-label">Sales Delivery</label>
-                  <input
-                    type="number"
-                    name="sales_delivery"
-                    value={formData.sales_delivery}
-                    onChange={handleChange}
-                    className="form-control"
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "pink" }}>
-                <div className="form-group">
-                  <label className="form-label">Total Sales</label>
-                  <input
-                    type="number"
-                    name="total_sales"
-                    value={formData.total_sales}
-                    onChange={handleChange}
-                    className="form-control"
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "yellow" }}>
-                <div className="form-group">
-                  <label className="form-label">Month Date Sales</label>
-                  <input
-                    type="number"
-                    name="month_date_sales"
-                    value={formData.month_date_sales}
-                    onChange={handleChange}
-                    className="form-control"
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Transaction Count</label>
-                  <input
-                    type="number"
-                    name="transaction_count"
-                    value={formData.transaction_count}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Avg Transaction Value</label>
-                  <input
-                    type="number"
-                    name="avg_transaction_value"
-                    value={formData.avg_transaction_value}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">100% Discount</label>
-                  <input
-                    type="number"
-                    name="discount"
-                    value={formData.discount}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#8E44AD" }}>
-                <div className="form-group">
-                  <label className="form-label">Labour Hours Used</label>
-                  <input
-                    type="number"
-                    name="labour_hours_used"
-                    value={formData.labour_hours_used}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#8E44AD" }}>
-                <div className="form-group">
-                  <label className="form-label">Sales Per Labour Hours</label>
-                  <input
-                    type="number"
-                    name="sales_per_labour_hours"
-                    value={formData.sales_per_labour_hours}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">POS Image</label>
-                  <div className="mb-2">
+            {/* Date Section */}
+            <div className="mb-4">
+              <h5 className="text-primary border-bottom pb-2 mb-3">
+                Date Information
+              </h5>
+              <div className="row g-2 g-md-3">
+                <div className="col-12 col-sm-6">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Month Date</label>
                     <input
-                      type="file"
-                      name="image_pos"
-                      onChange={handleFileChange}
+                      type="date"
+                      name="month_date"
+                      value={formData.month_date}
+                      onChange={handleChange}
                       className="form-control"
-                      accept="image/*"
                     />
                   </div>
-
-                  {imagePreviews.image_pos && (
-                    <div className="position-relative mt-2">
-                      <img
-                        src={imagePreviews.image_pos}
-                        alt="POS Preview"
-                        className="img-thumbnail"
-                        style={{ maxHeight: "150px" }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                        onClick={() => handleRemoveImage("image_pos")}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              <div
-                className="col-md-6"
-                style={{ backgroundColor: "#C0392B", display: "none" }}
-              >
-                <div className="form-group">
-                  <label className="form-label">Prev Day Balance</label>
-                  <input
-                    type="number"
-                    name="prev_day_balance"
-                    value={formData.prev_day_balance}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#C0392B" }}>
-                <div className="form-group">
-                  <label className="form-label">Actual Bank Amount</label>
-                  <input
-                    type="number"
-                    name="actual_bank_amount"
-                    value={formData.actual_bank_amount}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div
-                className="col-md-6"
-                style={{ backgroundColor: "#C0392B", display: "none" }}
-              >
-                <div className="form-group">
-                  <label className="form-label">Next Day Balance</label>
-                  <input
-                    type="number"
-                    name="next_day_balance"
-                    value={formData.next_day_balance}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6" style={{ backgroundColor: "#C0392B" }}>
-                <div className="form-group">
-                  <label className="form-label">Cash Box Amount</label>
-                  <input
-                    type="number"
-                    name="cash_box_amount"
-                    value={formData.cash_box_amount}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              {/* <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Cash In Hand</label>
-                  <input
-                    type="number"
-                    name="cash_in_hand"
-                    value={formData.cash_in_hand}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div> */}
-
-              <div className="col-md-6" style={{ backgroundColor: "#fff" }}>
-                <div className="form-group">
-                  <label className="form-label">Variance</label>
-                  <input
-                    type="number"
-                    name="variance"
-                    value={formData.variance}
-                    onChange={handleChange}
-                    className="form-control"
-                    style={{
-                      color:
-                        parseFloat(formData.variance) > 0 ? "green" : "red",
-                      fontWeight: "bold",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Bank in Date</label>
-                  <input
-                    type="date"
-                    name="bank_in_date"
-                    value={formData.bank_in_date}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Recipt Ref No</label>
-                  <input
-                    type="text"
-                    name="recipt_ref_no"
-                    value={formData.recipt_ref_no}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Remarks</label>
-                  <input
-                    type="text"
-                    name="remarks"
-                    value={formData.remarks}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="form-label">Receipt Image</label>
-                  <div className="mb-2">
+                <div className="col-12 col-sm-6" style={{ display: "none" }}>
+                  <div className="form-group">
+                    <label className="form-label">Day</label>
                     <input
-                      type="file"
-                      name="image_recipt"
-                      onChange={handleFileChange}
+                      type="number"
+                      name="day"
+                      value={formData.day}
+                      onChange={handleChange}
                       className="form-control"
-                      accept="image/*"
+                      required
                     />
                   </div>
-
-                  {imagePreviews.image_recipt && (
-                    <div className="position-relative mt-2">
-                      <img
-                        src={imagePreviews.image_recipt}
-                        alt="Receipt Preview"
-                        className="img-thumbnail"
-                        style={{ maxHeight: "150px" }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                        onClick={() => handleRemoveImage("image_recipt")}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 d-flex justify-content-between">
-              {/* <button type="button" className="btn btn-danger" onClick={deleteRecord}>
-                Delete
-              </button> */}
-              <button type="submit" className="btn btn-primary">
-                {isEditing ? "Update" : "Save"}
-              </button>
+            {/* Walk-in Sales Section */}
+            <div className="mb-4">
+              <h5 className="text-success border-bottom pb-2 mb-3">
+                Walk-in Sales
+              </h5>
+              <div className="row g-2 g-md-3">
+                <div className="col-6 col-md-4">
+                  <div className="form-group badge bg-success">
+                    <label className="form-label fw-bold">Cash</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="cash"
+                      value={formData.cash}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group badge bg-success">
+                    <label className="form-label fw-bold">Touch N GO</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="touch_n_go"
+                      value={formData.touch_n_go}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group badge bg-success">
+                    <label className="form-label fw-bold">Duit Now</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="duit_now"
+                      value={formData.duit_now}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group badge bg-success">
+                    <label className="form-label fw-bold ">Voucher</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="voucher"
+                      value={formData.voucher}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group badge bg-success">
+                    <label className="form-label fw-bold ">Bank Card</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="visa_master"
+                      value={formData.visa_master}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group badge bg-success">
+                    <label className="form-label fw-bold ">Sales Walk In</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="sales_walk_in"
+                      value={formData.sales_walk_in}
+                      onChange={handleChange}
+                      className="form-control bg-light"
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Sales Section */}
+            <div className="mb-4">
+              <h5 className="text-info border-bottom pb-2 mb-3">
+                Delivery Sales
+              </h5>
+              <div
+                className="row g-2 g-md-3"
+                style={{ backgroundColor: "#2E86C1", color: "white" }}
+              >
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Shopee</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="shopee"
+                      value={formData.shopee}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Grab</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="grab"
+                      value={formData.grab}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Panda</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="panda"
+                      value={formData.panda}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Sales Delivery</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="sales_delivery"
+                      value={formData.sales_delivery}
+                      onChange={handleChange}
+                      className="form-control bg-light"
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Sales Section */}
+            <div className="mb-4" style={{ backgroundColor: "yellow" }}>
+              <h5 className="text-warning border-bottom pb-2 mb-3">
+                Sales Summary
+              </h5>
+              <div className="row g-2 g-md-3">
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label fw-bold text-danger">
+                      Total Sales
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="total_sales"
+                      value={formData.total_sales}
+                      onChange={handleChange}
+                      className="form-control bg-light fw-bold"
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label fw-bold text-warning">
+                      Month Date Sales
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="month_date_sales"
+                      value={formData.month_date_sales}
+                      onChange={handleChange}
+                      className="form-control bg-light"
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction Details Section */}
+            <div className="mb-4">
+              <h5 className="text-secondary border-bottom pb-2 mb-3">
+                Transaction Details
+              </h5>
+              <div
+                className="row g-2 g-md-3"
+                style={{ backgroundColor: "pink" }}
+              >
+                <div className="col-6 col-md-4">
+                  <div className="form-group">
+                    <label className="form-label">Transaction Count</label>
+                    <input
+                      type="number"
+                      name="transaction_count"
+                      value={formData.transaction_count}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group">
+                    <label className="form-label">Avg Transaction Value</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="avg_transaction_value"
+                      value={formData.avg_transaction_value}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-4">
+                  <div className="form-group">
+                    <label className="form-label">100% Discount</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="discount"
+                      value={formData.discount}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Labour Information Section */}
+            <div className="mb-4">
+              <h5
+                className="text-purple border-bottom pb-2 mb-3"
+                style={{ color: "#8E44AD" }}
+              >
+                Labour Information
+              </h5>
+              <div
+                className="row g-2 g-md-3"
+                style={{ backgroundColor: "purple" }}
+              >
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Labour Hours Used</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="labour_hours_used"
+                      value={formData.labour_hours_used}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Sales Per Labour Hours</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="sales_per_labour_hours"
+                      value={formData.sales_per_labour_hours}
+                      onChange={handleChange}
+                      className="form-control bg-light"
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cash Management Section */}
+            <div className="mb-4">
+              <h5 className="text-danger border-bottom pb-2 mb-3">
+                Cash Management
+              </h5>
+              <div
+                className="row g-2 g-md-3"
+                style={{ backgroundColor: "red" }}
+              >
+                <div className="col-6 col-md-6" style={{ display: "none" }}>
+                  <div className="form-group">
+                    <label className="form-label">Prev Day Balance</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="prev_day_balance"
+                      value={formData.prev_day_balance}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Actual Bank Amount</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="actual_bank_amount"
+                      value={formData.actual_bank_amount}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-6" style={{ display: "none" }}>
+                  <div className="form-group">
+                    <label className="form-label">Next Day Balance</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="next_day_balance"
+                      value={formData.next_day_balance}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Cash Box Amount</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="cash_box_amount"
+                      value={formData.cash_box_amount}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Variance</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="variance"
+                      value={formData.variance}
+                      onChange={handleChange}
+                      className="form-control fw-bold"
+                      style={{
+                        color:
+                          parseFloat(formData.variance) > 0 ? "green" : "red",
+                        backgroundColor:
+                          parseFloat(formData.variance) !== 0 ? "#f8f9fa" : "",
+                      }}
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Banking Information Section */}
+            <div className="mb-4">
+              <h5 className="text-dark border-bottom pb-2 mb-3">
+                Banking Information
+              </h5>
+              <div
+                className="row g-2 g-md-3"
+                style={{ backgroundColor: "#B8860B" }}
+              >
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Bank in Date</label>
+                    <input
+                      type="date"
+                      name="bank_in_date"
+                      value={formData.bank_in_date}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Receipt Ref No</label>
+                    <input
+                      type="text"
+                      name="recipt_ref_no"
+                      value={formData.recipt_ref_no}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-12">
+                  <div className="form-group">
+                    <label className="form-label">Remarks</label>
+                    <textarea
+                      name="remarks"
+                      value={formData.remarks}
+                      onChange={handleChange}
+                      className="form-control"
+                      rows="2"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Images Section */}
+            <div className="mb-4">
+              <h5 className="text-muted border-bottom pb-2 mb-3">
+                Image Uploads
+              </h5>
+              <div className="row g-3">
+                <div className="col-12 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">POS Image</label>
+                    <div className="mb-2">
+                      <input
+                        type="file"
+                        name="image_pos"
+                        onChange={handleFileChange}
+                        className="form-control"
+                        accept="image/*"
+                      />
+                    </div>
+
+                    {imagePreviews.image_pos && (
+                      <div className="position-relative mt-2">
+                        <img
+                          src={imagePreviews.image_pos}
+                          alt="POS Preview"
+                          className="img-thumbnail w-100"
+                          style={{ maxHeight: "200px", objectFit: "cover" }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                          onClick={() => handleRemoveImage("image_pos")}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Receipt Image</label>
+                    <div className="mb-2">
+                      <input
+                        type="file"
+                        name="image_recipt"
+                        onChange={handleFileChange}
+                        className="form-control"
+                        accept="image/*"
+                      />
+                    </div>
+
+                    {imagePreviews.image_recipt && (
+                      <div className="position-relative mt-2">
+                        <img
+                          src={imagePreviews.image_recipt}
+                          alt="Receipt Preview"
+                          className="img-thumbnail w-100"
+                          style={{ maxHeight: "200px", objectFit: "cover" }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                          onClick={() => handleRemoveImage("image_recipt")}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className="mt-4 pt-3 border-top">
+              <div className="d-flex flex-column flex-sm-row justify-content-between gap-2">
+                {isEditing && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger order-2 order-sm-1"
+                    onClick={deleteRecord}
+                  >
+                    Delete Record
+                  </button>
+                )}
+                <div className="d-flex gap-2 order-1 order-sm-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary flex-fill flex-sm-grow-0"
+                    onClick={closeForm}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-fill flex-sm-grow-0"
+                  >
+                    {isEditing ? "Update Record" : "Save Record"}
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -1027,6 +1116,67 @@ function FormComponent() {
           onClick={closeForm}
         ></div>
       )}
+
+      {/* Custom CSS for better mobile experience */}
+      <style jsx>{`
+        @media (max-width: 767.98px) {
+          .form-label {
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+          }
+
+          .form-control {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+          }
+
+          .btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+          }
+
+          h5 {
+            font-size: 1.1rem;
+          }
+
+          .card-header h2 {
+            font-size: 1.5rem;
+          }
+        }
+
+        @media (max-width: 575.98px) {
+          .form-label {
+            font-size: 0.8rem;
+          }
+
+          .form-control {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+          }
+
+          h5 {
+            font-size: 1rem;
+          }
+        }
+
+        /* Ensure form sections are well spaced */
+        .form-group {
+          margin-bottom: 1rem;
+        }
+
+        @media (max-width: 767.98px) {
+          .form-group {
+            margin-bottom: 0.75rem;
+          }
+        }
+
+        /* Better image preview on mobile */
+        @media (max-width: 767.98px) {
+          .img-thumbnail {
+            max-height: 150px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

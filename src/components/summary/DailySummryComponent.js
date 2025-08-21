@@ -6,16 +6,13 @@ import Tabs from "react-bootstrap/Tabs";
 import TableMonthSummary from "./TableMonthSummary";
 import TableMonthSummary2 from "./TableMonthSummary2";
 import TableMonthSummary3 from "./TableMonthSummary3";
+import TableMonthSummary4 from "./TableMonthSummary4";
+
 import TableSDS from "./TableSDS";
 import MTDSummary from "./MTDSummary";
 
-
-
 function DailySummryComponent() {
-
-
   const [show, setShow] = useState(false);
-  
 
   const handleClose = () => setShow(false);
   return (
@@ -29,21 +26,19 @@ function DailySummryComponent() {
           className="mb-3"
           justify
         >
-          
           <Tab eventKey="stockin" title="Mixue">
-            <TableMonthSummary  />
+            <TableMonthSummary />
           </Tab>
           <Tab eventKey="abe" title="ABE YUS">
             <TableMonthSummary2 />
           </Tab>
           <Tab eventKey="amz" title="Amazon">
-            <TableMonthSummary3  />
+            <TableMonthSummary3 />
           </Tab>
           <Tab eventKey="sds" title="SDS">
-            <TableSDS  />
-            </Tab>
-                
-          
+            <TableSDS />
+          </Tab>
+
           <Tab eventKey="new" title="Total Summary">
             <MTDSummary />
           </Tab>
