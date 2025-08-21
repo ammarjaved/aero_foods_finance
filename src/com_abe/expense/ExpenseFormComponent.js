@@ -3,134 +3,131 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import ExpenseTable from "./ExpenseTable";
 
+const sevenDaysAgo = new Date();
+sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+const dayOfWeek = sevenDaysAgo.getDay();
 function ExpenseFormComponent() {
   const [formData, setFormData] = useState({
     month_date: new Date().toISOString().split("T")[0],
-      day: new Date().getDate(),
-      vendor:'',
-      amount:'',
-      remarks:''
+    day: dayOfWeek,
+    vendor: "",
+    amount: "",
+    remarks: "",
   });
-
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [mapKey, setMapKey] = useState(Date.now());
 
-
-
-
   const handleChange = async (e) => {
     const { name, value, type } = e.target;
 
-
-      // Create updated form data
-      const updatedFormData = {
-        ...formData,
-        [name]: value,
-      };
-
-     
-
-      setFormData(updatedFormData);
-    
-  };
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    // Create a regular object instead of FormData
-    const submitData = {};
-
-    // Build the object with form fields
-    Object.keys(formData).forEach((key) => {
-      let floatKeys = ["amount"];
-      
-      if (floatKeys.includes(key)) {
-        submitData[key] = parseFloat(formData[key]).toFixed(2);
-      } else {
-        submitData[key] = formData[key];
-      }
-    });
-
-    // Structure the request according to your PHP API expectations
-    const requestData = {
-      username: localStorage.getItem('user'),
-      records: [submitData] // PHP expects an array of records
+    // Create updated form data
+    const updatedFormData = {
+      ...formData,
+      [name]: value,
     };
 
-    // Make the API call
-    const response = await fetch(
-      "http://121.121.232.54:88/abe-yus/daily_expenditure.php",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      }
-    );
+    setFormData(updatedFormData);
+  };
 
-    const result = await response.json();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    if (response.ok) {
-      // Get the first result since we sent one record
-      const savedRecord = result.results[0];
-      
-      // Create a complete record with the returned data
-      const updatedRecord = {
-        ...formData,
-        id: savedRecord.id,
+    try {
+      // Create a regular object instead of FormData
+      const submitData = {};
+
+      // Build the object with form fields
+      Object.keys(formData).forEach((key) => {
+        let floatKeys = ["amount"];
+
+        if (floatKeys.includes(key)) {
+          submitData[key] = parseFloat(formData[key]).toFixed(2);
+        } else {
+          submitData[key] = formData[key];
+        }
+      });
+
+      // Structure the request according to your PHP API expectations
+      const requestData = {
+        username: localStorage.getItem("user"),
+        records: [submitData], // PHP expects an array of records
       };
 
-      // Show success message
-      alert(result.message || (isEditing ? 'Record updated successfully' : 'Record added successfully'));
+      // Make the API call
+      const response = await fetch(
+        "http://121.121.232.54:88/abe-yus/daily_expenditure.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
 
-      // Dispatch appropriate event based on operation type
-      if (isEditing) {
-        window.dispatchEvent(
-          new CustomEvent("recordUpdated", {
-            detail: updatedRecord,
-          })
+      const result = await response.json();
+
+      if (response.ok) {
+        // Get the first result since we sent one record
+        const savedRecord = result.results[0];
+
+        // Create a complete record with the returned data
+        const updatedRecord = {
+          ...formData,
+          id: savedRecord.id,
+        };
+
+        // Show success message
+        alert(
+          result.message ||
+            (isEditing
+              ? "Record updated successfully"
+              : "Record added successfully")
         );
+
+        // Dispatch appropriate event based on operation type
+        if (isEditing) {
+          window.dispatchEvent(
+            new CustomEvent("recordUpdated", {
+              detail: updatedRecord,
+            })
+          );
+        } else {
+          window.dispatchEvent(
+            new CustomEvent("newRecordAdded", {
+              detail: updatedRecord,
+            })
+          );
+        }
+
+        resetForm();
+        setIsFormOpen(false);
+        window.location.reload();
       } else {
-        window.dispatchEvent(
-          new CustomEvent("newRecordAdded", {
-            detail: updatedRecord,
-          })
-        );
+        throw new Error(result.error || "Failed to save data");
       }
-
-      resetForm();
-      setIsFormOpen(false);
-      window.location.reload();
-    } else {
-      throw new Error(result.error || "Failed to save data");
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("Error saving data. Please try again.");
     }
-  } catch (error) {
-    console.error("Error saving data:", error);
-    alert("Error saving data. Please try again.");
-  }
-};
+  };
 
   // Clean up object URLs when component unmounts or when previews change
-  
 
   const resetForm = () => {
     // Clean up existing preview URLs
-   
 
     // Reset form data
     setFormData({
       month_date: new Date().toISOString().split("T")[0],
-      day: new Date().getDate(),
-      vendor:'',
-      amount:'',
-      remarks:''
+      day: dayOfWeek,
+      vendor: "",
+      amount: "",
+      remarks: "",
     });
 
-  
     setMapKey(Date.now());
     setIsEditing(false);
   };
@@ -154,13 +151,9 @@ const handleSubmit = async (e) => {
       ...record, // Override with record values
     };
 
-   
     setFormData(updatedRecord);
 
     // If there are existing image URLs in the record, set them as previews
-    
-
- 
 
     setMapKey(Date.now());
     setIsEditing(true);
@@ -173,7 +166,11 @@ const handleSubmit = async (e) => {
   };
 
   const deleteRecord = async () => {
-    if (!window.confirm(`Are you sure you want to delete the expense for "${formData.vendor}" with amount ${formData.amount}?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the expense for "${formData.vendor}" with amount ${formData.amount}?`
+      )
+    ) {
       return;
     }
 
@@ -205,7 +202,6 @@ const handleSubmit = async (e) => {
     }
   };
 
-
   return (
     <div className="container-fluid">
       <div className="row">
@@ -216,10 +212,7 @@ const handleSubmit = async (e) => {
               className="card-header text-white d-flex justify-content-between align-items-center"
             >
               <h2 className="mb-0">Daily Sheet</h2>
-              <button 
-                className="btn btn-light" 
-                onClick={openNewForm}
-              >
+              <button className="btn btn-light" onClick={openNewForm}>
                 Add New Record
               </button>
             </div>
@@ -254,7 +247,7 @@ const handleSubmit = async (e) => {
 
           <form onSubmit={handleSubmit}>
             <div className="row g-2">
-              <div className="col-md-6" >
+              <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label">Month Date</label>
                   <input
@@ -267,7 +260,6 @@ const handleSubmit = async (e) => {
                   />
                 </div>
               </div>
-
 
               <div style={{ display: "none" }} className="col-md-6">
                 <div className="form-group">
@@ -283,7 +275,7 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-              <div className="col-md-6" >
+              <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label">Vendor</label>
                   <input
@@ -297,7 +289,7 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-              <div className="col-md-6" >
+              <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label">Amount</label>
                   <input
@@ -312,8 +304,6 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-
-
               <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label">Remarks</label>
@@ -326,17 +316,24 @@ const handleSubmit = async (e) => {
                   />
                 </div>
               </div>
-
             </div>
 
             <div className="mt-4 d-flex justify-content-between">
               {isEditing && (
-                <button type="button" className="btn btn-danger" onClick={deleteRecord}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={deleteRecord}
+                >
                   Delete
                 </button>
               )}
               <div className="ms-auto">
-                <button type="button" className="btn btn-secondary me-2" onClick={closeForm}>
+                <button
+                  type="button"
+                  className="btn btn-secondary me-2"
+                  onClick={closeForm}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">

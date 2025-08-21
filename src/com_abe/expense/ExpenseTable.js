@@ -31,9 +31,9 @@ function ExpenseTable({ onRowClick }) {
 
   // Format number with commas
   const formatAmount = (amount) => {
-    return amount.toLocaleString('en-US', {
+    return amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   };
 
@@ -66,7 +66,9 @@ function ExpenseTable({ onRowClick }) {
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch("http://121.121.232.54:88/abe-yus/fetchExpenseData.php?month=" + month)
+    fetch(
+      "http://121.121.232.54:88/abe-yus/fetchExpenseData.php?month=" + month
+    )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -140,26 +142,33 @@ function ExpenseTable({ onRowClick }) {
     // { key: 'month', label: 'Month' },
     // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
     {
+      key: "company",
+      label: "Company",
+      // ,
+      // headerStyle: { backgroundColor: "#196F3D" },
+      // cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
       key: "vendor",
-      label: "Vendor"
+      label: "Vendor",
       // ,
       // headerStyle: { backgroundColor: "#196F3D" },
       // cellStyle: { backgroundColor: "#196F3D" },
     },
     {
       key: "amount",
-      label: "Amount"
+      label: "Amount",
       // ,
       // headerStyle: { backgroundColor: "#196F3D" },
       // cellStyle: { backgroundColor: "#196F3D" },
     },
     {
       key: "remarks",
-      label: "Remarks"
+      label: "Remarks",
       // ,
       // headerStyle: { backgroundColor: "#196F3D" },
       // cellStyle: { backgroundColor: "#196F3D" },
-    }
+    },
   ];
 
   // Specify which columns you want to include in the filter
@@ -218,10 +227,12 @@ function ExpenseTable({ onRowClick }) {
             <div>
               <h5 className="mb-0">
                 <i className="bi bi-calculator me-2"></i>
-                Total Amount: <span className="fw-bold">RM {formatAmount(totalAmount)}</span>
+                Total Amount:{" "}
+                <span className="fw-bold">RM {formatAmount(totalAmount)}</span>
               </h5>
               <small className="text-muted">
-                Based on {filteredData.length} record(s) {hasActiveFilters && "(filtered)"}
+                Based on {filteredData.length} record(s){" "}
+                {hasActiveFilters && "(filtered)"}
               </small>
             </div>
           </div>
@@ -392,7 +403,10 @@ function ExpenseTable({ onRowClick }) {
                               key={`${record.id}-${column.key}`}
                               style={column.cellStyle || {}}
                             >
-                              RM {formatAmount(parseFloat(record[column.key] || 0))}
+                              RM{" "}
+                              {formatAmount(
+                                parseFloat(record[column.key] || 0)
+                              )}
                             </td>
                           );
                         } else {
@@ -421,9 +435,7 @@ function ExpenseTable({ onRowClick }) {
                   <td colSpan={columns.length - 2} className="text-end fw-bold">
                     Total:
                   </td>
-                  <td className="fw-bold">
-                    RM {formatAmount(totalAmount)}
-                  </td>
+                  <td className="fw-bold">RM {formatAmount(totalAmount)}</td>
                   <td></td>
                 </tr>
               </tfoot>
