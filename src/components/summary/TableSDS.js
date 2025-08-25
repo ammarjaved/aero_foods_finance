@@ -21,6 +21,7 @@ function TableSDS() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const [showChart, setShowChart] = useState(true); // Added missing state
   const [showExpenseInChart, setShowExpenseInChart] = useState(true);
+  const [showActualInChart, setShowActualInChart] = useState(true);
 
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -288,6 +289,9 @@ function TableSDS() {
   const toggleExpenseInChart = () => {
     setShowExpenseInChart(!showExpenseInChart);
   };
+  const toggleActualInChart = () => {
+    setShowActualInChart(!showActualInChart);
+  };
 
   const columns = [
     {
@@ -500,22 +504,41 @@ function TableSDS() {
           {/* Chart Section */}
           {showChart && (
             <div className="card mb-3">
-              <div className="card-header  d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Sales vs Actual vs Expense</h5>
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="showExpenseToggle"
-                    checked={showExpenseInChart}
-                    onChange={toggleExpenseInChart}
-                  />
-                  <label
-                    className="form-check-label"
-                    htmlFor="showExpenseToggle"
-                  >
-                    Show Total Expense
-                  </label>
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h5 className="mb-0">Sales vs Actual vs Expense</h5>
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="showExpenseToggle"
+                        checked={showExpenseInChart}
+                        onChange={toggleExpenseInChart}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="showExpenseToggle"
+                      >
+                        Show Total Expense
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="showActualToggle"
+                        checked={showActualInChart}
+                        onChange={toggleActualInChart}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="showActualToggle"
+                      >
+                        Show Total Actual
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="card-body">
@@ -552,15 +575,17 @@ function TableSDS() {
                         dot={{ fill: "#0d6efd", strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6 }}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey="total_actual"
-                        stroke="#198754"
-                        strokeWidth={2}
-                        name="Total Actual"
-                        dot={{ fill: "#198754", strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
+                      {showActualInChart && (
+                        <Line
+                          type="monotone"
+                          dataKey="total_actual"
+                          stroke="#198754"
+                          strokeWidth={2}
+                          name="Total Actual"
+                          dot={{ fill: "#198754", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      )}
                       {showExpenseInChart && (
                         <Line
                           type="monotone"
