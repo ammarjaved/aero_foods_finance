@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
-  Brush
+  Brush,
 } from "recharts";
 
 function TableSDS() {
@@ -20,7 +20,8 @@ function TableSDS() {
   const [filteredData, setFilteredData] = useState([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const [showChart, setShowChart] = useState(true); // Added missing state
-  
+  const [showExpenseInChart, setShowExpenseInChart] = useState(true);
+
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
@@ -44,19 +45,26 @@ function TableSDS() {
         "http://121.121.232.54:88/aero-foods/mon-sum-mixiue.php?month=" + month
       );
       const fetchedData = await response.json();
-      
+
       const processedData = fetchedData
-        .map(item => ({
+        .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),
           total_actual: parseFloat(item.total_actual || 0),
           total_variance: parseFloat(item.total_variance || 0),
-          total_expense: item.total_expense ? parseFloat(item.total_expense) : null,
-          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", { weekday: "long" }),
-          chart_date: new Date(item.month_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+          total_expense: item.total_expense
+            ? parseFloat(item.total_expense)
+            : null,
+          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
+            weekday: "long",
+          }),
+          chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
         }))
         .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
-      
+
       return processedData;
     } catch (error) {
       console.error("Error fetching data1:", error);
@@ -70,19 +78,26 @@ function TableSDS() {
         "http://121.121.232.54:88/aero-foods/mon-sum-mixiue2.php?month=" + month
       );
       const fetchedData = await response.json();
-      
+
       const processedData = fetchedData
-        .map(item => ({
+        .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),
           total_actual: parseFloat(item.total_actual || 0),
           total_variance: parseFloat(item.total_variance || 0),
-          total_expense: item.total_expense ? parseFloat(item.total_expense) : null,
-          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", { weekday: "long" }),
-          chart_date: new Date(item.month_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+          total_expense: item.total_expense
+            ? parseFloat(item.total_expense)
+            : null,
+          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
+            weekday: "long",
+          }),
+          chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
         }))
         .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
-      
+
       return processedData;
     } catch (error) {
       console.error("Error fetching data2:", error);
@@ -96,19 +111,26 @@ function TableSDS() {
         "http://121.121.232.54:88/aero-foods/mon-sum-mixiue3.php?month=" + month
       );
       const fetchedData = await response.json();
-      
+
       const processedData = fetchedData
-        .map(item => ({
+        .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),
           total_actual: parseFloat(item.total_actual || 0),
           total_variance: parseFloat(item.total_variance || 0),
-          total_expense: item.total_expense ? parseFloat(item.total_expense) : null,
-          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", { weekday: "long" }),
-          chart_date: new Date(item.month_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+          total_expense: item.total_expense
+            ? parseFloat(item.total_expense)
+            : null,
+          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
+            weekday: "long",
+          }),
+          chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
         }))
         .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
-      
+
       return processedData;
     } catch (error) {
       console.error("Error fetching data3:", error);
@@ -119,13 +141,13 @@ function TableSDS() {
   // Combined fetch and process function
   const fetchAllDataAndProcess = async (month) => {
     setLoading(true);
-    
+
     try {
       // Fetch all data concurrently
       const [fetchedData1, fetchedData2, fetchedData3] = await Promise.all([
         fetchData1(month),
         fetchData2(month),
-        fetchData3(month)
+        fetchData3(month),
       ]);
 
       // Update individual data states
@@ -135,71 +157,86 @@ function TableSDS() {
 
       // Combine and process data
       const combinedData = [...fetchedData1, ...fetchedData2, ...fetchedData3];
-      
+
       // Group by date and sum the values
       const groupedData = combinedData.reduce((acc, item) => {
         const date = item.month_date || item.date;
         if (!date) return acc;
-        
+
         // Filter by month if specified
         if (month && month !== "") {
           const itemMonth = new Date(date).getMonth() + 1;
           if (itemMonth !== parseInt(month)) return acc;
         }
-        
+
         if (!acc[date]) {
           acc[date] = {
             month_date: date,
-            day_of_week: new Date(date).toLocaleDateString("en-US", { weekday: "long" }),
-            chart_date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            day_of_week: new Date(date).toLocaleDateString("en-US", {
+              weekday: "long",
+            }),
+            chart_date: new Date(date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
             total_sales: 0,
             total_actual: 0,
             total_variance: 0,
-            total_expense: 0
+            total_expense: 0,
           };
         }
-        
+
         // Sum the values
-        acc[date].total_sales += parseFloat(item.total_sales || item.sales || 0);
-        acc[date].total_actual += parseFloat(item.total_actual || item.actual || 0);
-        acc[date].total_variance += parseFloat(item.total_variance || item.variance || 0);
-        acc[date].total_expense += parseFloat(item.total_expense || item.expense || 0);
-        
+        acc[date].total_sales += parseFloat(
+          item.total_sales || item.sales || 0
+        );
+        acc[date].total_actual += parseFloat(
+          item.total_actual || item.actual || 0
+        );
+        acc[date].total_variance += parseFloat(
+          item.total_variance || item.variance || 0
+        );
+        acc[date].total_expense += parseFloat(
+          item.total_expense || item.expense || 0
+        );
+
         return acc;
       }, {});
-      
+
       // Convert to array and sort by date
       const processedData = Object.values(groupedData)
-        .map(item => ({
+        .map((item) => ({
           ...item,
           // Set values to null if they're 0, null, undefined, or 'N/A' to exclude them from the chart lines
-          total_sales: (item.total_sales === null || 
-                       item.total_sales === undefined || 
-                       item.total_sales === 'N/A' || 
-                       parseFloat(item.total_sales) === 0 || 
-                       isNaN(parseFloat(item.total_sales))) 
-                       ? null 
-                       : parseFloat(item.total_sales),
-          total_actual: (item.total_actual === null || 
-                        item.total_actual === undefined || 
-                        item.total_actual === 'N/A' || 
-                        parseFloat(item.total_actual) === 0 || 
-                        isNaN(parseFloat(item.total_actual))) 
-                        ? null 
-                        : parseFloat(item.total_actual),
-          total_expense: (item.total_expense === null || 
-                         item.total_expense === undefined || 
-                         item.total_expense === 'N/A' || 
-                         parseFloat(item.total_expense) === 0 || 
-                         isNaN(parseFloat(item.total_expense))) 
-                         ? null 
-                         : parseFloat(item.total_expense)
+          total_sales:
+            item.total_sales === null ||
+            item.total_sales === undefined ||
+            item.total_sales === "N/A" ||
+            parseFloat(item.total_sales) === 0 ||
+            isNaN(parseFloat(item.total_sales))
+              ? null
+              : parseFloat(item.total_sales),
+          total_actual:
+            item.total_actual === null ||
+            item.total_actual === undefined ||
+            item.total_actual === "N/A" ||
+            parseFloat(item.total_actual) === 0 ||
+            isNaN(parseFloat(item.total_actual))
+              ? null
+              : parseFloat(item.total_actual),
+          total_expense:
+            item.total_expense === null ||
+            item.total_expense === undefined ||
+            item.total_expense === "N/A" ||
+            parseFloat(item.total_expense) === 0 ||
+            isNaN(parseFloat(item.total_expense))
+              ? null
+              : parseFloat(item.total_expense),
         }))
         .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
-      
+
       setData(processedData);
       setFilteredData(processedData);
-      
     } catch (error) {
       console.error("Error processing data:", error);
     } finally {
@@ -248,6 +285,10 @@ function TableSDS() {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
+  const toggleExpenseInChart = () => {
+    setShowExpenseInChart(!showExpenseInChart);
+  };
+
   const columns = [
     {
       key: "month_date",
@@ -284,7 +325,7 @@ function TableSDS() {
       label: "Total Expense",
       classHead: "bg-danger text-white",
       classBody: "bg-danger text-white",
-    }
+    },
   ];
 
   const indexOfLastRecord = currentPage * recordsPerPage;
@@ -326,7 +367,10 @@ function TableSDS() {
 
   const formatCurrency = (value) => {
     if (value === null || value === undefined) return "N/A";
-    return `RM${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `RM${value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   const getVarianceColor = (variance) => {
@@ -341,10 +385,14 @@ function TableSDS() {
         <div className="bg-white p-3 border rounded shadow">
           <p className="fw-bold mb-2">{`Date: ${label}`}</p>
           {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color, margin: '4px 0' }}>
-              {`${entry.dataKey === 'total_sales' ? 'Total Sales' : 
-                 entry.dataKey === 'total_actual' ? 'Total Actual' : 
-                 'Total Expense'}: ${formatCurrency(entry.value)}`}
+            <p key={index} style={{ color: entry.color, margin: "4px 0" }}>
+              {`${
+                entry.dataKey === "total_sales"
+                  ? "Total Sales"
+                  : entry.dataKey === "total_actual"
+                  ? "Total Actual"
+                  : "Total Expense"
+              }: ${formatCurrency(entry.value)}`}
             </p>
           ))}
         </div>
@@ -373,8 +421,8 @@ function TableSDS() {
                   aria-expanded={isFilterPanelOpen}
                   aria-controls="filterPanel"
                 >
-                  <span style={{ fontSize: '16px' }}>
-                    {isFilterPanelOpen ? '▼' : '▶'}
+                  <span style={{ fontSize: "16px" }}>
+                    {isFilterPanelOpen ? "▼" : "▶"}
                   </span>
                 </button>
                 <h5 className="mb-0">
@@ -389,7 +437,7 @@ function TableSDS() {
                   className="btn btn-sm btn-outline-info me-2"
                   onClick={toggleChart}
                 >
-                  {showChart ? 'Hide Chart' : 'Show Chart'}
+                  {showChart ? "Hide Chart" : "Show Chart"}
                 </button>
                 {hasActiveFilters && (
                   <button
@@ -437,7 +485,9 @@ function TableSDS() {
                         id="dateFilter"
                         placeholder="Filter by date"
                         value={filterValues.month_date || ""}
-                        onChange={(e) => handleFilterChange("month_date", e.target.value)}
+                        onChange={(e) =>
+                          handleFilterChange("month_date", e.target.value)
+                        }
                       />
                       <label htmlFor="dateFilter">Filter by Date</label>
                     </div>
@@ -450,11 +500,26 @@ function TableSDS() {
           {/* Chart Section */}
           {showChart && (
             <div className="card mb-3">
-              <div className="card-header">
+              <div className="card-header  d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Sales vs Actual vs Expense</h5>
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="showExpenseToggle"
+                    checked={showExpenseInChart}
+                    onChange={toggleExpenseInChart}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="showExpenseToggle"
+                  >
+                    Show Total Expense
+                  </label>
+                </div>
               </div>
               <div className="card-body">
-                <div style={{ width: '100%', height: '400px' }}>
+                <div style={{ width: "100%", height: "400px" }}>
                   <ResponsiveContainer>
                     <LineChart
                       data={filteredData}
@@ -462,53 +527,55 @@ function TableSDS() {
                         top: 20,
                         right: 30,
                         left: 80,
-                        bottom: 80
+                        bottom: 80,
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="chart_date" 
+                      <XAxis
+                        dataKey="chart_date"
                         angle={-45}
                         textAnchor="end"
                         height={80}
                         interval={0}
                       />
-                      <YAxis 
+                      <YAxis
                         tickFormatter={(value) => `RM${value.toLocaleString()}`}
                       />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total_sales" 
-                        stroke="#0d6efd" 
+                      <Line
+                        type="monotone"
+                        dataKey="total_sales"
+                        stroke="#0d6efd"
                         strokeWidth={2}
                         name="Total Sales"
-                        dot={{ fill: '#0d6efd', strokeWidth: 2, r: 4 }}
+                        dot={{ fill: "#0d6efd", strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6 }}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total_actual" 
-                        stroke="#198754" 
+                      <Line
+                        type="monotone"
+                        dataKey="total_actual"
+                        stroke="#198754"
                         strokeWidth={2}
                         name="Total Actual"
-                        dot={{ fill: '#198754', strokeWidth: 2, r: 4 }}
+                        dot={{ fill: "#198754", strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6 }}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total_expense" 
-                        stroke="#dc3545" 
-                        strokeWidth={2}
-                        name="Total Expense"
-                        dot={{ fill: '#dc3545', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6 }}
-                        connectNulls={false}
-                      />
-                      <Brush 
-                        dataKey="chart_date" 
-                        height={30} 
+                      {showExpenseInChart && (
+                        <Line
+                          type="monotone"
+                          dataKey="total_expense"
+                          stroke="#dc3545"
+                          strokeWidth={2}
+                          name="Total Expense"
+                          dot={{ fill: "#dc3545", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6 }}
+                          connectNulls={false}
+                        />
+                      )}
+                      <Brush
+                        dataKey="chart_date"
+                        height={30}
                         stroke="#8884d8"
                         fill="#f0f0f0"
                       />
@@ -550,10 +617,7 @@ function TableSDS() {
                   <thead>
                     <tr>
                       {columns.map((column) => (
-                        <th
-                          key={column.key}
-                          className={column.classHead}
-                        >
+                        <th key={column.key} className={column.classHead}>
                           {column.label}
                         </th>
                       ))}
@@ -579,11 +643,17 @@ function TableSDS() {
                           <td className={columns[3].classBody}>
                             {formatCurrency(record.total_actual)}
                           </td>
-                          <td className={`${columns[4].classBody} ${getVarianceColor(record.total_variance)}`}>
+                          <td
+                            className={`${
+                              columns[4].classBody
+                            } ${getVarianceColor(record.total_variance)}`}
+                          >
                             {formatCurrency(record.total_variance)}
                           </td>
                           <td className={columns[5].classBody}>
-                            {record.total_expense !== null ? formatCurrency(record.total_expense) : "N/A"}
+                            {record.total_expense !== null
+                              ? formatCurrency(record.total_expense)
+                              : "N/A"}
                           </td>
                         </tr>
                       ))
@@ -595,11 +665,19 @@ function TableSDS() {
                       </tr>
                     )}
                     <tr className="fw-bold bg-light">
-                      <td colSpan={2} className="text-end">Total</td>
+                      <td colSpan={2} className="text-end">
+                        Total
+                      </td>
                       <td>{formatCurrency(totals.total_sales)}</td>
                       <td>{formatCurrency(totals.total_actual)}</td>
-                      <td className={getVarianceColor(totals.total_variance)}>{formatCurrency(totals.total_variance)}</td>
-                      <td>{totals.total_expense ? formatCurrency(totals.total_expense) : "N/A"}</td>
+                      <td className={getVarianceColor(totals.total_variance)}>
+                        {formatCurrency(totals.total_variance)}
+                      </td>
+                      <td>
+                        {totals.total_expense
+                          ? formatCurrency(totals.total_expense)
+                          : "N/A"}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -608,7 +686,11 @@ function TableSDS() {
               {/* Pagination controls - bottom */}
               <nav aria-label="Page navigation" className="mt-3">
                 <ul className="pagination justify-content-center">
-                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       className="page-link"
                       style={{ backgroundColor: "#F8D7DA" }}
@@ -624,12 +706,15 @@ function TableSDS() {
                     if (
                       pageNumber === 1 ||
                       pageNumber === totalPages ||
-                      (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      (pageNumber >= currentPage - 1 &&
+                        pageNumber <= currentPage + 1)
                     ) {
                       return (
                         <li
                           key={pageNumber}
-                          className={`page-item ${currentPage === pageNumber ? "active" : ""}`}
+                          className={`page-item ${
+                            currentPage === pageNumber ? "active" : ""
+                          }`}
                         >
                           <button
                             style={{ backgroundColor: "#E80000" }}
@@ -642,7 +727,8 @@ function TableSDS() {
                       );
                     } else if (
                       (pageNumber === 2 && currentPage > 3) ||
-                      (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
+                      (pageNumber === totalPages - 1 &&
+                        currentPage < totalPages - 2)
                     ) {
                       return (
                         <li key={pageNumber} className="page-item disabled">
@@ -653,7 +739,11 @@ function TableSDS() {
                     return null;
                   })}
 
-                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       style={{ backgroundColor: "#F8D7DA" }}
                       className="page-link"

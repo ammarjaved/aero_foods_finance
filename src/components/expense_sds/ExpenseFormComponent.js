@@ -345,7 +345,7 @@ function ExpenseFormComponent() {
               style={{ backgroundColor: "#e80000" }}
               className="card-header text-white d-flex justify-content-between align-items-center"
             >
-              <h2 className="mb-0">Daily Sheet</h2>
+              <h2 className="mb-0">SDS HQ</h2>
               <button className="btn btn-light" onClick={openNewForm}>
                 Add New Record
               </button>
