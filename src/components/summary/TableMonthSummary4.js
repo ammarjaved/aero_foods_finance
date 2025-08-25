@@ -28,7 +28,6 @@ function TableMonthSummary4() {
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
-    localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
     fetchData(monthValue);
   };
@@ -38,13 +37,7 @@ function TableMonthSummary4() {
   };
 
   useEffect(() => {
-    const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
-      setSelectedMonth(monthvalue);
-    } else {
-      fetchData(selectedMonth);
-    }
+    fetchData(selectedMonth);
 
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
@@ -67,30 +60,11 @@ function TableMonthSummary4() {
     )
       .then((response) => response.json())
       .then((fetchedData) => {
-        // Convert string values to numbers and sort by date descending
-
+        // Convert string values to numbers and sort by date ascending
         const processedData = fetchedData
           .map((item) => ({
             ...item,
-            total_sales:
-              parseFloat(item.total_sales) === 0
-                ? null
-                : parseFloat(item.total_sales),
-            total_actual:
-              parseFloat(item.total_actual) === 0
-                ? null
-                : parseFloat(item.total_actual),
-            total_variance:
-              parseFloat(item.total_variance) === 0
-                ? null
-                : parseFloat(item.total_variance),
-            total_expense:
-              parseFloat(item.total_expense) === 0
-                ? null
-                : parseFloat(item.total_expense),
-            day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
-              weekday: "long",
-            }),
+            total_expense: parseFloat(item.total_expense) || 0,
             chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
@@ -162,30 +136,6 @@ function TableMonthSummary4() {
       classBody: "bg-dark text-white",
     },
     {
-      key: "day_of_week",
-      label: "Day",
-      classHead: "bg-secondary text-white",
-      classBody: "bg-secondary text-white",
-    },
-    {
-      key: "total_sales",
-      label: "Total Sales",
-      classHead: "bg-primary text-white",
-      classBody: "bg-primary text-white",
-    },
-    {
-      key: "total_actual",
-      label: "Total Actual",
-      classHead: "bg-success text-white",
-      classBody: "bg-success text-white",
-    },
-    {
-      key: "total_variance",
-      label: "Variance",
-      classHead: "bg-warning text-dark",
-      classBody: "bg-warning text-dark",
-    },
-    {
       key: "total_expense",
       label: "Total Expense",
       classHead: "bg-danger text-white",
@@ -203,13 +153,10 @@ function TableMonthSummary4() {
 
   const totals = filteredData.reduce(
     (acc, item) => {
-      acc.total_sales += item.total_sales || 0;
-      acc.total_actual += item.total_actual || 0;
-      acc.total_variance += item.total_variance || 0;
       acc.total_expense += item.total_expense || 0;
       return acc;
     },
-    { total_sales: 0, total_actual: 0, total_variance: 0, total_expense: 0 }
+    { total_expense: 0 }
   );
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -232,17 +179,8 @@ function TableMonthSummary4() {
 
   const formatCurrency = (value) => {
     if (value === null || value === undefined) return "N/A";
-    // Use toLocaleString to add commas, specify minimumFractionDigits and maximumFractionDigits for two decimals
-    return `RM${value.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
-  const getVarianceColor = (variance) => {
-    if (variance > 0) return "text-success";
-    if (variance < 0) return "text-danger";
-    return "text-muted";
+    // Round to whole number and add commas
+    return `RM${Math.round(value).toLocaleString()}`;
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -252,13 +190,7 @@ function TableMonthSummary4() {
           <p className="fw-bold mb-2">{`Date: ${label}`}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color, margin: "4px 0" }}>
-              {`${
-                entry.dataKey === "total_sales"
-                  ? "Total Sales"
-                  : entry.dataKey === "total_actual"
-                  ? "Total Actual"
-                  : "Total Expense"
-              }: ${formatCurrency(entry.value)}`}
+              {`Total Expense: ${formatCurrency(entry.value)}`}
             </p>
           ))}
         </div>
@@ -362,10 +294,11 @@ function TableMonthSummary4() {
               </div>
             )}
           </div>
+
           {showChart && (
             <div className="card mb-3">
               <div className="card-header">
-                <h5 className="mb-0">Sales vs Actual vs Expense</h5>
+                <h5 className="mb-0">Total Expense Trend</h5>
               </div>
               <div className="card-body">
                 <div style={{ width: "100%", height: "400px" }}>
@@ -388,28 +321,12 @@ function TableMonthSummary4() {
                         interval={0}
                       />
                       <YAxis
-                        tickFormatter={(value) => `RM${value.toLocaleString()}`}
+                        tickFormatter={(value) =>
+                          `RM${Math.round(value).toLocaleString()}`
+                        }
                       />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="total_sales"
-                        stroke="#0d6efd"
-                        strokeWidth={2}
-                        name="Total Sales"
-                        dot={{ fill: "#0d6efd", strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="total_actual"
-                        stroke="#198754"
-                        strokeWidth={2}
-                        name="Total Actual"
-                        dot={{ fill: "#198754", strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
                       <Line
                         type="monotone"
                         dataKey="total_expense"
@@ -457,7 +374,7 @@ function TableMonthSummary4() {
 
           {/* Main content area */}
           <div className="row">
-            <div className={`col-12 } transition-all`}>
+            <div className={`col-12 transition-all`}>
               {/* Table */}
               <div className="table-responsive shadow rounded-3">
                 <table className="table table-striped table-hover table-bordered mb-0">
@@ -478,29 +395,11 @@ function TableMonthSummary4() {
                           style={{ cursor: "pointer" }}
                           className="hover-row"
                         >
-                          <td className={columns[0].classBody}>
+                          <td className="bg-dark text-white">
                             {record.month_date}
                           </td>
-                          <td className={columns[1].classBody}>
-                            {record.day_of_week}
-                          </td>
-                          <td className={columns[2].classBody}>
-                            {formatCurrency(record.total_sales)}
-                          </td>
-                          <td className={columns[3].classBody}>
-                            {formatCurrency(record.total_actual)}
-                          </td>
-                          <td
-                            className={`${
-                              columns[4].classBody
-                            } ${getVarianceColor(record.total_variance)}`}
-                          >
-                            {formatCurrency(record.total_variance)}
-                          </td>
-                          <td className={columns[5].classBody}>
-                            {record.total_expense !== null
-                              ? formatCurrency(record.total_expense)
-                              : "N/A"}
+                          <td className="bg-danger text-white">
+                            {formatCurrency(record.total_expense)}
                           </td>
                         </tr>
                       ))
@@ -512,20 +411,8 @@ function TableMonthSummary4() {
                       </tr>
                     )}
                     <tr className="fw-bold bg-light">
-                      <td colSpan={2} className="text-end">
-                        Total
-                      </td>{" "}
-                      {/* Day + Date columns */}
-                      <td>{formatCurrency(totals.total_sales)}</td>
-                      <td>{formatCurrency(totals.total_actual)}</td>
-                      <td className={getVarianceColor(totals.total_variance)}>
-                        {formatCurrency(totals.total_variance)}
-                      </td>
-                      <td>
-                        {totals.total_expense
-                          ? formatCurrency(totals.total_expense)
-                          : "N/A"}
-                      </td>
+                      <td className="text-end">Total</td>
+                      <td>{formatCurrency(totals.total_expense)}</td>
                     </tr>
                   </tbody>
                 </table>

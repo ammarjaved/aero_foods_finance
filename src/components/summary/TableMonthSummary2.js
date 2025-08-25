@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Brush,
+} from "recharts";
 
 function TableMonthSummary2() {
   const [data, setData] = useState([]);
@@ -9,8 +19,9 @@ function TableMonthSummary2() {
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
-    const [showChart, setShowChart] = useState(true);
-  
+  const [showChart, setShowChart] = useState(true);
+  const [showExpenseInChart, setShowExpenseInChart] = useState(true);
+
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
@@ -23,22 +34,15 @@ function TableMonthSummary2() {
     fetchData(monthValue);
   };
 
- const toggleChart = () => {
+  const toggleChart = () => {
     setShowChart(!showChart);
   };
-
- 
 
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
     if (monthvalue) {
       fetchData(monthvalue);
       setSelectedMonth(monthvalue);
-
-
-
-
-
     } else {
       fetchData(selectedMonth);
     }
@@ -65,20 +69,36 @@ function TableMonthSummary2() {
       .then((response) => response.json())
       .then((fetchedData) => {
         // Convert string values to numbers and sort by date descending
-       
-        const processedData = fetchedData
-          .map(item => ({
-            ...item,
-              total_sales: parseFloat(item.total_sales) === 0 ? null : parseFloat(item.total_sales),
-            total_actual: parseFloat(item.total_actual) === 0 ? null : parseFloat(item.total_actual),
-            total_variance: parseFloat(item.total_variance) === 0 ? null : parseFloat(item.total_variance),
-             total_expense: parseFloat(item.total_expense) === 0 ? null : parseFloat(item.total_expense),
-            day_of_week:new Date(item.month_date).toLocaleDateString("en-US", { weekday: "long" }),
-            chart_date: new Date(item.month_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
+        const processedData = fetchedData
+          .map((item) => ({
+            ...item,
+            total_sales:
+              parseFloat(item.total_sales) === 0
+                ? null
+                : parseFloat(item.total_sales),
+            total_actual:
+              parseFloat(item.total_actual) === 0
+                ? null
+                : parseFloat(item.total_actual),
+            total_variance:
+              parseFloat(item.total_variance) === 0
+                ? null
+                : parseFloat(item.total_variance),
+            total_expense:
+              parseFloat(item.total_expense) === 0
+                ? null
+                : parseFloat(item.total_expense),
+            day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
+              weekday: "long",
+            }),
+            chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
           }))
           .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
-        
+
         setData(processedData);
         setFilteredData(processedData);
         setLoading(false);
@@ -135,6 +155,10 @@ function TableMonthSummary2() {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
+  const toggleExpenseInChart = () => {
+    setShowExpenseInChart(!showExpenseInChart);
+  };
+
   const columns = [
     {
       key: "month_date",
@@ -143,11 +167,11 @@ function TableMonthSummary2() {
       classBody: "bg-dark text-white",
     },
     {
-    key: "day_of_week",
-    label: "Day",
-    classHead: "bg-secondary text-white",
-    classBody: "bg-secondary text-white",
-     },
+      key: "day_of_week",
+      label: "Day",
+      classHead: "bg-secondary text-white",
+      classBody: "bg-secondary text-white",
+    },
     {
       key: "total_sales",
       label: "Total Sales",
@@ -171,7 +195,7 @@ function TableMonthSummary2() {
       label: "Total Expense",
       classHead: "bg-danger text-white",
       classBody: "bg-danger text-white",
-    }
+    },
   ];
 
   const indexOfLastRecord = currentPage * recordsPerPage;
@@ -182,17 +206,16 @@ function TableMonthSummary2() {
   );
   const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
-
   const totals = filteredData.reduce(
-  (acc, item) => {
-    acc.total_sales += item.total_sales || 0;
-    acc.total_actual += item.total_actual || 0;
-    acc.total_variance += item.total_variance || 0;
-    acc.total_expense += item.total_expense || 0;
-    return acc;
-  },
-  { total_sales: 0, total_actual: 0, total_variance: 0, total_expense: 0 }
-);
+    (acc, item) => {
+      acc.total_sales += item.total_sales || 0;
+      acc.total_actual += item.total_actual || 0;
+      acc.total_variance += item.total_variance || 0;
+      acc.total_expense += item.total_expense || 0;
+      return acc;
+    },
+    { total_sales: 0, total_actual: 0, total_variance: 0, total_expense: 0 }
+  );
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -212,11 +235,14 @@ function TableMonthSummary2() {
     (value) => value && value.trim() !== ""
   );
 
-   const formatCurrency = (value) => {
-  if (value === null || value === undefined) return "N/A";
-  // Use toLocaleString to add commas, specify minimumFractionDigits and maximumFractionDigits for two decimals
-  return `RM${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined) return "N/A";
+    // Use toLocaleString to add commas, specify minimumFractionDigits and maximumFractionDigits for two decimals
+    return `RM${value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
 
   const getVarianceColor = (variance) => {
     if (variance > 0) return "text-success";
@@ -224,17 +250,20 @@ function TableMonthSummary2() {
     return "text-muted";
   };
 
-
-    const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border rounded shadow">
           <p className="fw-bold mb-2">{`Date: ${label}`}</p>
           {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color, margin: '4px 0' }}>
-              {`${entry.dataKey === 'total_sales' ? 'Total Sales' : 
-                 entry.dataKey === 'total_actual' ? 'Total Actual' : 
-                 'Total Expense'}: ${formatCurrency(entry.value)}`}
+            <p key={index} style={{ color: entry.color, margin: "4px 0" }}>
+              {`${
+                entry.dataKey === "total_sales"
+                  ? "Total Sales"
+                  : entry.dataKey === "total_actual"
+                  ? "Total Actual"
+                  : "Total Expense"
+              }: ${formatCurrency(entry.value)}`}
             </p>
           ))}
         </div>
@@ -242,8 +271,6 @@ function TableMonthSummary2() {
     }
     return null;
   };
-
-
 
   return (
     <div className="container-fluid mt-2 position-relative">
@@ -265,8 +292,8 @@ function TableMonthSummary2() {
                   aria-expanded={isFilterPanelOpen}
                   aria-controls="filterPanel"
                 >
-                  <span style={{ fontSize: '16px' }}>
-                    {isFilterPanelOpen ? '▼' : '▶'}
+                  <span style={{ fontSize: "16px" }}>
+                    {isFilterPanelOpen ? "▼" : "▶"}
                   </span>
                 </button>
                 <h5 className="mb-0">
@@ -277,11 +304,11 @@ function TableMonthSummary2() {
                 </h5>
               </div>
               <div>
-                  <button
+                <button
                   className="btn btn-sm btn-outline-info me-2"
                   onClick={toggleChart}
                 >
-                  {showChart ? 'Hide Chart' : 'Show Chart'}
+                  {showChart ? "Hide Chart" : "Show Chart"}
                 </button>
                 {hasActiveFilters && (
                   <button
@@ -329,7 +356,9 @@ function TableMonthSummary2() {
                         id="dateFilter"
                         placeholder="Filter by date"
                         value={filterValues.month_date || ""}
-                        onChange={(e) => handleFilterChange("month_date", e.target.value)}
+                        onChange={(e) =>
+                          handleFilterChange("month_date", e.target.value)
+                        }
                       />
                       <label htmlFor="dateFilter">Filter by Date</label>
                     </div>
@@ -338,78 +367,95 @@ function TableMonthSummary2() {
               </div>
             )}
           </div>
-          
 
-               {showChart && (
-                      <div className="card mb-3">
-                        <div className="card-header">
-                          <h5 className="mb-0">Sales vs Actual vs Expense</h5>
-                        </div>
-                        <div className="card-body">
-                          <div style={{ width: '100%', height: '400px' }}>
-                            <ResponsiveContainer>
-                              <LineChart
-                                data={filteredData}
-                                margin={{
-                                  top: 20,
-                                  right: 30,
-                                  left: 20,
-                                  bottom: 80
-                                }}
-                              >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis 
-                                  dataKey="chart_date" 
-                                  angle={-45}
-                                  textAnchor="end"
-                                  height={80}
-                                  interval={0}
-                                />
-                                <YAxis 
-                                  tickFormatter={(value) => `RM${value.toLocaleString()}`}
-                                />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend />
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="total_sales" 
-                                  stroke="#0d6efd" 
-                                  strokeWidth={2}
-                                  name="Total Sales"
-                                  dot={{ fill: '#0d6efd', strokeWidth: 2, r: 4 }}
-                                  activeDot={{ r: 6 }}
-                                />
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="total_actual" 
-                                  stroke="#198754" 
-                                  strokeWidth={2}
-                                  name="Total Actual"
-                                  dot={{ fill: '#198754', strokeWidth: 2, r: 4 }}
-                                  activeDot={{ r: 6 }}
-                                />
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="total_expense" 
-                                  stroke="#dc3545" 
-                                  strokeWidth={2}
-                                  name="Total Expense"
-                                  dot={{ fill: '#dc3545', strokeWidth: 2, r: 4 }}
-                                  activeDot={{ r: 6 }}
-                                  connectNulls={false}
-                                />
-                                <Brush 
-                                  dataKey="chart_date" 
-                                  height={30} 
-                                  stroke="#8884d8"
-                                  fill="#f0f0f0"
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+          {showChart && (
+            <div className="card mb-3">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Sales vs Actual vs Expense</h5>
+
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="showExpenseToggle"
+                    checked={showExpenseInChart}
+                    onChange={toggleExpenseInChart}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="showExpenseToggle"
+                  >
+                    Show Total Expense
+                  </label>
+                </div>
+              </div>
+              <div className="card-body">
+                <div style={{ width: "100%", height: "400px" }}>
+                  <ResponsiveContainer>
+                    <LineChart
+                      data={filteredData}
+                      margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 80,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="chart_date"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        interval={0}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => `RM${value.toLocaleString()}`}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="total_sales"
+                        stroke="#0d6efd"
+                        strokeWidth={2}
+                        name="Total Sales"
+                        dot={{ fill: "#0d6efd", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total_actual"
+                        stroke="#198754"
+                        strokeWidth={2}
+                        name="Total Actual"
+                        dot={{ fill: "#198754", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      {showExpenseInChart && (
+                        <Line
+                          type="monotone"
+                          dataKey="total_expense"
+                          stroke="#dc3545"
+                          strokeWidth={2}
+                          name="Total Expense"
+                          dot={{ fill: "#dc3545", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6 }}
+                          connectNulls={false}
+                        />
+                      )}
+                      <Brush
+                        dataKey="chart_date"
+                        height={30}
+                        stroke="#8884d8"
+                        fill="#f0f0f0"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Pagination controls - top */}
           <div className="d-flex justify-content-between align-items-center mb-2">
@@ -442,10 +488,7 @@ function TableMonthSummary2() {
                   <thead>
                     <tr>
                       {columns.map((column) => (
-                        <th
-                          key={column.key}
-                          className={column.classHead}
-                        >
+                        <th key={column.key} className={column.classHead}>
                           {column.label}
                         </th>
                       ))}
@@ -462,7 +505,7 @@ function TableMonthSummary2() {
                           <td className={columns[0].classBody}>
                             {record.month_date}
                           </td>
-                            <td className={columns[1].classBody}>
+                          <td className={columns[1].classBody}>
                             {record.day_of_week}
                           </td>
                           <td className={columns[2].classBody}>
@@ -471,11 +514,17 @@ function TableMonthSummary2() {
                           <td className={columns[3].classBody}>
                             {formatCurrency(record.total_actual)}
                           </td>
-                          <td className={`${columns[4].classBody} ${getVarianceColor(record.total_variance)}`}>
+                          <td
+                            className={`${
+                              columns[4].classBody
+                            } ${getVarianceColor(record.total_variance)}`}
+                          >
                             {formatCurrency(record.total_variance)}
                           </td>
                           <td className={columns[5].classBody}>
-                            {record.total_expense !== null ? formatCurrency(record.total_expense) : "N/A"}
+                            {record.total_expense !== null
+                              ? formatCurrency(record.total_expense)
+                              : "N/A"}
                           </td>
                         </tr>
                       ))
@@ -487,12 +536,21 @@ function TableMonthSummary2() {
                       </tr>
                     )}
                     <tr className="fw-bold bg-light">
-                    <td colSpan={2} className="text-end">Total</td> {/* Day + Date columns */}
-                    <td>{formatCurrency(totals.total_sales)}</td>
-                    <td>{formatCurrency(totals.total_actual)}</td>
-                    <td className={getVarianceColor(totals.total_variance)}>{formatCurrency(totals.total_variance)}</td>
-                    <td>{totals.total_expense ? formatCurrency(totals.total_expense) : "N/A"}</td>
-                  </tr>
+                      <td colSpan={2} className="text-end">
+                        Total
+                      </td>{" "}
+                      {/* Day + Date columns */}
+                      <td>{formatCurrency(totals.total_sales)}</td>
+                      <td>{formatCurrency(totals.total_actual)}</td>
+                      <td className={getVarianceColor(totals.total_variance)}>
+                        {formatCurrency(totals.total_variance)}
+                      </td>
+                      <td>
+                        {totals.total_expense
+                          ? formatCurrency(totals.total_expense)
+                          : "N/A"}
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -500,7 +558,11 @@ function TableMonthSummary2() {
               {/* Pagination controls - bottom */}
               <nav aria-label="Page navigation" className="mt-3">
                 <ul className="pagination justify-content-center">
-                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       className="page-link"
                       style={{ backgroundColor: "#F8D7DA" }}
@@ -516,12 +578,15 @@ function TableMonthSummary2() {
                     if (
                       pageNumber === 1 ||
                       pageNumber === totalPages ||
-                      (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      (pageNumber >= currentPage - 1 &&
+                        pageNumber <= currentPage + 1)
                     ) {
                       return (
                         <li
                           key={pageNumber}
-                          className={`page-item ${currentPage === pageNumber ? "active" : ""}`}
+                          className={`page-item ${
+                            currentPage === pageNumber ? "active" : ""
+                          }`}
                         >
                           <button
                             style={{ backgroundColor: "#E80000" }}
@@ -534,7 +599,8 @@ function TableMonthSummary2() {
                       );
                     } else if (
                       (pageNumber === 2 && currentPage > 3) ||
-                      (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
+                      (pageNumber === totalPages - 1 &&
+                        currentPage < totalPages - 2)
                     ) {
                       return (
                         <li key={pageNumber} className="page-item disabled">
@@ -545,7 +611,11 @@ function TableMonthSummary2() {
                     return null;
                   })}
 
-                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       style={{ backgroundColor: "#F8D7DA" }}
                       className="page-link"
@@ -557,15 +627,9 @@ function TableMonthSummary2() {
                 </ul>
               </nav>
             </div>
-
-          
           </div>
-
-         
         </>
       )}
-
-    
     </div>
   );
 }

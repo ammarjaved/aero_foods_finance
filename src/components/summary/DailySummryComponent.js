@@ -35,8 +35,13 @@ function DailySummryComponent() {
           <Tab eventKey="amz" title="Amazon">
             <TableMonthSummary3 />
           </Tab>
+
           <Tab eventKey="sds" title="SDS">
             <TableSDS />
+          </Tab>
+
+          <Tab eventKey="hq" title="SDS HQ">
+            <TableMonthSummary4 />
           </Tab>
 
           <Tab eventKey="new" title="Total Summary">
