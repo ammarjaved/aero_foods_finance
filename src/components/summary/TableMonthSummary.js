@@ -13,6 +13,8 @@ import {
 
 function TableMonthSummary() {
   const [data, setData] = useState([]);
+  // multimonth: Added state to cache data for all months to enable multi-month chart functionality
+  const [allMonthsData, setAllMonthsData] = useState({}); // Store data for all months
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
@@ -27,6 +29,27 @@ function TableMonthSummary() {
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  // multimonth: Added state for managing multiple months in chart view
+
+  const [selectedMonthsForChart, setSelectedMonthsForChart] = useState([
+    monthNumber,
+  ]); // Multiple months for chart
+  const [chartData, setChartData] = useState([]); // Combined data for chart
+
+  const monthNames = {
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
+  };
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
@@ -35,11 +58,120 @@ function TableMonthSummary() {
     fetchData(monthValue);
   };
 
+  const handleAddMonthToChart = (monthToAdd) => {
+    if (!selectedMonthsForChart.includes(parseInt(monthToAdd)) && monthToAdd) {
+      const updatedMonths = [...selectedMonthsForChart, parseInt(monthToAdd)];
+      setSelectedMonthsForChart(updatedMonths);
+
+      // Fetch data for the new month if not already cached
+      if (!allMonthsData[monthToAdd]) {
+        fetchMonthData(monthToAdd);
+      } else {
+        updateChartData(updatedMonths);
+      }
+    }
+  };
+
+  const handleRemoveMonthFromChart = (monthToRemove) => {
+    const updatedMonths = selectedMonthsForChart.filter(
+      (month) => month !== monthToRemove
+    );
+    setSelectedMonthsForChart(updatedMonths);
+    updateChartData(updatedMonths);
+  };
+
+  const fetchMonthData = async (month) => {
+    try {
+      const response = await fetch(
+        `http://121.121.232.54:88/aero-foods/mon-sum-mixiue.php?month=${month}`
+      );
+      const fetchedData = await response.json();
+
+      const processedData = fetchedData
+        .map((item) => ({
+          ...item,
+          total_sales:
+            parseFloat(item.total_sales) === 0
+              ? null
+              : parseFloat(item.total_sales),
+          total_actual:
+            parseFloat(item.total_actual) === 0
+              ? null
+              : parseFloat(item.total_actual),
+          total_variance:
+            parseFloat(item.total_variance) === 0
+              ? null
+              : parseFloat(item.total_variance),
+          total_expense:
+            parseFloat(item.total_expense) === 0
+              ? null
+              : parseFloat(item.total_expense),
+          day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
+            weekday: "long",
+          }),
+          chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          month_name: monthNames[parseInt(month)],
+          sort_date: new Date(item.month_date),
+        }))
+        .sort((a, b) => a.sort_date - b.sort_date);
+
+      // Cache the data
+      setAllMonthsData((prev) => ({
+        ...prev,
+        [month]: processedData,
+      }));
+
+      // If this is the selected month for the table, update the main data
+      if (parseInt(month) === parseInt(selectedMonth)) {
+        setData(processedData);
+        setFilteredData(processedData);
+      }
+
+      // Update chart data
+      updateChartData(
+        selectedMonthsForChart.includes(parseInt(month))
+          ? selectedMonthsForChart
+          : [...selectedMonthsForChart, parseInt(month)]
+      );
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  const updateChartData = (monthsToShow) => {
+    const combinedData = [];
+
+    monthsToShow.forEach((month) => {
+      if (allMonthsData[month]) {
+        allMonthsData[month].forEach((item) => {
+          combinedData.push({
+            ...item,
+            display_date: `${item.chart_date}`,
+            month_year: `${item.month_name}`,
+            full_date: item.sort_date.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: monthsToShow.length > 1 ? "numeric" : undefined,
+            }),
+          });
+        });
+      }
+    });
+
+    // Sort by date
+    combinedData.sort((a, b) => a.sort_date - b.sort_date);
+    setChartData(combinedData);
+  };
+
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
     if (monthvalue) {
       fetchData(monthvalue);
       setSelectedMonth(monthvalue);
+      setSelectedMonthsForChart([parseInt(monthvalue)]);
     } else {
       fetchData(selectedMonth);
     }
@@ -57,6 +189,14 @@ function TableMonthSummary() {
     applyFilters();
   }, [data, filterValues]);
 
+  useEffect(() => {
+    updateChartData(selectedMonthsForChart);
+  }, [selectedMonthsForChart, allMonthsData]);
+
+  // const fetchData = (month) => {
+  //   setLoading(true);
+  //   fetchMonthData(month).finally(() => setLoading(false));
+  // };
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
@@ -65,7 +205,7 @@ function TableMonthSummary() {
     )
       .then((response) => response.json())
       .then((fetchedData) => {
-        // Convert string values to numbers and sort by date descending
+        // Convert string values to numbers and sort by date ascending
 
         const processedData = fetchedData
           .map((item) => ({
@@ -89,16 +229,26 @@ function TableMonthSummary() {
             day_of_week: new Date(item.month_date).toLocaleDateString("en-US", {
               weekday: "long",
             }),
-            // Format date for chart display
             chart_date: new Date(item.month_date).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
             }),
+            // multimonth: Added month name and sort date properties for multi-month chart support
+            month_name: monthNames[parseInt(month)],
+            sort_date: new Date(item.month_date),
           }))
           .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
 
+        // Update table data
         setData(processedData);
         setFilteredData(processedData);
+
+        // multimonth: Cache this data for the chart to enable multi-month functionality
+        setAllMonthsData((prev) => ({
+          ...prev,
+          [month]: processedData,
+        }));
+
         setLoading(false);
       })
       .catch((error) => {
@@ -164,6 +314,7 @@ function TableMonthSummary() {
   const toggleActualInChart = () => {
     setShowActualInChart(!showActualInChart);
   };
+
   const columns = [
     {
       key: "month_date",
@@ -257,9 +408,14 @@ function TableMonthSummary() {
   // Custom tooltip for the chart
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      // Find the data point to get additional info
+      const dataPoint = chartData.find((item) => item.full_date === label);
+
       return (
         <div className="bg-white p-3 border rounded shadow">
-          <p className="fw-bold mb-2">{`Date: ${label}`}</p>
+          <p className="fw-bold mb-2">{`${label}${
+            dataPoint ? ` (${dataPoint.month_year})` : ""
+          }`}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color, margin: "4px 0" }}>
               {`${
@@ -276,6 +432,11 @@ function TableMonthSummary() {
     }
     return null;
   };
+
+  // Get available months for the dropdown (excluding already selected ones)
+  const availableMonths = Object.keys(monthNames).filter(
+    (month) => !selectedMonthsForChart.includes(parseInt(month))
+  );
 
   return (
     <div className="container-fluid mt-2 position-relative">
@@ -337,20 +498,13 @@ function TableMonthSummary() {
                         onChange={handleMonthChange}
                       >
                         <option value="">Select month</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
+                        {Object.entries(monthNames).map(([value, name]) => (
+                          <option key={value} value={value}>
+                            {name}
+                          </option>
+                        ))}
                       </select>
-                      <label htmlFor="monthSelect">Month</label>
+                      <label htmlFor="monthSelect">Month (Table Data)</label>
                     </div>
                   </div>
                   <div className="col">
@@ -377,7 +531,7 @@ function TableMonthSummary() {
           {showChart && (
             <div className="card mb-3">
               <div className="card-header">
-                <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5 className="mb-0">Sales vs Actual vs Expense</h5>
                   <div className="d-flex align-items-center gap-3">
                     <div className="form-check">
@@ -412,12 +566,56 @@ function TableMonthSummary() {
                     </div>
                   </div>
                 </div>
+
+                {/* Month Management Controls */}
+                <div className="row g-2 mb-3">
+                  <div className="col-md-4">
+                    <div className="d-flex gap-2">
+                      <select
+                        className="form-select form-select-sm"
+                        onChange={(e) => handleAddMonthToChart(e.target.value)}
+                        value=""
+                      >
+                        <option value="">Add month to chart...</option>
+                        {availableMonths.map((month) => (
+                          <option key={month} value={month}>
+                            {monthNames[month]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="col-md-8">
+                    <div className="d-flex gap-1 flex-wrap">
+                      <span className="small text-muted me-2">
+                        Chart months:
+                      </span>
+                      {selectedMonthsForChart.map((month) => (
+                        <span
+                          key={month}
+                          className="badge bg-primary d-flex align-items-center gap-1"
+                        >
+                          {monthNames[month]}
+                          {selectedMonthsForChart.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn-close btn-close-white"
+                              style={{ fontSize: "0.6em" }}
+                              onClick={() => handleRemoveMonthFromChart(month)}
+                              aria-label={`Remove ${monthNames[month]} from chart`}
+                            ></button>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="card-body">
                 <div style={{ width: "100%", height: "400px" }}>
                   <ResponsiveContainer>
                     <LineChart
-                      data={filteredData}
+                      data={chartData}
                       margin={{
                         top: 20,
                         right: 30,
@@ -427,11 +625,19 @@ function TableMonthSummary() {
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
-                        dataKey="chart_date"
+                        dataKey="full_date"
                         angle={-45}
                         textAnchor="end"
                         height={80}
-                        interval={0}
+                        interval="preserveStartEnd"
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(value, index) => {
+                          // Show every 5th tick to reduce clutter
+                          if (chartData.length > 31) {
+                            return index % 5 === 0 ? value : "";
+                          }
+                          return value;
+                        }}
                       />
                       <YAxis
                         tickFormatter={(value) => `RM${value.toLocaleString()}`}
@@ -471,10 +677,18 @@ function TableMonthSummary() {
                         />
                       )}
                       <Brush
-                        dataKey="chart_date"
+                        dataKey="full_date"
                         height={30}
                         stroke="#8884d8"
                         fill="#f0f0f0"
+                        tickFormatter={(value) => {
+                          // Show simplified format in brush
+                          const date = new Date(value);
+                          return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -564,8 +778,7 @@ function TableMonthSummary() {
                     <tr className="fw-bold bg-light">
                       <td colSpan={2} className="text-end">
                         Total
-                      </td>{" "}
-                      {/* Day + Date columns */}
+                      </td>
                       <td>{formatCurrency(totals.total_sales)}</td>
                       <td>{formatCurrency(totals.total_actual)}</td>
                       <td className={getVarianceColor(totals.total_variance)}>
