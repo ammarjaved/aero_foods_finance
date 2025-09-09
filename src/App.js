@@ -31,6 +31,7 @@ import Expenses from "./components/expense/Expense";
 import ExpensesYus from "./com_abe/expense/Expense";
 import ExpensesAmz from "./com_amz/expense/Expense";
 import ExpensesSDS from "./components/expense_sds/Expense";
+import Salary from "./components/salary/Salary";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
         <Route path="/Expenses-yus" element={<ExpensesYus />} />
         <Route path="/Expenses-amz" element={<ExpensesAmz />} />
         <Route path="/ExpensesSDS" element={<ExpensesSDS />} />
+        <Route path="/Salary" element={<Salary />} />
 
         <Route path="/" element={<LoginForm />} />
       </Routes>
