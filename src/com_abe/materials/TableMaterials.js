@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableMaterials({ onRowClick,setCatG }) {
+function TableMaterials({ onRowClick, setCatG }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,7 +44,7 @@ function TableMaterials({ onRowClick,setCatG }) {
     } else {
       fetchData(selectedMonth);
     }
-        setCatG(categories);
+    setCatG(categories);
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -61,7 +61,6 @@ function TableMaterials({ onRowClick,setCatG }) {
   useEffect(() => {
     applyFilters();
     setCatG(categories);
-
   }, [data, filterValues]);
 
   const getDistinctCategories = (arr) => {
@@ -80,9 +79,7 @@ function TableMaterials({ onRowClick,setCatG }) {
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch(
-      "http://121.121.232.54:88/abe-yus/fetch_materials.php?month=" + month
-    )
+    fetch("http://121.121.232.54:88/abe-yus/fetch_materials.php?month=" + month)
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -332,7 +329,7 @@ function TableMaterials({ onRowClick,setCatG }) {
                         <option value="7">July</option>
                         <option value="8">August</option>
                         <option value="9">September</option>
-                        <option value="0">October</option>
+                        <option value="10">October</option>
                         <option value="11">November</option>
                         <option value="12">December</option>
                       </select>

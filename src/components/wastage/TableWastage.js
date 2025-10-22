@@ -574,7 +574,7 @@ function TableWastage({ onRowClick }) {
                         <option value="7">July</option>
                         <option value="8">August</option>
                         <option value="9">September</option>
-                        <option value="0">October</option>
+                        <option value="10">October</option>
                         <option value="11">November</option>
                         <option value="12">December</option>
                       </select>

@@ -162,10 +162,11 @@ function TableBankReconciliation({ onRowClick }) {
 
     numericColumns.forEach((column) => {
       summary[column] = filteredData.reduce((sum, record) => {
-        const value = parseFloat(record[column]).toFixed(2) || 0;
+        const value = parseFloat(record[column]) || 0;
         return sum + value;
       }, 0);
     });
+
     return summary;
   };
 

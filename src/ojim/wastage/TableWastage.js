@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableMaterials({ onRowClick, setCatG }) {
+function TableWastage({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -23,18 +21,6 @@ function TableMaterials({ onRowClick, setCatG }) {
     fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
-  const handleCategoryChange = (e) => {
-    const categoryValue = e.target.value;
-    localStorage.setItem("category", categoryValue);
-    setCategory(categoryValue);
-
-    const filteredItems = data.filter(
-      (item) => item.category === categoryValue
-    );
-
-    setFilteredData(filteredItems);
-  };
-
   // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
@@ -44,7 +30,6 @@ function TableMaterials({ onRowClick, setCatG }) {
     } else {
       fetchData(selectedMonth);
     }
-    setCatG(categories);
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -60,33 +45,19 @@ function TableMaterials({ onRowClick, setCatG }) {
   // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
-    setCatG(categories);
   }, [data, filterValues]);
-
-  const getDistinctCategories = (arr) => {
-    if (!Array.isArray(arr)) return [];
-
-    return [
-      ...new Set(
-        arr
-          .filter((item) => item && typeof item === "object")
-          .map((item) => item.category)
-          .filter((cat) => typeof cat === "string" && cat.trim() !== "")
-      ),
-    ];
-  };
 
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_materials.php?month=" + month
+      "http://121.121.232.54:88/ojim-cafe/fetch_daily_wastage.php?month=" +
+        month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
         setFilteredData(fetchedData);
-        setCategories(getDistinctCategories(fetchedData));
         setLoading(false);
       })
       .catch((error) => {
@@ -163,46 +134,280 @@ function TableMaterials({ onRowClick, setCatG }) {
       classBody: "bg-dark text-light",
     },
     {
-      key: "code",
-      label: "Item Code",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
-    },
-    {
-      key: "name",
-      label: "Item name",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
-    },
-    {
-      key: "description",
-      label: "Item Description",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
-    },
-    {
-      key: "category",
-      label: "Category",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
-    },
-    {
-      key: "unit_price",
-      label: "Unit Price",
+      key: "final_total",
+      label: "Final Total",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light text-end",
     },
     {
-      key: "packet",
-      label: "Packet(s)",
+      key: "discount",
+      label: "Discount",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light text-end",
     },
     {
-      key: "unit",
-      label: "Unit",
+      key: "bubur_wastage",
+      label: "Wastage - Bubur",
       classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "bubur_cost",
+      label: "Cost - Bubur",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "ayam_cincang_wastage",
+      label: "Wastage - Ayam Cincang",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "ayam_cincang_cost",
+      label: "Cost - Ayam Cincang",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "daging_cincang_wastage",
+      label: "Wastage - Daging Cincang",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "daging_cincang_cost",
+      label: "Cost - Daging Cincang",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "halia_goreng_wastage",
+      label: "Wastage - Halia Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "halia_goreng_cost",
+      label: "Cost - Halia Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "tempe_goreng_wastage",
+      label: "Wastage - Tempe Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "tempe_goreng_cost",
+      label: "Cost - Tempe Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kentang_goreng_wastage",
+      label: "Wastage - Kentang Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kentang_goreng_cost",
+      label: "Cost - Kentang Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "ikan_bilis_goreng_wastage",
+      label: "Wastage - Ikan Bilis Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "ikan_bilis_goreng_cost",
+      label: "Cost - Ikan Bilis Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "peria_goreng_wastage",
+      label: "Wastage - Peria Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "peria_goreng_cost",
+      label: "Cost - Peria Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "udang_goreng_wastage",
+      label: "Wastage - Udang Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "udang_goreng_cost",
+      label: "Cost - Udang Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kacang_goreng_wastage",
+      label: "Wastage - Kacang Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kacang_goreng_cost",
+      label: "Cost - Kacang Goreng",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "paru_sira_wastage",
+      label: "Wastage - Paru Sira",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "paru_sira_cost",
+      label: "Cost - Paru Sira",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "sotong_lobak_manis_wastage",
+      label: "Wastage - Sotong Lobak Manis",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "sotong_lobak_manis_cost",
+      label: "Cost - Sotong Lobak Manis",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "ikan_masin_lobak_manis_wastage",
+      label: "Wastage - Ikan Masin Lobak Manis",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "ikan_masin_lobak_manis_cost",
+      label: "Cost - Ikan Masin Lobak Manis",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "telur_masin_wastage",
+      label: "Wastage - Telur Masin",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "telur_masin_cost",
+      label: "Cost - Telur Masin",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "bawang_goreng_wastage",
+      label: "Wastage - Bawang Goreng",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "bawang_goreng_cost",
+      label: "Cost - Bawang Goreng",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "daun_bawang_wastage",
+      label: "Wastage - Daun Bawang",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "daun_bawang_cost",
+      label: "Cost - Daun Bawang",
+      classHead: "bg-primary text-light",
+      classBody: "bg-primary text-light text-end",
+    },
+    {
+      key: "lada_sulah_wastage",
+      label: "Wastage - Lada Sulah",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "lada_sulah_cost",
+      label: "Cost - Lada Sulah",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "chilli_flakes_wastage",
+      label: "Wastage - Chilli Flakes",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "chilli_flakes_cost",
+      label: "Cost - Chilli Flakes",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "sambal_bilis_wastage",
+      label: "Wastage - Sambal Bilis",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "sambal_bilis_cost",
+      label: "Cost - Sambal Bilis",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "cili_padi_wastage",
+      label: "Wastage - Cili Padi",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "cili_padi_cost",
+      label: "Cost - Cili Padi",
+      classHead: "bg-warning text-light",
+      classBody: "bg-warning text-light text-end",
+    },
+    {
+      key: "minyak_bijian_wastage",
+      label: "Wastage - Minyak Bijian",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "minyak_bijian_cost",
+      label: "Cost - Minyak Bijian",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kicap_cair_wastage",
+      label: "Wastage - Kicap Cair",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "kicap_cair_cost",
+      label: "Cost - Kicap Cair",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
     },
   ];
 
@@ -272,7 +477,7 @@ function TableMaterials({ onRowClick, setCatG }) {
                   ></i>
                 </button>
                 <h5 className="mb-0">
-                  Filters
+                  Filters{" "}
                   {hasActiveFilters && (
                     <span className="badge bg-primary ms-2">Active</span>
                   )}
@@ -292,26 +497,25 @@ function TableMaterials({ onRowClick, setCatG }) {
             {isFilterPanelOpen && (
               <div className="card-body" id="filterPanel">
                 <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  {false &&
-                    filterableColumns.map((column) => (
-                      <div className="col" key={`filter-${column.key}`}>
-                        <div className="form-floating">
-                          <input
-                            type="date"
-                            className="form-control"
-                            id={`filter-${column.key}`}
-                            placeholder={column.label}
-                            value={filterValues[column.key] || ""}
-                            onChange={(e) =>
-                              handleFilterChange(column.key, e.target.value)
-                            }
-                          />
-                          <label htmlFor={`filter-${column.key}`}>
-                            {column.label}
-                          </label>
-                        </div>
+                  {filterableColumns.map((column) => (
+                    <div className="col" key={`filter-${column.key}`}>
+                      <div className="form-floating">
+                        <input
+                          type="date"
+                          className="form-control"
+                          id={`filter-${column.key}`}
+                          placeholder={column.label}
+                          value={filterValues[column.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(column.key, e.target.value)
+                          }
+                        />
+                        <label htmlFor={`filter-${column.key}`}>
+                          {column.label}
+                        </label>
                       </div>
-                    ))}
+                    </div>
+                  ))}
 
                   <div className="col">
                     <div className="form-floating">
@@ -336,26 +540,6 @@ function TableMaterials({ onRowClick, setCatG }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
-                    </div>
-                  </div>
-                </div>
-                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  <div className="col">
-                    <div className="form-floating" style={{ marginTop: 5 }}>
-                      <select
-                        className="form-select"
-                        id="categorySelect"
-                        value={category}
-                        onChange={handleCategoryChange}
-                      >
-                        <option value="">Select Category</option>
-                        {categories.map((item, index) => (
-                          <option key={index} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                      <label htmlFor="monthSelect">Category</label>
                     </div>
                   </div>
                 </div>
@@ -444,6 +628,22 @@ function TableMaterials({ onRowClick, setCatG }) {
                               className={`${column.classBody}`}
                             >
                               {days[record[column.key]]}
+                            </td>
+                          );
+                        } else if (
+                          column.key === "variance" ||
+                          column.key === "month_date_sales" ||
+                          column.key === "sales_walk_in"
+                        ) {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={{}}
+                              className={`${column.classBody}`}
+                            >
+                              {parseFloat(record[column.key])
+                                .toFixed(2)
+                                .toString()}
                             </td>
                           );
                         } else {
@@ -551,4 +751,4 @@ function TableMaterials({ onRowClick, setCatG }) {
   );
 }
 
-export default TableMaterials;
+export default TableWastage;

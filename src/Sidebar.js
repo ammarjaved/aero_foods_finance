@@ -38,6 +38,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         setActiveSection("amazon");
       } else if (currentPath.includes("aero_foods_finance")) {
         setActiveSection("mixiue");
+      } else if (currentPath.includes("ojim")) {
+        setActiveSection("ojim");
       }
     }
   }, []); // Only run on mount
@@ -71,6 +73,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/materials", label: "Materials" },
     { href: "/stockin", label: "Stock In" },
     { href: "/Expenses", label: "Expenditure" },
+    { href: "/Audit", label: "Audit" },
   ];
 
   const menuItems_abe = [
@@ -93,6 +96,17 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/materials-amz", label: "Materials" },
     { href: "/stockin-amz", label: "Stock In" },
     { href: "/Expenses-amz", label: "Expenditure" },
+  ];
+
+  const menuItems_ojim = [
+    { href: "/landing-ojim", label: "Home" },
+    { href: "/TimesheetOjim", label: "Time Sheet" },
+    { href: "/dashboard-ojim", label: "Daily Sheet" },
+    { href: "/wastage-ojim", label: "Daily Wastage" },
+    { href: "/reconciliation-ojim", label: "Bank Reconciliation" },
+    { href: "/materials-ojim", label: "Materials" },
+    { href: "/stockin-ojim", label: "Stock In" },
+    { href: "/Expenses-ojim", label: "Expenditure" },
   ];
 
   // Function to check if current page matches the menu item
@@ -139,6 +153,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     if (sectionKey === "mixiue") items = menuItems_mixe;
     if (sectionKey === "abeYus") items = menuItems_abe;
     if (sectionKey === "amazon") items = menuItems_amz;
+    if (sectionKey === "ojim") items = menuItems_ojim;
 
     const hasActivePage = items.some((item) => isCurrentPage(item.href));
 
@@ -203,6 +218,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
               {renderMenuItems(menuItems_amz)}
             </div>
           )}
+          {sectionKey === "ojim" && (
+            <div className="nav flex-column" style={{ padding: "5px 0" }}>
+              {renderMenuItems(menuItems_ojim)}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -244,6 +264,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           {renderCollapsibleSection("mixiue", "Mixiue")}
           {renderCollapsibleSection("abeYus", "Abe Yus")}
           {renderCollapsibleSection("amazon", "Amazon")}
+          {renderCollapsibleSection("ojim", "Ojim")}
         </div>
 
         {/* Common Items - Always Visible */}
