@@ -51,8 +51,7 @@ function TableWastage({ onRowClick }) {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/abe-yus/fetch_daily_wastage.php?month=" +
-        month
+      "http://121.121.232.54:88/abe-yus/fetch_daily_wastage.php?month=" + month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
@@ -574,7 +573,7 @@ function TableWastage({ onRowClick }) {
                         <option value="7">July</option>
                         <option value="8">August</option>
                         <option value="9">September</option>
-                        <option value="0">October</option>
+                        <option value="10">October</option>
                         <option value="11">November</option>
                         <option value="12">December</option>
                       </select>

@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableMaterials({ onRowClick, setCatG }) {
+function TableBankReconciliation({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -18,33 +16,22 @@ function TableMaterials({ onRowClick, setCatG }) {
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
-    localStorage.setItem("month", monthValue);
+    // Note: localStorage is not available in Claude artifacts
+    // localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
     fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
-  const handleCategoryChange = (e) => {
-    const categoryValue = e.target.value;
-    localStorage.setItem("category", categoryValue);
-    setCategory(categoryValue);
-
-    const filteredItems = data.filter(
-      (item) => item.category === categoryValue
-    );
-
-    setFilteredData(filteredItems);
-  };
-
   // Subscribe to a custom event for new records
   useEffect(() => {
-    const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
-      setSelectedMonth(monthvalue);
-    } else {
-      fetchData(selectedMonth);
-    }
-    setCatG(categories);
+    // Note: localStorage is not available in Claude artifacts
+    // const monthvalue = localStorage.getItem("month");
+    // if (monthvalue) {
+    //   fetchData(monthvalue);
+    //   setSelectedMonth(monthvalue);
+    // } else {
+    fetchData(selectedMonth);
+    // }
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -60,33 +47,19 @@ function TableMaterials({ onRowClick, setCatG }) {
   // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
-    setCatG(categories);
   }, [data, filterValues]);
-
-  const getDistinctCategories = (arr) => {
-    if (!Array.isArray(arr)) return [];
-
-    return [
-      ...new Set(
-        arr
-          .filter((item) => item && typeof item === "object")
-          .map((item) => item.category)
-          .filter((cat) => typeof cat === "string" && cat.trim() !== "")
-      ),
-    ];
-  };
 
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_materials.php?month=" + month
+      "http://121.121.232.54:88/ojim-cafe/fetch_bank_reconciliation_sheet.php?month=" +
+        month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
         setFilteredData(fetchedData);
-        setCategories(getDistinctCategories(fetchedData));
         setLoading(false);
       })
       .catch((error) => {
@@ -148,6 +121,55 @@ function TableMaterials({ onRowClick, setCatG }) {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
+  // Calculate summary totals for numeric columns
+  const calculateSummary = () => {
+    const numericColumns = [
+      "cash",
+      "touch_n_go",
+      "duit_now",
+      "voucher",
+      "visa_master",
+      "sales_walk_in",
+      "shopee",
+      "grab",
+      "panda",
+      "sales_delivery",
+      "total_sales",
+      "visa",
+      "master",
+      "my_debit",
+      "total_terminal",
+      "comission",
+      "cash_box_amount",
+      "variance",
+      "tng",
+      "variance_1",
+      "dr_1",
+      "dr_2",
+      "cr",
+      "total_bank_card",
+      "variance_2",
+      "shopee_1",
+      "grab_1",
+      "panda_1",
+      "total_delivery",
+      "variance_3",
+      "actual_total",
+      "total_variance",
+    ];
+
+    const summary = {};
+
+    numericColumns.forEach((column) => {
+      summary[column] = filteredData.reduce((sum, record) => {
+        const value = parseFloat(record[column]) || 0;
+        return sum + value;
+      }, 0);
+    });
+
+    return summary;
+  };
+
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
     {
@@ -162,47 +184,202 @@ function TableMaterials({ onRowClick, setCatG }) {
       classHead: "bg-dark text-light",
       classBody: "bg-dark text-light",
     },
+    //Constants
     {
-      key: "code",
-      label: "Item Code",
+      key: "cash",
+      label: "Cash",
       classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
-      key: "name",
-      label: "Item name",
+      key: "touch_n_go",
+      label: "Touch N Go",
       classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
-      key: "description",
-      label: "Item Description",
+      key: "duit_now",
+      label: "Duit Now",
       classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
-      key: "category",
-      label: "Category",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      key: "voucher",
+      label: "Voucher",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
     },
     {
-      key: "unit_price",
-      label: "Unit Price",
+      key: "visa_master",
+      label: "Bank Card",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "sales_walk_in",
+      label: "Net Sales Walk In",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "shopee",
+      label: "Shopee",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "grab",
+      label: "Grab",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "panda",
+      label: "Panda",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "sales_delivery",
+      label: "Net Sales Delivery",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "total_sales",
+      label: "Total Sales POS",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+
+    //Form Values
+    {
+      key: "visa",
+      label: "Visa",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light text-end",
     },
     {
-      key: "packet",
-      label: "Packet(s)",
+      key: "master",
+      label: "Master",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light text-end",
     },
     {
-      key: "unit",
-      label: "Unit",
+      key: "my_debit",
+      label: "Mydebit",
       classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "total_terminal",
+      label: "Total Terminal",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "comission",
+      label: "Comission",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    //Constants
+    {
+      key: "cash_box_amount",
+      label: "Cash Box Amount",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
+    },
+    {
+      key: "variance",
+      label: "Variance",
+      classHead: "bg-light text-dark",
+      classBody: "bg-light text-end fw-bold",
+    },
+
+    {
+      key: "tng",
+      label: "TNG",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "variance_1",
+      label: "Variance",
+      classHead: "bg-light text-dark",
+      classBody: "bg-light text-end fw-bold",
+    },
+    {
+      key: "dr_1",
+      label: "DR/1",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "dr_2",
+      label: "DR/2",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "cr",
+      label: "CR",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "total_bank_card",
+      label: "Total Bank Card",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "variance_2",
+      label: "Variance",
+      classHead: "bg-light text-dark",
+      classBody: "bg-light text-end fw-bold",
+    },
+    {
+      key: "shopee_1",
+      label: "Shopee",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "grab_1",
+      label: "Grab",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "panda_1",
+      label: "Panda",
+      classHead: "bg-danger text-light",
+      classBody: "bg-danger text-light text-end",
+    },
+    {
+      key: "total_delivery",
+      label: "Total Delivery",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "variance_3",
+      label: "Variance",
+      classHead: "bg-light text-dark",
+      classBody: "bg-light text-end fw-bold",
+    },
+    {
+      key: "actual_total",
+      label: "Actual Total",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+    },
+    {
+      key: "total_variance",
+      label: "Total Variance",
+      classHead: "bg-light text-dark",
+      classBody: "bg-light text-end fw-bold",
     },
   ];
 
@@ -245,6 +422,9 @@ function TableMaterials({ onRowClick, setCatG }) {
     (value) => value && value.trim() !== ""
   );
 
+  // Get summary data
+  const summaryData = calculateSummary();
+
   return (
     <div className="container-fluid mt-2">
       {loading ? (
@@ -272,7 +452,7 @@ function TableMaterials({ onRowClick, setCatG }) {
                   ></i>
                 </button>
                 <h5 className="mb-0">
-                  Filters
+                  Filters{" "}
                   {hasActiveFilters && (
                     <span className="badge bg-primary ms-2">Active</span>
                   )}
@@ -292,26 +472,25 @@ function TableMaterials({ onRowClick, setCatG }) {
             {isFilterPanelOpen && (
               <div className="card-body" id="filterPanel">
                 <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  {false &&
-                    filterableColumns.map((column) => (
-                      <div className="col" key={`filter-${column.key}`}>
-                        <div className="form-floating">
-                          <input
-                            type="date"
-                            className="form-control"
-                            id={`filter-${column.key}`}
-                            placeholder={column.label}
-                            value={filterValues[column.key] || ""}
-                            onChange={(e) =>
-                              handleFilterChange(column.key, e.target.value)
-                            }
-                          />
-                          <label htmlFor={`filter-${column.key}`}>
-                            {column.label}
-                          </label>
-                        </div>
+                  {filterableColumns.map((column) => (
+                    <div className="col" key={`filter-${column.key}`}>
+                      <div className="form-floating">
+                        <input
+                          type="date"
+                          className="form-control"
+                          id={`filter-${column.key}`}
+                          placeholder={column.label}
+                          value={filterValues[column.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(column.key, e.target.value)
+                          }
+                        />
+                        <label htmlFor={`filter-${column.key}`}>
+                          {column.label}
+                        </label>
                       </div>
-                    ))}
+                    </div>
+                  ))}
 
                   <div className="col">
                     <div className="form-floating">
@@ -336,26 +515,6 @@ function TableMaterials({ onRowClick, setCatG }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
-                    </div>
-                  </div>
-                </div>
-                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  <div className="col">
-                    <div className="form-floating" style={{ marginTop: 5 }}>
-                      <select
-                        className="form-select"
-                        id="categorySelect"
-                        value={category}
-                        onChange={handleCategoryChange}
-                      >
-                        <option value="">Select Category</option>
-                        {categories.map((item, index) => (
-                          <option key={index} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                      <label htmlFor="monthSelect">Category</label>
                     </div>
                   </div>
                 </div>
@@ -430,7 +589,6 @@ function TableMaterials({ onRowClick, setCatG }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {record[column.key]}
@@ -440,20 +598,39 @@ function TableMaterials({ onRowClick, setCatG }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
                               className={`${column.classBody}`}
                             >
                               {days[record[column.key]]}
+                            </td>
+                          );
+                        } else if (
+                          column.key === "variance" ||
+                          column.key === "variance_1" ||
+                          column.key === "variance_2" ||
+                          column.key === "variance_3" ||
+                          column.key === "total_variance"
+                        ) {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              className={
+                                parseFloat(record[column.key]) < 0
+                                  ? `${column.classBody} text-danger`
+                                  : `${column.classBody} text-success`
+                              }
+                            >
+                              {parseFloat(record[column.key])
+                                .toFixed(2)
+                                .toString()}
                             </td>
                           );
                         } else {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
                               className={`${column.classBody}`}
                             >
-                              {record[column.key]}
+                              {parseFloat(record[column.key]).toFixed(2)}
                             </td>
                           );
                         }
@@ -467,6 +644,103 @@ function TableMaterials({ onRowClick, setCatG }) {
                     </td>
                   </tr>
                 )}
+
+                {/* Summary Row */}
+                <tr className="table-info fw-bold border-top border-3 border-primary">
+                  {columns.map((column) => {
+                    if (column.key === "month_date") {
+                      return (
+                        <td
+                          key={`summary-${column.key}`}
+                          className="bg-info text-dark fw-bold text-center"
+                        >
+                          TOTAL
+                        </td>
+                      );
+                    } else if (column.key === "day") {
+                      return (
+                        <td
+                          key={`summary-${column.key}`}
+                          className="bg-info text-dark fw-bold text-center"
+                        >
+                          -
+                        </td>
+                      );
+                    } else if (
+                      column.key === "variance" ||
+                      column.key === "variance_1" ||
+                      column.key === "variance_2" ||
+                      column.key === "variance_3" ||
+                      column.key === "total_variance"
+                    ) {
+                      const value = summaryData[column.key] || 0;
+                      return (
+                        <td
+                          key={`summary-${column.key}`}
+                          className={
+                            value < 0
+                              ? "bg-info text-danger fw-bold text-end"
+                              : "bg-info text-success fw-bold text-end"
+                          }
+                        >
+                          {value.toFixed(2)}
+                        </td>
+                      );
+                    } else {
+                      // Check if this is a numeric column
+                      const isNumericColumn = [
+                        "cash",
+                        "touch_n_go",
+                        "duit_now",
+                        "voucher",
+                        "visa_master",
+                        "sales_walk_in",
+                        "shopee",
+                        "grab",
+                        "panda",
+                        "sales_delivery",
+                        "total_sales",
+                        "visa",
+                        "master",
+                        "my_debit",
+                        "total_terminal",
+                        "comission",
+                        "cash_box_amount",
+                        "tng",
+                        "dr_1",
+                        "dr_2",
+                        "cr",
+                        "total_bank_card",
+                        "shopee_1",
+                        "grab_1",
+                        "panda_1",
+                        "total_delivery",
+                        "actual_total",
+                      ].includes(column.key);
+
+                      if (isNumericColumn) {
+                        const value = summaryData[column.key] || 0;
+                        return (
+                          <td
+                            key={`summary-${column.key}`}
+                            className="bg-info text-dark fw-bold text-end"
+                          >
+                            {value.toFixed(2)}
+                          </td>
+                        );
+                      } else {
+                        return (
+                          <td
+                            key={`summary-${column.key}`}
+                            className="bg-info text-dark fw-bold text-center"
+                          >
+                            -
+                          </td>
+                        );
+                      }
+                    }
+                  })}
+                </tr>
               </tbody>
             </table>
           </div>
@@ -551,4 +825,4 @@ function TableMaterials({ onRowClick, setCatG }) {
   );
 }
 
-export default TableMaterials;
+export default TableBankReconciliation;

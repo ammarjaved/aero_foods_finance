@@ -80,7 +80,7 @@ function TableMaterials({ onRowClick, setCatG }) {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_materials.php?month=" + month
+      "http://121.121.232.54:88/ojim-cafe/fetch_materials.php?month=" + month
     )
       .then((response) => response.json())
       .then((fetchedData) => {

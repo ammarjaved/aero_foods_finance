@@ -30,7 +30,7 @@ function TableBankReconciliation({ onRowClick }) {
     //   fetchData(monthvalue);
     //   setSelectedMonth(monthvalue);
     // } else {
-      fetchData(selectedMonth);
+    fetchData(selectedMonth);
     // }
 
     // Create event listeners for record updates
@@ -124,17 +124,43 @@ function TableBankReconciliation({ onRowClick }) {
   // Calculate summary totals for numeric columns
   const calculateSummary = () => {
     const numericColumns = [
-      'cash', 'touch_n_go', 'duit_now', 'voucher', 'visa_master', 'sales_walk_in',
-      'shopee', 'grab', 'panda', 'sales_delivery', 'total_sales', 'visa', 'master',
-      'my_debit', 'total_terminal', 'comission', 'cash_box_amount', 'variance',
-      'tng', 'variance_1', 'dr_1', 'dr_2', 'cr', 'total_bank_card', 'variance_2',
-      'shopee_1', 'grab_1', 'panda_1', 'total_delivery', 'variance_3', 'actual_total',
-      'total_variance'
+      "cash",
+      "touch_n_go",
+      "duit_now",
+      "voucher",
+      "visa_master",
+      "sales_walk_in",
+      "shopee",
+      "grab",
+      "panda",
+      "sales_delivery",
+      "total_sales",
+      "visa",
+      "master",
+      "my_debit",
+      "total_terminal",
+      "comission",
+      "cash_box_amount",
+      "variance",
+      "tng",
+      "variance_1",
+      "dr_1",
+      "dr_2",
+      "cr",
+      "total_bank_card",
+      "variance_2",
+      "shopee_1",
+      "grab_1",
+      "panda_1",
+      "total_delivery",
+      "variance_3",
+      "actual_total",
+      "total_variance",
     ];
 
     const summary = {};
-    
-    numericColumns.forEach(column => {
+
+    numericColumns.forEach((column) => {
       summary[column] = filteredData.reduce((sum, record) => {
         const value = parseFloat(record[column]) || 0;
         return sum + value;
@@ -604,7 +630,7 @@ function TableBankReconciliation({ onRowClick }) {
                               key={`${record.id}-${column.key}`}
                               className={`${column.classBody}`}
                             >
-                              {record[column.key]}
+                              {parseFloat(record[column.key]).toFixed(2)}
                             </td>
                           );
                         }
@@ -618,7 +644,7 @@ function TableBankReconciliation({ onRowClick }) {
                     </td>
                   </tr>
                 )}
-                
+
                 {/* Summary Row */}
                 <tr className="table-info fw-bold border-top border-3 border-primary">
                   {columns.map((column) => {
@@ -663,11 +689,33 @@ function TableBankReconciliation({ onRowClick }) {
                     } else {
                       // Check if this is a numeric column
                       const isNumericColumn = [
-                        'cash', 'touch_n_go', 'duit_now', 'voucher', 'visa_master', 'sales_walk_in',
-                        'shopee', 'grab', 'panda', 'sales_delivery', 'total_sales', 'visa', 'master',
-                        'my_debit', 'total_terminal', 'comission', 'cash_box_amount', 'tng', 'dr_1', 
-                        'dr_2', 'cr', 'total_bank_card', 'shopee_1', 'grab_1', 'panda_1', 
-                        'total_delivery', 'actual_total'
+                        "cash",
+                        "touch_n_go",
+                        "duit_now",
+                        "voucher",
+                        "visa_master",
+                        "sales_walk_in",
+                        "shopee",
+                        "grab",
+                        "panda",
+                        "sales_delivery",
+                        "total_sales",
+                        "visa",
+                        "master",
+                        "my_debit",
+                        "total_terminal",
+                        "comission",
+                        "cash_box_amount",
+                        "tng",
+                        "dr_1",
+                        "dr_2",
+                        "cr",
+                        "total_bank_card",
+                        "shopee_1",
+                        "grab_1",
+                        "panda_1",
+                        "total_delivery",
+                        "actual_total",
                       ].includes(column.key);
 
                       if (isNumericColumn) {

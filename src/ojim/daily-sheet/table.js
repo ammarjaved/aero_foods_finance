@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableMaterials({ onRowClick, setCatG }) {
+function Table({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -23,18 +21,6 @@ function TableMaterials({ onRowClick, setCatG }) {
     fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
-  const handleCategoryChange = (e) => {
-    const categoryValue = e.target.value;
-    localStorage.setItem("category", categoryValue);
-    setCategory(categoryValue);
-
-    const filteredItems = data.filter(
-      (item) => item.category === categoryValue
-    );
-
-    setFilteredData(filteredItems);
-  };
-
   // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
@@ -44,7 +30,6 @@ function TableMaterials({ onRowClick, setCatG }) {
     } else {
       fetchData(selectedMonth);
     }
-    setCatG(categories);
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -60,33 +45,16 @@ function TableMaterials({ onRowClick, setCatG }) {
   // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
-    setCatG(categories);
   }, [data, filterValues]);
-
-  const getDistinctCategories = (arr) => {
-    if (!Array.isArray(arr)) return [];
-
-    return [
-      ...new Set(
-        arr
-          .filter((item) => item && typeof item === "object")
-          .map((item) => item.category)
-          .filter((cat) => typeof cat === "string" && cat.trim() !== "")
-      ),
-    ];
-  };
 
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_materials.php?month=" + month
-    )
+    fetch("http://121.121.232.54:88/ojim-cafe/fetchData.php?month=" + month)
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
         setFilteredData(fetchedData);
-        setCategories(getDistinctCategories(fetchedData));
         setLoading(false);
       })
       .catch((error) => {
@@ -150,60 +118,128 @@ function TableMaterials({ onRowClick, setCatG }) {
 
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
+    // { key: 'id', label: 'ID' },
+    { key: "month_date", label: "Month Date" },
+    { key: "day", label: "Day" },
+    // { key: 'month', label: 'Month' },
+    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
     {
-      key: "month_date",
-      label: "Month Date",
-      classHead: "bg-dark text-light",
-      classBody: "bg-dark text-light",
+      key: "cash",
+      label: "Cash",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "day",
-      label: "Day",
-      classHead: "bg-dark text-light",
-      classBody: "bg-dark text-light",
+      key: "touch_n_go",
+      label: "Touch n Go",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "code",
-      label: "Item Code",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      key: "duit_now",
+      label: "DuitNow",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "name",
-      label: "Item name",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      key: "voucher",
+      label: "Voucher",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "description",
-      label: "Item Description",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      key: "visa_master",
+      label: "Bank Card",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "category",
-      label: "Category",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      key: "sales_walk_in",
+      label: "Walk-in Sales",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "unit_price",
-      label: "Unit Price",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
+      key: "shopee",
+      label: "Shopee",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
     },
     {
-      key: "packet",
-      label: "Packet(s)",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
+      key: "grab",
+      label: "Grab",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
     },
     {
-      key: "unit",
-      label: "Unit",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      key: "panda",
+      label: "Foodpanda",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
     },
+    {
+      key: "sales_delivery",
+      label: "Delivery Sales",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+
+    {
+      key: "total_sales",
+      label: "Total Sales",
+      headerStyle: { backgroundColor: "#B7950B" },
+      cellStyle: { backgroundColor: "#B7950B" },
+    },
+    {
+      key: "month_date_sales",
+      label: "Month To Date Sales",
+      headerStyle: { backgroundColor: "#B7950B" },
+      cellStyle: { backgroundColor: "#B7950B" },
+    },
+    { key: "transaction_count", label: "Transaction Count" },
+    { key: "avg_transaction_value", label: "Avg Transaction" },
+    { key: "discount", label: "100% Discount" },
+    {
+      key: "labour_hours_used",
+      label: "Labour Hours",
+      headerStyle: { backgroundColor: "#8E44AD" },
+      cellStyle: { backgroundColor: "#8E44AD" },
+    },
+    {
+      key: "sales_per_labour_hours",
+      label: "Sales/Labour Hour",
+      headerStyle: { backgroundColor: "#8E44AD" },
+      cellStyle: { backgroundColor: "#8E44AD" },
+    },
+    //   { key: 'prev_day_balance', label: 'Previous Day Balance' ,
+    //     headerStyle: { backgroundColor: '#C0392B' },
+    //   cellStyle: { backgroundColor: '#C0392B' }
+    // },
+    //   { key: 'next_day_balance', label: 'Next Day Balance',
+    //     headerStyle: { backgroundColor: '#C0392B' },
+    //   cellStyle: { backgroundColor: '#C0392B' }
+    //  },
+    {
+      key: "actual_bank_amount",
+      label: "Actual Bank Amount",
+      headerStyle: { backgroundColor: "#C0392B" },
+      cellStyle: { backgroundColor: "#C0392B" },
+    },
+    {
+      key: "cash_box_amount",
+      label: "Cash Box Amount",
+      headerStyle: { backgroundColor: "#C0392B" },
+      cellStyle: { backgroundColor: "#C0392B" },
+    },
+    {
+      key: "variance",
+      label: "Variance",
+      headerStyle: { backgroundColor: "#fff" },
+      cellStyle: { backgroundColor: "#fff" },
+    },
+    { key: "bank_in_date", label: "Bank-in Date" },
+    { key: "recipt_ref_no", label: "Receipt Ref No." },
+    { key: "remarks", label: "Remarks" },
   ];
 
   // Specify which columns you want to include in the filter
@@ -272,7 +308,7 @@ function TableMaterials({ onRowClick, setCatG }) {
                   ></i>
                 </button>
                 <h5 className="mb-0">
-                  Filters
+                  Filters{" "}
                   {hasActiveFilters && (
                     <span className="badge bg-primary ms-2">Active</span>
                   )}
@@ -292,26 +328,25 @@ function TableMaterials({ onRowClick, setCatG }) {
             {isFilterPanelOpen && (
               <div className="card-body" id="filterPanel">
                 <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  {false &&
-                    filterableColumns.map((column) => (
-                      <div className="col" key={`filter-${column.key}`}>
-                        <div className="form-floating">
-                          <input
-                            type="date"
-                            className="form-control"
-                            id={`filter-${column.key}`}
-                            placeholder={column.label}
-                            value={filterValues[column.key] || ""}
-                            onChange={(e) =>
-                              handleFilterChange(column.key, e.target.value)
-                            }
-                          />
-                          <label htmlFor={`filter-${column.key}`}>
-                            {column.label}
-                          </label>
-                        </div>
+                  {filterableColumns.map((column) => (
+                    <div className="col" key={`filter-${column.key}`}>
+                      <div className="form-floating">
+                        <input
+                          type="date"
+                          className="form-control"
+                          id={`filter-${column.key}`}
+                          placeholder={column.label}
+                          value={filterValues[column.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(column.key, e.target.value)
+                          }
+                        />
+                        <label htmlFor={`filter-${column.key}`}>
+                          {column.label}
+                        </label>
                       </div>
-                    ))}
+                    </div>
+                  ))}
 
                   <div className="col">
                     <div className="form-floating">
@@ -336,26 +371,6 @@ function TableMaterials({ onRowClick, setCatG }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
-                    </div>
-                  </div>
-                </div>
-                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  <div className="col">
-                    <div className="form-floating" style={{ marginTop: 5 }}>
-                      <select
-                        className="form-select"
-                        id="categorySelect"
-                        value={category}
-                        onChange={handleCategoryChange}
-                      >
-                        <option value="">Select Category</option>
-                        {categories.map((item, index) => (
-                          <option key={index} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                      <label htmlFor="monthSelect">Category</label>
                     </div>
                   </div>
                 </div>
@@ -386,8 +401,8 @@ function TableMaterials({ onRowClick, setCatG }) {
           </div>
 
           {/* Table */}
-          <div className="table-responsive shadow rounded-3">
-            <table className="table table-striped table-hover table-bordered mb-0">
+          <div className="table-responsive">
+            <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
                   {columns.map((column, index) => {
@@ -395,21 +410,13 @@ function TableMaterials({ onRowClick, setCatG }) {
 
                     if (column.key === "month_date") {
                       return (
-                        <th
-                          key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
-                        >
+                        <th key={column.key} style={column.headerStyle || {}}>
                           {column.label}
                         </th>
                       );
                     } else {
                       return (
-                        <th
-                          key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
-                        >
+                        <th key={column.key} style={column.headerStyle || {}}>
                           {column.label}
                         </th>
                       );
@@ -430,8 +437,7 @@ function TableMaterials({ onRowClick, setCatG }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {record[column.key]}
                             </td>
@@ -440,18 +446,54 @@ function TableMaterials({ onRowClick, setCatG }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {days[record[column.key]]}
+                            </td>
+                          );
+                        } else if (
+                          column.key === "sales_walk_in" ||
+                          column.key === "total_sales" ||
+                          column.key === "sales_delivery" ||
+                          column.key === "month_date_sales" ||
+                          column.key === "avg_transaction_value" ||
+                          column.key === "transaction_count" ||
+                          column.key === "labour_hours_used" ||
+                          column.key === "sales_per_labour_hours"
+                        ) {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={column.cellStyle || {}}
+                            >
+                              {parseFloat(record[column.key])
+                                .toFixed(2)
+                                .toString()}
+                            </td>
+                          );
+                        } else if (column.key === "variance") {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={{
+                                ...(column.cellStyle || {}),
+                                color:
+                                  parseFloat(record[column.key]).toFixed(2) > 0
+                                    ? "green"
+                                    : "red",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {parseFloat(record[column.key])
+                                .toFixed(2)
+                                .toString()}
                             </td>
                           );
                         } else {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {record[column.key]}
                             </td>
@@ -551,4 +593,4 @@ function TableMaterials({ onRowClick, setCatG }) {
   );
 }
 
-export default TableMaterials;
+export default Table;

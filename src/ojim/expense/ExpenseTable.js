@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableMaterials({ onRowClick, setCatG }) {
+function ExpenseTable({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -23,16 +21,20 @@ function TableMaterials({ onRowClick, setCatG }) {
     fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
-  const handleCategoryChange = (e) => {
-    const categoryValue = e.target.value;
-    localStorage.setItem("category", categoryValue);
-    setCategory(categoryValue);
+  // Calculate total amount from filtered data
+  const calculateTotalAmount = () => {
+    return filteredData.reduce((total, record) => {
+      const amount = parseFloat(record.amount) || 0;
+      return total + amount;
+    }, 0);
+  };
 
-    const filteredItems = data.filter(
-      (item) => item.category === categoryValue
-    );
-
-    setFilteredData(filteredItems);
+  // Format number with commas
+  const formatAmount = (amount) => {
+    return amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   // Subscribe to a custom event for new records
@@ -44,7 +46,6 @@ function TableMaterials({ onRowClick, setCatG }) {
     } else {
       fetchData(selectedMonth);
     }
-    setCatG(categories);
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -60,33 +61,18 @@ function TableMaterials({ onRowClick, setCatG }) {
   // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
-    setCatG(categories);
   }, [data, filterValues]);
-
-  const getDistinctCategories = (arr) => {
-    if (!Array.isArray(arr)) return [];
-
-    return [
-      ...new Set(
-        arr
-          .filter((item) => item && typeof item === "object")
-          .map((item) => item.category)
-          .filter((cat) => typeof cat === "string" && cat.trim() !== "")
-      ),
-    ];
-  };
 
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_materials.php?month=" + month
+      "http://121.121.232.54:88/ojim-cafe/fetchExpenseData.php?month=" + month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
         setFilteredData(fetchedData);
-        setCategories(getDistinctCategories(fetchedData));
         setLoading(false);
       })
       .catch((error) => {
@@ -150,59 +136,38 @@ function TableMaterials({ onRowClick, setCatG }) {
 
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
+    // { key: 'id', label: 'ID' },
+    { key: "month_date", label: "Month Date" },
+    { key: "day", label: "Day" },
+    // { key: 'month', label: 'Month' },
+    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
     {
-      key: "month_date",
-      label: "Month Date",
-      classHead: "bg-dark text-light",
-      classBody: "bg-dark text-light",
+      key: "company",
+      label: "Company",
+      // ,
+      // headerStyle: { backgroundColor: "#196F3D" },
+      // cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "day",
-      label: "Day",
-      classHead: "bg-dark text-light",
-      classBody: "bg-dark text-light",
+      key: "vendor",
+      label: "Vendor",
+      // ,
+      // headerStyle: { backgroundColor: "#196F3D" },
+      // cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "code",
-      label: "Item Code",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
+      key: "amount",
+      label: "Amount",
+      // ,
+      // headerStyle: { backgroundColor: "#196F3D" },
+      // cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "name",
-      label: "Item name",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
-    },
-    {
-      key: "description",
-      label: "Item Description",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light",
-    },
-    {
-      key: "category",
-      label: "Category",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
-    },
-    {
-      key: "unit_price",
-      label: "Unit Price",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "packet",
-      label: "Packet(s)",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "unit",
-      label: "Unit",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light",
+      key: "remarks",
+      label: "Remarks",
+      // ,
+      // headerStyle: { backgroundColor: "#196F3D" },
+      // cellStyle: { backgroundColor: "#196F3D" },
     },
   ];
 
@@ -245,6 +210,8 @@ function TableMaterials({ onRowClick, setCatG }) {
     (value) => value && value.trim() !== ""
   );
 
+  const totalAmount = calculateTotalAmount();
+
   return (
     <div className="container-fluid mt-2">
       {loading ? (
@@ -255,6 +222,21 @@ function TableMaterials({ onRowClick, setCatG }) {
         </div>
       ) : (
         <>
+          {/* Total Amount Display */}
+          <div className="alert alert-info d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 className="mb-0">
+                <i className="bi bi-calculator me-2"></i>
+                Total Amount:{" "}
+                <span className="fw-bold">RM {formatAmount(totalAmount)}</span>
+              </h5>
+              <small className="text-muted">
+                Based on {filteredData.length} record(s){" "}
+                {hasActiveFilters && "(filtered)"}
+              </small>
+            </div>
+          </div>
+
           {/* Filter section */}
           <div className="card mb-3">
             <div className="card-header d-flex justify-content-between align-items-center">
@@ -272,7 +254,7 @@ function TableMaterials({ onRowClick, setCatG }) {
                   ></i>
                 </button>
                 <h5 className="mb-0">
-                  Filters
+                  Filters{" "}
                   {hasActiveFilters && (
                     <span className="badge bg-primary ms-2">Active</span>
                   )}
@@ -292,26 +274,25 @@ function TableMaterials({ onRowClick, setCatG }) {
             {isFilterPanelOpen && (
               <div className="card-body" id="filterPanel">
                 <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  {false &&
-                    filterableColumns.map((column) => (
-                      <div className="col" key={`filter-${column.key}`}>
-                        <div className="form-floating">
-                          <input
-                            type="date"
-                            className="form-control"
-                            id={`filter-${column.key}`}
-                            placeholder={column.label}
-                            value={filterValues[column.key] || ""}
-                            onChange={(e) =>
-                              handleFilterChange(column.key, e.target.value)
-                            }
-                          />
-                          <label htmlFor={`filter-${column.key}`}>
-                            {column.label}
-                          </label>
-                        </div>
+                  {filterableColumns.map((column) => (
+                    <div className="col" key={`filter-${column.key}`}>
+                      <div className="form-floating">
+                        <input
+                          type="date"
+                          className="form-control"
+                          id={`filter-${column.key}`}
+                          placeholder={column.label}
+                          value={filterValues[column.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(column.key, e.target.value)
+                          }
+                        />
+                        <label htmlFor={`filter-${column.key}`}>
+                          {column.label}
+                        </label>
                       </div>
-                    ))}
+                    </div>
+                  ))}
 
                   <div className="col">
                     <div className="form-floating">
@@ -336,26 +317,6 @@ function TableMaterials({ onRowClick, setCatG }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
-                    </div>
-                  </div>
-                </div>
-                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
-                  <div className="col">
-                    <div className="form-floating" style={{ marginTop: 5 }}>
-                      <select
-                        className="form-select"
-                        id="categorySelect"
-                        value={category}
-                        onChange={handleCategoryChange}
-                      >
-                        <option value="">Select Category</option>
-                        {categories.map((item, index) => (
-                          <option key={index} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                      <label htmlFor="monthSelect">Category</label>
                     </div>
                   </div>
                 </div>
@@ -386,8 +347,8 @@ function TableMaterials({ onRowClick, setCatG }) {
           </div>
 
           {/* Table */}
-          <div className="table-responsive shadow rounded-3">
-            <table className="table table-striped table-hover table-bordered mb-0">
+          <div className="table-responsive">
+            <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
                   {columns.map((column, index) => {
@@ -395,21 +356,13 @@ function TableMaterials({ onRowClick, setCatG }) {
 
                     if (column.key === "month_date") {
                       return (
-                        <th
-                          key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
-                        >
+                        <th key={column.key} style={column.headerStyle || {}}>
                           {column.label}
                         </th>
                       );
                     } else {
                       return (
-                        <th
-                          key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
-                        >
+                        <th key={column.key} style={column.headerStyle || {}}>
                           {column.label}
                         </th>
                       );
@@ -430,8 +383,7 @@ function TableMaterials({ onRowClick, setCatG }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {record[column.key]}
                             </td>
@@ -440,18 +392,28 @@ function TableMaterials({ onRowClick, setCatG }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {days[record[column.key]]}
+                            </td>
+                          );
+                        } else if (column.key === "amount") {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={column.cellStyle || {}}
+                            >
+                              RM{" "}
+                              {formatAmount(
+                                parseFloat(record[column.key] || 0)
+                              )}
                             </td>
                           );
                         } else {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {record[column.key]}
                             </td>
@@ -468,6 +430,15 @@ function TableMaterials({ onRowClick, setCatG }) {
                   </tr>
                 )}
               </tbody>
+              <tfoot>
+                <tr className="table-info">
+                  <td colSpan={columns.length - 2} className="text-end fw-bold">
+                    Total:
+                  </td>
+                  <td className="fw-bold">RM {formatAmount(totalAmount)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
 
@@ -551,4 +522,4 @@ function TableMaterials({ onRowClick, setCatG }) {
   );
 }
 
-export default TableMaterials;
+export default ExpenseTable;
