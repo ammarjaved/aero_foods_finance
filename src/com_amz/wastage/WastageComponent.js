@@ -7,298 +7,226 @@ function WastageComponent() {
   const [formData, setFormData] = useState({
     month_date: new Date().toISOString().split("T")[0],
     day: new Date().getDate(),
-    utilities: 130,
-    rental: 227,
-    jasmine_tea_value: 0.0023,
-    jasmine_tea_wastage: 0,
-    jasmine_tea_cost: 0,
-    black_tea_value: 0.0024,
-    black_tea_wastage: 0,
-    black_tea_cost: 0,
-    milk_tea_value: 0.0054,
-    milk_tea_wastage: 0,
-    milk_tea_cost: 0,
-    coffee_value: 0.006,
-    coffee_wastage: 0,
-    coffee_cost: 0,
-    ctc_value: 0.0064,
-    ctc_wastage: 0,
-    ctc_cost: 0,
-    yellow_peach_jelly_value: 0.0037,
-    yellow_peach_jelly_wastage: 0,
-    yellow_peach_jelly_cost: 0,
-    brown_sugar_jelly_value: 0.0046,
-    brown_sugar_jelly_wastage: 0,
-    brown_sugar_jelly_cost: 0,
-    peal_value: 0.0058,
-    peal_wastage: 0,
-    peal_cost: 0,
-    ice_cream_value: 0.0061,
-    ice_cream_wastage: 0,
-    ice_cream_cost: 0,
-    melon_ice_cream_value: 0.0061,
-    melon_ice_cream_wastage: 0,
-    melon_ice_cream_cost: 0,
-    oreo_value: 0.0219,
-    oreo_wastage: 0,
-    oreo_cost: 0,
-    yellow_peach_jam_value: 0.0101,
-    yellow_peach_jam_wastage: 0,
-    yellow_peach_jam_cost: 0,
-    pink_peach_jam_value: 0.0113,
-    pink_peach_jam_wastage: 0,
-    pink_peach_jam_cost: 0,
-    kiwi_jam_value: 0.0116,
-    kiwi_jam_wastage: 0,
-    kiwi_jam_cost: 0,
-    strawberry_jam_value: 0.0099,
-    strawberry_jam_wastage: 0,
-    strawberry_jam_cost: 0,
-    mango_jam_value: 0.0179,
-    mango_jam_wastage: 0,
-    mango_jam_cost: 0,
-    passion_fruit_jam_value: 0.0174,
-    passion_fruit_jam_wastage: 0,
-    passion_fruit_jam_cost: 0,
-    nata_de_coco_value: 0.0047,
-    nata_de_coco_wastage: 0,
-    nata_de_coco_cost: 0,
-    lemon_value: 0.0053,
-    lemon_wastage: 0,
-    lemon_cost: 0,
-    total_before_discount: 0,
-    discount: 0,
-    final_total: 0,
+    utilities: "0",
+    rental: "0",
+    nasi_value: "0.006",
+    nasi_wastage: "0",
+    nasi_cost: "0",
+    nasi_lamak_value: "0.006",
+    nasi_lamak_wastage: "0",
+    nasi_lamak_cost: "0",
+    boil_egg_value: "0.5",
+    boil_egg_wastage: "0",
+    boil_egg_cost: "0",
+    cpc_value: "3",
+    cpc_wastage: "0",
+    cpc_cost: "0",
+    cpt_value: "3",
+    cpt_wastage: "0",
+    cpt_cost: "0",
+    spring_roll_value: "3",
+    spring_roll_wastage: "0",
+    spring_roll_cost: "0",
+    toast_bread_value: "0.013",
+    toast_bread_wastage: "0",
+    toast_bread_cost: "0",
+    leamon_value: "0.006",
+    leamon_wastage: "0",
+    leamon_cost: "0",
+    chicken_value: "4",
+    chicken_wastage: "0",
+    chicken_cost: "0",
+    timun_value: "0.004",
+    timun_wastage: "0",
+    timun_cost: "0",
+    black_tea_value: "0.018",
+    black_tea_wastage: "0",
+    black_tea_cost: "0",
+    coffee_value: "0.0019745",
+    coffee_wastage: "0",
+    coffee_cost: "0",
+    tea_value: "0.00072",
+    tea_wastage: "0",
+    tea_cost: "0",
+    total_before_discount: "0",
+    discount: "0",
+    final_total: "0",
   });
 
   const formMembers = [
     {
-      key: "jasmine_tea_wastage",
-      label: "Jasmine Tea Wastage",
+      key: "final_total",
+      label: "Total Wastage",
+      isReadOnly: true,
+      badge: "bg-success",
+    },
+    {
+      key: "discount",
+      label: "100% Discount Amount",
+      isReadOnly: true,
+      badge: "bg-success",
+    },
+    {
+      key: "total_before_discount",
+      label: "Wastage Amount",
+      isReadOnly: true,
+      badge: "bg-success",
+    },
+    {
+      key: "nasi_wastage",
+      label: "Wastage - Nasi",
       isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "nasi_cost",
+      label: "Cost - Nasi",
+      isReadOnly: true,
       badge: "bg-danger",
     },
     {
-      key: "jasmine_tea_cost",
-      label: "Jasmine Tea Cost",
+      key: "nasi_lamak_wastage",
+      label: "Wastage - Nasi Lamak",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "nasi_lamak_cost",
+      label: "Cost - Nasi Lamak",
       isReadOnly: true,
-      badge: "bg-secondary",
+      badge: "bg-danger",
+    },
+    {
+      key: "boil_egg_wastage",
+      label: "Wastage - Soft Boil Egg",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "boil_egg_cost",
+      label: "Cost - Soft Boil Egg",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "cpc_wastage",
+      label: "Wastage - Curry Puff Chicken",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "cpc_cost",
+      label: "Cost - Curry Puff Chicken",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "cpt_wastage",
+      label: "Wastage - Curry Puff Tomyam",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "cpt_cost",
+      label: "Cost - Curry Puff Tomyam",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "spring_roll_wastage",
+      label: "Wastage - Spring Roll",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "spring_roll_cost",
+      label: "Cost - Spring Roll",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "toast_bread_wastage",
+      label: "Wastage - Toast Bread",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "toast_bread_cost",
+      label: "Cost - Toast Bread",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "leamon_wastage",
+      label: "Wastage - Lemon",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "leamon_cost",
+      label: "Cost - Lemon",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "chicken_wastage",
+      label: "Wastage - Chicken",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "chicken_cost",
+      label: "Cost - Chicken",
+      isReadOnly: true,
+      badge: "bg-danger",
+    },
+    {
+      key: "timun_wastage",
+      label: "Wastage - Timun",
+      isReadOnly: false,
+      badge: "bg-primary",
+    },
+    {
+      key: "timun_cost",
+      label: "Cost - Timun",
+      isReadOnly: true,
+      badge: "bg-danger",
     },
     {
       key: "black_tea_wastage",
-      label: "Black Tea Wastage",
+      label: "Wastage - Black Tea",
       isReadOnly: false,
-      badge: "bg-danger",
+      badge: "bg-primary",
     },
     {
       key: "black_tea_cost",
-      label: "Black Tea Cost",
+      label: "Cost - Black Tea",
       isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "milk_tea_wastage",
-      label: "Milk Tea Wastage",
-      isReadOnly: false,
       badge: "bg-danger",
-    },
-    {
-      key: "milk_tea_cost",
-      label: "Milk Tea Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
     },
     {
       key: "coffee_wastage",
-      label: "Coffee Wastage",
+      label: "Wastage - Coffee",
       isReadOnly: false,
-      badge: "bg-danger",
+      badge: "bg-primary",
     },
     {
       key: "coffee_cost",
-      label: "Coffee Cost",
+      label: "Cost - Coffee",
       isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "ctc_wastage",
-      label: "CTC Wastage",
-      isReadOnly: false,
       badge: "bg-danger",
     },
     {
-      key: "ctc_cost",
-      label: "CTC Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "yellow_peach_jelly_wastage",
-      label: "Yellow Peach Jelly Wastage",
+      key: "tea_wastage",
+      label: "Wastage - Tea",
       isReadOnly: false,
-      badge: "bg-danger",
+      badge: "bg-primary",
     },
     {
-      key: "yellow_peach_jelly_cost",
-      label: "Yellow Peach Jelly Cost",
+      key: "tea_cost",
+      label: "Cost - Tea",
       isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "brown_sugar_jelly_wastage",
-      label: "Brown Sugar Jelly Wastage",
-      isReadOnly: false,
       badge: "bg-danger",
-    },
-    {
-      key: "brown_sugar_jelly_cost",
-      label: "Brown Sugar Jelly Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "peal_wastage",
-      label: "Peal Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "peal_cost",
-      label: "Peal Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "ice_cream_wastage",
-      label: "Ice Cream Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "ice_cream_cost",
-      label: "Ice Cream Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "melon_ice_cream_wastage",
-      label: "Melon Ice Cream Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "melon_ice_cream_cost",
-      label: "Melon Ice Cream Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "oreo_wastage",
-      label: "Oreo Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "oreo_cost",
-      label: "Oreo Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "yellow_peach_jam_wastage",
-      label: "Yellow Peach Jam Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "yellow_peach_jam_cost",
-      label: "Yellow Peach Jam Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "pink_peach_jam_wastage",
-      label: "Pink Peach Jam Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "pink_peach_jam_cost",
-      label: "Pink Peach Jam Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "kiwi_jam_wastage",
-      label: "Kiwi Jam Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "kiwi_jam_cost",
-      label: "Kiwi Jam Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "strawberry_jam_wastage",
-      label: "Strawberry Jam Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "strawberry_jam_cost",
-      label: "Strawberry Jam Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "mango_jam_wastage",
-      label: "Mango Jam Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "mango_jam_cost",
-      label: "Mango Jam Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "passion_fruit_jam_wastage",
-      label: "Passion Fruit Jam Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "passion_fruit_jam_cost",
-      label: "Passion Fruit Jam Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "nata_de_coco_wastage",
-      label: "Nata De Coco Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "nata_de_coco_cost",
-      label: "Nata De Coco Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
-    },
-    {
-      key: "lemon_wastage",
-      label: "Lemon Wastage",
-      isReadOnly: false,
-      badge: "bg-danger",
-    },
-    {
-      key: "lemon_cost",
-      label: "Lemon Cost",
-      isReadOnly: true,
-      badge: "bg-secondary",
     },
   ];
 
@@ -309,292 +237,107 @@ function WastageComponent() {
   const API_BASE_URL = "http://121.121.232.54:88/amazon-cafe";
 
   const handleSum = () => {
+    // Sum all cost fields for the new items
     const total_before_discount = parseFloat(
-      parseFloat(formData.jasmine_tea_cost || 0) +
+      parseFloat(formData.nasi_cost || 0) +
+        parseFloat(formData.nasi_lamak_cost || 0) +
+        parseFloat(formData.boil_egg_cost || 0) +
+        parseFloat(formData.cpc_cost || 0) +
+        parseFloat(formData.cpt_cost || 0) +
+        parseFloat(formData.spring_roll_cost || 0) +
+        parseFloat(formData.toast_bread_cost || 0) +
+        parseFloat(formData.leamon_cost || 0) + // Note: corrected spelling
+        parseFloat(formData.chicken_cost || 0) +
+        parseFloat(formData.timun_cost || 0) +
         parseFloat(formData.black_tea_cost || 0) +
-        parseFloat(formData.milk_tea_cost || 0) +
         parseFloat(formData.coffee_cost || 0) +
-        parseFloat(formData.ctc_cost || 0) +
-        parseFloat(formData.yellow_peach_jelly_cost || 0) +
-        parseFloat(formData.brown_sugar_jelly_cost || 0) +
-        parseFloat(formData.peal_cost || 0) +
-        parseFloat(formData.ice_cream_cost || 0) +
-        parseFloat(formData.melon_ice_cream_cost || 0) +
-        parseFloat(formData.oreo_cost || 0) +
-        parseFloat(formData.yellow_peach_jam_cost || 0) +
-        parseFloat(formData.pink_peach_jam_cost || 0) +
-        parseFloat(formData.kiwi_jam_cost || 0) +
-        parseFloat(formData.strawberry_jam_cost || 0) +
-        parseFloat(formData.mango_jam_cost || 0) +
-        parseFloat(formData.passion_fruit_jam_cost || 0) +
-        parseFloat(formData.nata_de_coco_cost || 0) +
-        parseFloat(formData.lemon_cost || 0)
+        parseFloat(formData.tea_cost || 0)
     ).toFixed(2);
+
     formData.total_before_discount = total_before_discount;
 
+    // Calculate final total (discount + wastage amount)
     const final_total = parseFloat(
       parseFloat(formData.discount || 0) + parseFloat(total_before_discount)
     ).toFixed(2);
+
     formData.final_total = final_total;
   };
+  // Replace your handleChange function with this:
 
-  const handleChange = async (e) => {
-    const { name, value, type } = e.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const updatedFormData = { ...formData, [name]: value };
 
-    if (type !== "file") {
-      // Create updated form data
-      const updatedFormData = {
-        ...formData,
-        [name]: value,
-      };
+    // Define item groups with their value/wastage/cost fields
+    const itemGroups = [
+      { value: "nasi_value", wastage: "nasi_wastage", cost: "nasi_cost" },
+      {
+        value: "nasi_lamak_value",
+        wastage: "nasi_lamak_wastage",
+        cost: "nasi_lamak_cost",
+      },
+      {
+        value: "boil_egg_value",
+        wastage: "boil_egg_wastage",
+        cost: "boil_egg_cost",
+      },
+      { value: "cpc_value", wastage: "cpc_wastage", cost: "cpc_cost" },
+      { value: "cpt_value", wastage: "cpt_wastage", cost: "cpt_cost" },
+      {
+        value: "spring_roll_value",
+        wastage: "spring_roll_wastage",
+        cost: "spring_roll_cost",
+      },
+      {
+        value: "toast_bread_value",
+        wastage: "toast_bread_wastage",
+        cost: "toast_bread_cost",
+      },
+      { value: "leamon_value", wastage: "leamon_wastage", cost: "leamon_cost" },
+      {
+        value: "chicken_value",
+        wastage: "chicken_wastage",
+        cost: "chicken_cost",
+      },
+      {
+        value: "timun_value",
+        wastage: "timun_wastage",
+        cost: "timun_cost",
+      },
+      {
+        value: "black_tea_value",
+        wastage: "black_tea_wastage",
+        cost: "black_tea_cost",
+      },
+      {
+        value: "coffee_value",
+        wastage: "coffee_wastage",
+        cost: "coffee_cost",
+      },
+      {
+        value: "tea_value",
+        wastage: "tea_wastage",
+        cost: "tea_cost",
+      },
+    ];
 
-      // Jasmine Tea
-      if (
-        [
-          "jasmine_tea_value",
-          "jasmine_tea_wastage",
-          "jasmine_tea_cost",
-        ].includes(name)
-      ) {
-        // Calculate the sum for sales_walk_in
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.jasmine_tea_value || 0) *
-            parseFloat(updatedFormData.jasmine_tea_wastage || 0)
+    // Process each item group
+    itemGroups.forEach((group) => {
+      if ([group.value, group.wastage, group.cost].includes(name)) {
+        const costValue = parseFloat(
+          parseFloat(updatedFormData[group.value] || 0) *
+            parseFloat(updatedFormData[group.wastage] || 0)
         ).toFixed(2);
 
-        // Update sales_walk_in with the calculated sum
-        updatedFormData.jasmine_tea_cost = calculate_value;
+        updatedFormData[group.cost] = costValue;
       }
+    });
 
-      // Black Tea
-      if (
-        ["black_tea_value", "black_tea_wastage", "black_tea_cost"].includes(
-          name
-        )
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.black_tea_value || 0) *
-            parseFloat(updatedFormData.black_tea_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.black_tea_cost = calculate_value;
-      }
+    setFormData(updatedFormData);
 
-      // Milk Tea
-      if (
-        ["milk_tea_value", "milk_tea_wastage", "milk_tea_cost"].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.milk_tea_value || 0) *
-            parseFloat(updatedFormData.milk_tea_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.milk_tea_cost = calculate_value;
-      }
-
-      // Coffee
-      if (["coffee_value", "coffee_wastage", "coffee_cost"].includes(name)) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.coffee_value || 0) *
-            parseFloat(updatedFormData.coffee_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.coffee_cost = calculate_value;
-      }
-
-      // CTC
-      if (["ctc_value", "ctc_wastage", "ctc_cost"].includes(name)) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.ctc_value || 0) *
-            parseFloat(updatedFormData.ctc_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.ctc_cost = calculate_value;
-      }
-
-      // Yellow Peach Jelly
-      if (
-        [
-          "yellow_peach_jelly_value",
-          "yellow_peach_jelly_wastage",
-          "yellow_peach_jelly_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.yellow_peach_jelly_value || 0) *
-            parseFloat(updatedFormData.yellow_peach_jelly_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.yellow_peach_jelly_cost = calculate_value;
-      }
-
-      // Brown Sugar Jelly
-      if (
-        [
-          "brown_sugar_jelly_value",
-          "brown_sugar_jelly_wastage",
-          "brown_sugar_jelly_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.brown_sugar_jelly_value || 0) *
-            parseFloat(updatedFormData.brown_sugar_jelly_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.brown_sugar_jelly_cost = calculate_value;
-      }
-
-      // Peal
-      if (["peal_value", "peal_wastage", "peal_cost"].includes(name)) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.peal_value || 0) *
-            parseFloat(updatedFormData.peal_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.peal_cost = calculate_value;
-      }
-
-      // Ice Cream
-      if (
-        ["ice_cream_value", "ice_cream_wastage", "ice_cream_cost"].includes(
-          name
-        )
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.ice_cream_value || 0) *
-            parseFloat(updatedFormData.ice_cream_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.ice_cream_cost = calculate_value;
-      }
-
-      // Melon Ice Cream
-      if (
-        [
-          "melon_ice_cream_value",
-          "melon_ice_cream_wastage",
-          "melon_ice_cream_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.melon_ice_cream_value || 0) *
-            parseFloat(updatedFormData.melon_ice_cream_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.melon_ice_cream_cost = calculate_value;
-      }
-
-      // Oreo
-      if (["oreo_value", "oreo_wastage", "oreo_cost"].includes(name)) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.oreo_value || 0) *
-            parseFloat(updatedFormData.oreo_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.oreo_cost = calculate_value;
-      }
-
-      // Yellow Peach Jam
-      if (
-        [
-          "yellow_peach_jam_value",
-          "yellow_peach_jam_wastage",
-          "yellow_peach_jam_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.yellow_peach_jam_value || 0) *
-            parseFloat(updatedFormData.yellow_peach_jam_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.yellow_peach_jam_cost = calculate_value;
-      }
-
-      // Pink Peach Jam
-      if (
-        [
-          "pink_peach_jam_value",
-          "pink_peach_jam_wastage",
-          "pink_peach_jam_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.pink_peach_jam_value || 0) *
-            parseFloat(updatedFormData.pink_peach_jam_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.pink_peach_jam_cost = calculate_value;
-      }
-
-      // Kiwi Jam
-      if (
-        ["kiwi_jam_value", "kiwi_jam_wastage", "kiwi_jam_cost"].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.kiwi_jam_value || 0) *
-            parseFloat(updatedFormData.kiwi_jam_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.kiwi_jam_cost = calculate_value;
-      }
-
-      // Strawberry Jam
-      if (
-        [
-          "strawberry_jam_value",
-          "strawberry_jam_wastage",
-          "strawberry_jam_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.strawberry_jam_value || 0) *
-            parseFloat(updatedFormData.strawberry_jam_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.strawberry_jam_cost = calculate_value;
-      }
-
-      // Mango Jam
-      if (
-        ["mango_jam_value", "mango_jam_wastage", "mango_jam_cost"].includes(
-          name
-        )
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.mango_jam_value || 0) *
-            parseFloat(updatedFormData.mango_jam_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.mango_jam_cost = calculate_value;
-      }
-
-      // Passion Fruit Jam
-      if (
-        [
-          "passion_fruit_jam_value",
-          "passion_fruit_jam_wastage",
-          "passion_fruit_jam_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.passion_fruit_jam_value || 0) *
-            parseFloat(updatedFormData.passion_fruit_jam_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.passion_fruit_jam_cost = calculate_value;
-      }
-
-      // Nata De Coco
-      if (
-        [
-          "nata_de_coco_value",
-          "nata_de_coco_wastage",
-          "nata_de_coco_cost",
-        ].includes(name)
-      ) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.nata_de_coco_value || 0) *
-            parseFloat(updatedFormData.nata_de_coco_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.nata_de_coco_cost = calculate_value;
-      }
-
-      // Lemon
-      if (["lemon_value", "lemon_wastage", "lemon_cost"].includes(name)) {
-        const calculate_value = parseFloat(
-          parseFloat(updatedFormData.lemon_value || 0) *
-            parseFloat(updatedFormData.lemon_wastage || 0)
-        ).toFixed(2);
-        updatedFormData.lemon_cost = calculate_value;
-      }
-
-      setFormData(updatedFormData);
-      handleSum();
-    }
+    // Calculate totals after state update
+    setTimeout(() => handleSum(), 0);
   };
 
   const handleSubmit = async (e) => {
@@ -622,7 +365,7 @@ function WastageComponent() {
       const result = await response.json();
 
       if (response.ok) {
-        // alert(result.message);
+        alert(result.message);
 
         // Create a complete record with the returned ID
         const updatedRecord = {
@@ -664,68 +407,50 @@ function WastageComponent() {
     setFormData({
       month_date: new Date().toISOString().split("T")[0],
       day: new Date().getDate(),
-      utilities: 130,
-      rental: 227,
-      jasmine_tea_value: 0.0023,
-      jasmine_tea_wastage: 0,
-      jasmine_tea_cost: 0,
-      black_tea_value: 0.0024,
-      black_tea_wastage: 0,
-      black_tea_cost: 0,
-      milk_tea_value: 0.0054,
-      milk_tea_wastage: 0,
-      milk_tea_cost: 0,
-      coffee_value: 0.006,
-      coffee_wastage: 0,
-      coffee_cost: 0,
-      ctc_value: 0.0064,
-      ctc_wastage: 0,
-      ctc_cost: 0,
-      yellow_peach_jelly_value: 0.0037,
-      yellow_peach_jelly_wastage: 0,
-      yellow_peach_jelly_cost: 0,
-      brown_sugar_jelly_value: 0.0046,
-      brown_sugar_jelly_wastage: 0,
-      brown_sugar_jelly_cost: 0,
-      peal_value: 0.0058,
-      peal_wastage: 0,
-      peal_cost: 0,
-      ice_cream_value: 0.0061,
-      ice_cream_wastage: 0,
-      ice_cream_cost: 0,
-      melon_ice_cream_value: 0.0061,
-      melon_ice_cream_wastage: 0,
-      melon_ice_cream_cost: 0,
-      oreo_value: 0.0219,
-      oreo_wastage: 0,
-      oreo_cost: 0,
-      yellow_peach_jam_value: 0.0101,
-      yellow_peach_jam_wastage: 0,
-      yellow_peach_jam_cost: 0,
-      pink_peach_jam_value: 0.0113,
-      pink_peach_jam_wastage: 0,
-      pink_peach_jam_cost: 0,
-      kiwi_jam_value: 0.0116,
-      kiwi_jam_wastage: 0,
-      kiwi_jam_cost: 0,
-      strawberry_jam_value: 0.0099,
-      strawberry_jam_wastage: 0,
-      strawberry_jam_cost: 0,
-      mango_jam_value: 0.0179,
-      mango_jam_wastage: 0,
-      mango_jam_cost: 0,
-      passion_fruit_jam_value: 0.0174,
-      passion_fruit_jam_wastage: 0,
-      passion_fruit_jam_cost: 0,
-      nata_de_coco_value: 0.0047,
-      nata_de_coco_wastage: 0,
-      nata_de_coco_cost: 0,
-      lemon_value: 0.0053,
-      lemon_wastage: 0,
-      lemon_cost: 0,
-      total_before_discount: 0,
-      discount: 0,
-      final_total: 0,
+      utilities: "0",
+      rental: "0",
+      nasi_value: "0.006",
+      nasi_wastage: "0",
+      nasi_cost: "0",
+      nasi_lamak_value: "0.006",
+      nasi_lamak_wastage: "0",
+      nasi_lamak_cost: "0",
+      boil_egg_value: "0.5",
+      boil_egg_wastage: "0",
+      boil_egg_cost: "0",
+      cpc_value: "3",
+      cpc_wastage: "0",
+      cpc_cost: "0",
+      cpt_value: "3",
+      cpt_wastage: "0",
+      cpt_cost: "0",
+      spring_roll_value: "3",
+      spring_roll_wastage: "0",
+      spring_roll_cost: "0",
+      toast_bread_value: "0.013",
+      toast_bread_wastage: "0",
+      toast_bread_cost: "0",
+      leamon_value: "0.006",
+      leamon_wastage: "0",
+      leamon_cost: "0",
+      chicken_value: "4",
+      chicken_wastage: "0",
+      chicken_cost: "0",
+      timun_value: "0.004",
+      timun_wastage: "0",
+      timun_cost: "0",
+      black_tea_value: "0.018",
+      black_tea_wastage: "0",
+      black_tea_cost: "0",
+      coffee_value: "0.0019745",
+      coffee_wastage: "0",
+      coffee_cost: "0",
+      tea_value: "0.00072",
+      tea_wastage: "0",
+      tea_cost: "0",
+      total_before_discount: "0",
+      discount: "0",
+      final_total: "0",
     });
 
     setMapKey(Date.now());
