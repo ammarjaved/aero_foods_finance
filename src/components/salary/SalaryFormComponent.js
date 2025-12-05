@@ -10,6 +10,7 @@ function SalaryFormComponent() {
     mixue: "",
     abeyus: "",
     dac: "",
+    ojim: "",
     sds_hq: "",
   };
 
@@ -65,7 +66,7 @@ function SalaryFormComponent() {
         // Single record edit
         const editData = {};
         Object.keys(editFormData).forEach((key) => {
-          let floatKeys = ["mixue", "abeyus", "dac", "sds_hq"];
+          let floatKeys = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
           if (floatKeys.includes(key)) {
             editData[key] = editFormData[key]
               ? parseFloat(editFormData[key]).toFixed(2)
@@ -82,7 +83,7 @@ function SalaryFormComponent() {
         submitData = formRecords.map((record) => {
           const recordData = {};
           Object.keys(record).forEach((key) => {
-            let floatKeys = ["mixue", "abeyus", "dac", "sds_hq"];
+            let floatKeys = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
             if (floatKeys.includes(key)) {
               recordData[key] = record[key]
                 ? parseFloat(record[key]).toFixed(2)
@@ -383,6 +384,21 @@ function SalaryFormComponent() {
 
           <div className="col-md-6">
             <div className="form-group">
+              <label className="form-label">Ojim Amount</label>
+              <input
+                type="number"
+                name="ojim"
+                step="0.01"
+                value={formData.ojim}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="form-group">
               <label className="form-label">SDS HQ Amount</label>
               <input
                 type="number"
@@ -406,6 +422,7 @@ function SalaryFormComponent() {
                 (parseFloat(formData.mixue) || 0) +
                 (parseFloat(formData["abeyus"]) || 0) +
                 (parseFloat(formData.dac) || 0) +
+                (parseFloat(formData.ojim) || 0) +
                 (parseFloat(formData.sds_hq) || 0)
               ).toLocaleString("en-US", {
                 minimumFractionDigits: 2,

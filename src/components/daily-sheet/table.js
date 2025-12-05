@@ -136,6 +136,24 @@ function Table({ onRowClick }) {
       cellStyle: { backgroundColor: "#196F3D" },
     },
     {
+      key: "visa",
+      label: "Visa",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
+    },
+    {
+      key: "master",
+      label: "Master",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
+    },
+    {
+      key: "my_debit",
+      label: "My Debit",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
+    },
+    {
       key: "duit_now",
       label: "DuitNow",
       headerStyle: { backgroundColor: "#196F3D" },

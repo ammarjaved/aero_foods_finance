@@ -41,6 +41,7 @@ import ExpensesAmz from "./com_amz/expense/Expense";
 import ExpensesOjim from "./ojim/expense/Expense";
 import ExpensesSDS from "./components/expense_sds/Expense";
 import Salary from "./components/salary/Salary";
+import User from "./components/user/User";
 import Audit from "./components/audit/Audit";
 import LandingOjim from "./ojim/Landing";
 
@@ -102,6 +103,7 @@ function App() {
 
         <Route path="/ExpensesSDS" element={<ExpensesSDS />} />
         <Route path="/Salary" element={<Salary />} />
+        <Route path="/User" element={<User />} />
 
         <Route path="/Audit" element={<Audit />} />
 
