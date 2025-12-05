@@ -18,6 +18,9 @@ function FormComponent() {
     shopee: "",
     grab: "",
     panda: "",
+    visa: 0,
+    master: 0,
+    my_debit: 0,
     sales_delivery: 0,
     total_sales: 0,
     month_date_sales: 0,
@@ -202,6 +205,9 @@ function FormComponent() {
             "shopee",
             "grab",
             "panda",
+            "visa",
+            "master",
+            "my_debit",
             "sales_delivery",
             "total_sales",
             "month_date_sales",
@@ -261,7 +267,7 @@ function FormComponent() {
 
         resetForm();
         setIsFormOpen(false);
-        window.location.reload();
+        //window.location.reload();
       } else {
         throw new Error(result.error || "Failed to save data");
       }
@@ -302,6 +308,9 @@ function FormComponent() {
       shopee: 0,
       grab: 0,
       panda: 0,
+      visa: 0,
+      master: 0,
+      my_debit: 0,
       sales_delivery: 0,
       total_sales: 0,
       month_date_sales: 0,
@@ -717,6 +726,61 @@ function FormComponent() {
                       onChange={handleChange}
                       className="form-control bg-light"
                       readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h5 className="text-warning border-bottom pb-2 mb-3">
+                Payment Methods
+              </h5>
+              <div
+                className="row g-2 g-md-3"
+                style={{ backgroundColor: "red", color: "white" }}
+              >
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Visa</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="visa"
+                      value={formData.visa}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">Master</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="master"
+                      value={formData.master}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-3">
+                  <div className="form-group">
+                    <label className="form-label fw-bold">My Debit</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="my_debit"
+                      value={formData.my_debit}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
                     />
                   </div>
                 </div>

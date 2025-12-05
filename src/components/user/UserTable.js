@@ -1,96 +1,32 @@
 import React, { useEffect, useState, useCallback } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function SalaryTable({ onRowClick }) {
+function UserTable({ onRowClick, onCafeChange }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
-  const date = new Date();
-  const monthIndex = date.getMonth();
-  const monthNumber = monthIndex + 1;
-  const [selectedMonth, setSelectedMonth] = useState(monthNumber);
-
-  const handleMonthChange = (e) => {
-    const monthValue = e.target.value;
-    localStorage.setItem("month", monthValue);
-    setSelectedMonth(monthValue);
-    fetchData(monthValue);
-  };
-
-  // Calculate row total for a single record
-  const calculateRowTotal = (record) => {
-    const companyFields = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
-    return companyFields.reduce((total, field) => {
-      const value = parseFloat(record[field]) || 0;
-      return total + value;
-    }, 0);
-  };
-
-  // Calculate column total for all records
-  const calculateColumnTotal = (fieldName) => {
-    return data.reduce((total, record) => {
-      const value = parseFloat(record[fieldName]) || 0;
-      return total + value;
-    }, 0);
-  };
-
-  // Calculate grand total of all amounts
-  const calculateGrandTotal = () => {
-    const companyFields = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
-    return companyFields.reduce((grandTotal, field) => {
-      return grandTotal + calculateColumnTotal(field);
-    }, 0);
-  };
-
-  // Format number with commas
-  const formatAmount = (amount) => {
-    return amount.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
+  const [cdb, setCdb] = useState("mixue");
 
   // Memoized fetch function to prevent unnecessary re-renders
-  const monthOrder = [
-    "JAN",
-    "FEB",
-    "MAC",
-    "APR",
-    "MAY",
-    "JUNE",
-    "JULY",
-    "AUG",
-    "SEP",
-    "OCT",
-    "NOV",
-    "DEC",
-  ];
-  const fetchData = useCallback((month) => {
+  const fetchData = useCallback(() => {
     setLoading(true);
-    fetch("http://121.121.232.54:88/aero-foods/get_all_salary.php")
+    fetch("http://121.121.232.54:88/aero-foods/get_all_user.php?db=" + cdb)
       .then((response) => response.json())
       .then((fetchedData) => {
         const cleanedData = fetchedData.results.map((record) => ({
-          ...record,
-          year: record.year ? record.year.toString().trim() : "",
-          month: record.month ? record.month.toString().trim() : "",
+          id: record.id,
+          username: record.username,
+          password: record.password,
+          is_admin: record.is_admin,
+          created_at: record.created_at,
+          updated_at: record.updated_at,
         }));
 
-        const sortedData = cleanedData.sort((a, b) => {
-          const yearA = parseInt(a.year) || 0;
-          const yearB = parseInt(b.year) || 0;
-          if (yearA !== yearB) {
-            return yearA - yearB;
-          }
-
-          const monthAIndex = monthOrder.indexOf(a.month?.toUpperCase()) ?? -1;
-          const monthBIndex = monthOrder.indexOf(b.month?.toUpperCase()) ?? -1;
-          return monthAIndex - monthBIndex;
-        });
+        // Sort by ID in descending order (newest first)
+        const sortedData = cleanedData.sort((a, b) => b.id - a.id);
 
         setData(sortedData);
-
         setLoading(false);
 
         console.log("Sample data:", cleanedData.slice(0, 5));
@@ -99,7 +35,14 @@ function SalaryTable({ onRowClick }) {
         console.error("Error fetching data:", error);
         setLoading(false);
       });
-  }, []);
+  }, [cdb]);
+
+  const setCafe = (val) => {
+    setCdb(val);
+    if (onCafeChange) {
+      onCafeChange(val);
+    }
+  };
 
   // Handler for new record event
   const handleNewRecord = useCallback((event) => {
@@ -142,18 +85,11 @@ function SalaryTable({ onRowClick }) {
   // Handler for general table refresh
   const handleTableRefresh = useCallback(() => {
     console.log("Table refresh requested");
-    const monthvalue = localStorage.getItem("month") || selectedMonth;
-    fetchData(monthvalue);
-  }, [fetchData, selectedMonth]);
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
-    const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
-      setSelectedMonth(monthvalue);
-    } else {
-      fetchData(selectedMonth);
-    }
+    fetchData();
 
     // Set up event listeners
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -174,44 +110,28 @@ function SalaryTable({ onRowClick }) {
     handleRecordDelete,
     handleTableRefresh,
     fetchData,
-    selectedMonth,
   ]);
 
-  // Column definitions - updated for new data structure
+  // Format date for better readability
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Column definitions
   const columns = [
-    { key: "month", label: "Month" },
-    { key: "year", label: "Year" },
-    {
-      key: "mixue",
-      label: "Mixue",
-      isAmount: true,
-    },
-    {
-      key: "abeyus",
-      label: "Abe-Yus",
-      isAmount: true,
-    },
-    {
-      key: "dac",
-      label: "DAC",
-      isAmount: true,
-    },
-    {
-      key: "ojim",
-      label: "Ojim",
-      isAmount: true,
-    },
-    {
-      key: "sds_hq",
-      label: "SDS HQ",
-      isAmount: true,
-    },
-    {
-      key: "total",
-      label: "Total",
-      isAmount: true,
-      isTotal: true,
-    },
+    { key: "id", label: "ID" },
+    { key: "username", label: "Username" },
+    { key: "is_admin", label: "Admin Status" },
+    { key: "created_at", label: "Created At" },
+    { key: "updated_at", label: "Updated At" },
   ];
 
   // Calculate pagination
@@ -241,6 +161,10 @@ function SalaryTable({ onRowClick }) {
     handleTableRefresh();
   };
 
+  // Count admin users
+  const adminCount = data.filter((user) => user.is_admin === "yes").length;
+  const regularCount = data.length - adminCount;
+
   return (
     <div className="container-fluid mt-2">
       {loading ? (
@@ -268,6 +192,24 @@ function SalaryTable({ onRowClick }) {
                 <i className="fas fa-sync-alt"></i> Refresh
               </button>
 
+              <div className="d-flex align-items-center">
+                <label className="me-2">Select Cafe:</label>
+                <select
+                  className="form-select form-select-sm"
+                  value={cdb}
+                  onChange={(e) => {
+                    setCafe(e.target.value);
+                    // Reset to first page when changing page size
+                  }}
+                  style={{ width: "auto" }}
+                >
+                  <option value={"mixue"}>Mixue</option>
+                  <option value={"abe"}>Abe-Yus</option>
+                  <option value={"amz"}>Amazon</option>
+                  <option value={"ojim"}>Ojim</option>
+                </select>
+              </div>
+
               {/* Records per page selector */}
               <div className="d-flex align-items-center">
                 <label className="me-2">Records per page:</label>
@@ -292,19 +234,10 @@ function SalaryTable({ onRowClick }) {
           {/* Table */}
           <div className="table-responsive">
             <table className="table table-striped table-hover table-bordered">
-              <thead className="table-dark">
+              <thead>
                 <tr>
                   {columns.map((column) => (
-                    <th
-                      key={column.key}
-                      className={column.isTotal ? "bg-warning text-dark" : ""}
-                      style={{
-                        backgroundColor: column.isTotal ? "#ffc107" : "#212529",
-                        color: column.isTotal ? "#000" : "#fff",
-                      }}
-                    >
-                      {column.label}
-                    </th>
+                    <th key={column.key}>{column.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -313,40 +246,22 @@ function SalaryTable({ onRowClick }) {
                   currentRecords.map((record) => (
                     <tr
                       key={record.id}
-                      onClick={() => onRowClick && onRowClick(record)}
+                      onClick={() => onRowClick && onRowClick(record, cdb)}
                       style={{ cursor: onRowClick ? "pointer" : "default" }}
                       className={onRowClick ? "table-row-hover" : ""}
                     >
-                      {columns.map((column) => {
-                        if (column.key === "total") {
-                          const rowTotal = calculateRowTotal(record);
-                          return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              className="fw-bold"
-                              style={{ backgroundColor: "#fff3cd" }}
-                            >
-                              RM {formatAmount(rowTotal)}
-                            </td>
-                          );
-                        } else if (column.isAmount) {
-                          const value = parseFloat(record[column.key]) || 0;
-                          return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              className={value === 0 ? "text-muted" : ""}
-                            >
-                              {value === 0 ? "-" : `RM ${formatAmount(value)}`}
-                            </td>
-                          );
-                        } else {
-                          return (
-                            <td key={`${record.id}-${column.key}`}>
-                              {record[column.key] || "-"}
-                            </td>
-                          );
-                        }
-                      })}
+                      <td>{record.id}</td>
+                      <td className="fw-bold">{record.username}</td>
+
+                      <td>
+                        {record.is_admin === "yes" ? (
+                          <span className="badge bg-danger">Admin</span>
+                        ) : (
+                          <span className="badge bg-secondary">User</span>
+                        )}
+                      </td>
+                      <td>{formatDate(record.created_at)}</td>
+                      <td>{formatDate(record.updated_at)}</td>
                     </tr>
                   ))
                 ) : (
@@ -357,44 +272,11 @@ function SalaryTable({ onRowClick }) {
                     >
                       No records found
                       <br />
-                      <small>Click "Add New Record" to get started</small>
+                      <small>Click "Add New User" to get started</small>
                     </td>
                   </tr>
                 )}
               </tbody>
-              {data.length > 0 && (
-                <tfoot className="table-secondary">
-                  <tr className="fw-bold">
-                    <td colSpan={2} className="text-end">
-                      Column Totals:
-                    </td>
-                    {columns.slice(2).map((column) => {
-                      if (column.key === "total") {
-                        return (
-                          <td
-                            key={column.key}
-                            className="fw-bold"
-                            style={{
-                              backgroundColor: "#ffc107",
-                              color: "#000",
-                            }}
-                          >
-                            RM {formatAmount(calculateGrandTotal())}
-                          </td>
-                        );
-                      } else if (column.isAmount) {
-                        const columnTotal = calculateColumnTotal(column.key);
-                        return (
-                          <td key={column.key}>
-                            RM {formatAmount(columnTotal)}
-                          </td>
-                        );
-                      }
-                      return null;
-                    })}
-                  </tr>
-                </tfoot>
-              )}
             </table>
           </div>
 
@@ -403,33 +285,20 @@ function SalaryTable({ onRowClick }) {
             <div className="card mt-3">
               <div className="card-body">
                 <div className="row">
-                  <div className="col-md-3">
-                    <h6>Total Records: {data.length}</h6>
+                  <div className="col-md-4">
+                    <h6>Total Users: {data.length}</h6>
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-md-4">
                     <h6>
-                      Grand Total: RM {formatAmount(calculateGrandTotal())}
+                      <span className="badge bg-danger me-2">Admin</span>
+                      {adminCount} users
                     </h6>
                   </div>
-                  <div className="col-md-6">
-                    <div className="d-flex justify-content-end">
-                      {["mixue", "abeyus", "dac", "ojim", "sds_hq"].map(
-                        (field) => {
-                          const total = calculateColumnTotal(field);
-                          const label =
-                            columns.find((col) => col.key === field)?.label ||
-                            field;
-                          return (
-                            <div key={field} className="me-3">
-                              <small className="text-muted">{label}:</small>
-                              <div className="fw-bold">
-                                RM {formatAmount(total)}
-                              </div>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
+                  <div className="col-md-4">
+                    <h6>
+                      <span className="badge bg-secondary me-2">Regular</span>
+                      {regularCount} users
+                    </h6>
                   </div>
                 </div>
               </div>
@@ -522,4 +391,4 @@ function SalaryTable({ onRowClick }) {
   );
 }
 
-export default SalaryTable;
+export default UserTable;

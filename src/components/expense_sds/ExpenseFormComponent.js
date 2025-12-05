@@ -282,9 +282,10 @@ function ExpenseFormComponent() {
                 required
               >
                 <option value="">Select a company</option>
-                <option value="Mixiue">Mixiue</option>
+                <option value="Mixue">Mixue</option>
                 <option value="Amazon">Amazon</option>
                 <option value="Abe Yus">Abe Yus</option>
+                <option value="Ojim">Ojim</option>
                 <option value="SDS HQ">SDS HQ</option>
               </select>
             </div>
