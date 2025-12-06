@@ -108,6 +108,7 @@ function MTDSummary() {
           total_sales: parseFloat(item.total_sales || 0),
           total_actual: parseFloat(item.total_actual || 0),
           total_variance: parseFloat(item.total_variance || 0),
+          cash_box: parseFloat(item.cash_box || 0),
           total_expense: item.total_expense
             ? parseFloat(item.total_expense)
             : null,
@@ -130,8 +131,9 @@ function MTDSummary() {
         total_sales: acc.total_sales + item.total_sales,
         total_actual: acc.total_actual + item.total_actual,
         total_expense: acc.total_expense + (item.total_expense || 0),
+        total_cash_box: acc.total_cash_box + (item.cash_box || 0),
       }),
-      { total_sales: 0, total_actual: 0, total_expense: 0 }
+      { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
     );
   };
 
@@ -172,8 +174,10 @@ function MTDSummary() {
           total_sales: acc.total_sales + store.totals.total_sales,
           total_actual: acc.total_actual + store.totals.total_actual,
           total_expense: acc.total_expense + store.totals.total_expense,
+          total_cash_box:
+            acc.total_cash_box + (store.totals.total_cash_box || 0),
         }),
-        { total_sales: 0, total_actual: 0, total_expense: 0 }
+        { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
       );
 
       stores.push({
@@ -248,7 +252,7 @@ function MTDSummary() {
 
   const calculateROI = (profit, cost) => {
     const res = ((profit - cost) / cost) * 100;
-    return formatCurrency(res);
+    return formatPercentage(res);
   };
 
   const formatPercentage = (value) => {
@@ -283,6 +287,7 @@ function MTDSummary() {
         total_sales: 0,
         total_actual: 0,
         total_expense: 0,
+        total_cash_box: 0,
       };
 
       selectedMonths.forEach((month) => {
@@ -293,6 +298,7 @@ function MTDSummary() {
             combinedTotals.total_sales += storeData.totals.total_sales;
             combinedTotals.total_actual += storeData.totals.total_actual;
             combinedTotals.total_expense += storeData.totals.total_expense;
+            combinedTotals.total_cash_box += storeData.totals.total_cash_box;
           }
         }
       });
@@ -310,8 +316,9 @@ function MTDSummary() {
         total_sales: acc.total_sales + store.totals.total_sales,
         total_actual: acc.total_actual + store.totals.total_actual,
         total_expense: acc.total_expense + store.totals.total_expense,
+        total_cash_box: acc.total_cash_box + store.totals.total_cash_box,
       }),
-      { total_sales: 0, total_actual: 0, total_expense: 0 }
+      { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
     );
 
     const totalInvestment = combinedData.reduce(
@@ -919,6 +926,17 @@ function MTDSummary() {
                           backgroundColor: "#f8f9fa",
                         }}
                       >
+                        Cash Box Amount
+                      </th>
+                      <th
+                        style={{
+                          border: "1px solid #ddd",
+                          padding: "12px",
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          backgroundColor: "#f8f9fa",
+                        }}
+                      >
                         % Cost
                       </th>
                       <th
@@ -1041,6 +1059,15 @@ function MTDSummary() {
                             style={{
                               border: "1px solid #ddd",
                               padding: "12px",
+                              textAlign: "right",
+                            }}
+                          >
+                            {formatCurrency(store.totals.total_cash_box)}
+                          </td>
+                          <td
+                            style={{
+                              border: "1px solid #ddd",
+                              padding: "12px",
                               textAlign: "center",
                             }}
                           >
@@ -1082,7 +1109,7 @@ function MTDSummary() {
                               textAlign: "center",
                             }}
                           >
-                            {calculateROI(profit, store.invst * 100)}
+                            {calculateROI(profit, store.invst * 1000)}
                           </td>
                         </tr>
                       );
