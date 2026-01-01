@@ -73,6 +73,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/materials", label: "Materials" },
     { href: "/stockin", label: "Stock In" },
     { href: "/Expenses", label: "Expenditure" },
+    { href: "/EmpTimeSheet", label: "Emp-TimeSheet" },
     { href: "/Audit", label: "Audit" },
   ];
 
@@ -107,6 +108,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/materials-ojim", label: "Materials" },
     { href: "/stockin-ojim", label: "Stock In" },
     { href: "/Expenses-ojim", label: "Expenditure" },
+    { href: "https://ws.sogo.com.my/TenantSales.asp", label: "SOGO Link" },
   ];
 
   // Function to check if current page matches the menu item
@@ -115,37 +117,50 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
   };
 
   const renderMenuItems = (items) =>
-    items.map((item, index) => (
-      <div
-        key={index}
-        onClick={() => handleNavigation(item.href)}
-        style={{
-          borderBottom: "1px rgba(255,255,255,0.3) solid",
-          cursor: "pointer",
-          paddingLeft: "25px",
-          fontSize: "14px",
-          backgroundColor: isCurrentPage(item.href)
-            ? "rgba(255,255,255,0.2)"
-            : "transparent",
-          fontWeight: isCurrentPage(item.href) ? "bold" : "normal",
-          transition: "background-color 0.2s ease",
-        }}
-        className="nav-link text-white py-2"
-        onMouseEnter={(e) => {
-          if (!isCurrentPage(item.href)) {
-            e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isCurrentPage(item.href)) {
-            e.target.style.backgroundColor = "transparent";
-          }
-        }}
-      >
-        {isCurrentPage(item.href) && "► "}
-        {item.label}
-      </div>
-    ));
+    items.map((item, index) => {
+      const isExternalLink =
+        item.href.startsWith("http://") || item.href.startsWith("https://");
+
+      return (
+        <div
+          key={index}
+          onClick={() => {
+            if (isExternalLink) {
+              window.open(item.href, "_blank", "noopener,noreferrer");
+            } else {
+              handleNavigation(item.href);
+            }
+          }}
+          style={{
+            borderBottom: "1px rgba(255,255,255,0.3) solid",
+            cursor: "pointer",
+            paddingLeft: "25px",
+            fontSize: "14px",
+            backgroundColor:
+              !isExternalLink && isCurrentPage(item.href)
+                ? "rgba(255,255,255,0.2)"
+                : "transparent",
+            fontWeight:
+              !isExternalLink && isCurrentPage(item.href) ? "bold" : "normal",
+            transition: "background-color 0.2s ease",
+          }}
+          className="nav-link text-white py-2"
+          onMouseEnter={(e) => {
+            if (isExternalLink || !isCurrentPage(item.href)) {
+              e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (isExternalLink || !isCurrentPage(item.href)) {
+              e.target.style.backgroundColor = "transparent";
+            }
+          }}
+        >
+          {!isExternalLink && isCurrentPage(item.href) && "► "}
+          {item.label}
+        </div>
+      );
+    });
 
   const renderCollapsibleSection = (sectionKey, title) => {
     // Check if any item in this section is currently active

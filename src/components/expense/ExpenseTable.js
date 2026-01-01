@@ -18,7 +18,7 @@ function ExpenseTable({ onRowClick }) {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue);
   };
 
   // Calculate total amount from filtered data
@@ -97,6 +97,52 @@ function ExpenseTable({ onRowClick }) {
     );
   };
 
+  // Handle approval/rejection
+  const handleApproval = async (record, isApproved, e) => {
+    e.stopPropagation(); // Prevent row click event
+
+    const action = isApproved ? "approve" : "reject";
+    if (!window.confirm(`Are you sure you want to ${action} this claim?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://121.121.232.54:88/aero-foods/daily_expenditure.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "approve", // Specify the action
+            id: record.id,
+            is_approved: isApproved,
+            username: localStorage.getItem("user"),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(`Claim ${action}d successfully`);
+
+        // Update the local data
+        setData((prevData) =>
+          prevData.map((item) =>
+            item.id === record.id ? { ...item, is_approved: isApproved } : item
+          )
+        );
+      } else {
+        alert(result.error || `Failed to ${action} claim`);
+      }
+    } catch (error) {
+      console.error("Error updating approval:", error);
+      alert("Error updating approval status");
+    }
+  };
+
   // Apply filters to the data
   const applyFilters = () => {
     let filtered = [...data];
@@ -136,47 +182,18 @@ function ExpenseTable({ onRowClick }) {
 
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
-    // { key: 'id', label: 'ID' },
     { key: "month_date", label: "Month Date" },
     { key: "day", label: "Day" },
-    // { key: 'month', label: 'Month' },
-    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
-    {
-      key: "company",
-      label: "Company",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "vendor",
-      label: "Vendor",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "amount",
-      label: "Amount",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "remarks",
-      label: "Remarks",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
+    { key: "expense_type_name", label: "Type" },
+    { key: "company", label: "Company" },
+    { key: "vendor", label: "Vendor" },
+    { key: "amount", label: "Amount" },
+    { key: "remarks", label: "Remarks" },
+    { key: "status", label: "Status" },
   ];
 
   // Specify which columns you want to include in the filter
-  const filterableColumns = [
-    // { key: 'day', label: 'Day' },
-    { key: "month_date", label: "Month Date" },
-    // { key: 'year', label: 'Year' }
-  ];
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -351,23 +368,11 @@ function ExpenseTable({ onRowClick }) {
             <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
-                  {columns.map((column, index) => {
-                    const prevColumn = columns[index - 1];
-
-                    if (column.key === "month_date") {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    } else {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    }
-                  })}
+                  {columns.map((column) => (
+                    <th key={column.key} style={column.headerStyle || {}}>
+                      {column.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -409,6 +414,66 @@ function ExpenseTable({ onRowClick }) {
                               )}
                             </td>
                           );
+                        } else if (column.key === "status") {
+                          // Only show approval buttons for "Claim" expense type
+                          // if (record.expense_type_name === "Claim") {
+                          const user = localStorage.getItem("user");
+
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={column.cellStyle || {}}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {record.is_approved === true ||
+                              record.is_approved === 1 ||
+                              record.is_approved === "1" ? (
+                                <span className="badge bg-success">
+                                  Approved
+                                </span>
+                              ) : record.is_approved === false ||
+                                record.is_approved === 0 ||
+                                record.is_approved === "0" ? (
+                                <span className="badge bg-danger">
+                                  Rejected
+                                </span>
+                              ) : (
+                                (user === "admin" || user === "manager") && (
+                                  <div className="btn-group btn-group-sm">
+                                    <button
+                                      className="btn btn-success btn-sm"
+                                      onClick={(e) =>
+                                        handleApproval(record, true, e)
+                                      }
+                                      title="Approve"
+                                    >
+                                      ✓ Approve
+                                    </button>
+                                    <button
+                                      className="btn btn-danger btn-sm"
+                                      onClick={(e) =>
+                                        handleApproval(record, false, e)
+                                      }
+                                      title="Reject"
+                                    >
+                                      ✗ Reject
+                                    </button>
+                                  </div>
+                                )
+                              )}
+                            </td>
+                          );
+
+                          // } else {
+                          //   return (
+                          //     <td
+                          //       key={`${record.id}-${column.key}`}
+                          //       style={column.cellStyle || {}}
+                          //     >
+                          //       <span className="text-muted">N/A</span>
+                          //     </td>
+                          //   );
+                          // }
                         } else {
                           return (
                             <td
