@@ -14,6 +14,8 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import TimesheetSB from "./TimeSheetSB";
+import MonthSalesSummary from "./MonthSalesSummary";
 
 function MTDSummary() {
   const [data, setData] = useState({});
@@ -792,6 +794,8 @@ function MTDSummary() {
             {[
               "tables",
               "sds",
+              "timesheet_summary",
+              "monthly_sales_summary",
               "trends",
               "comparison",
               "distribution",
@@ -814,6 +818,10 @@ function MTDSummary() {
               >
                 {tab === "tables"
                   ? "Data Summary"
+                  : tab === "timesheet_summary"
+                  ? "Time Sheet Summary Brand & Staff"
+                  : tab === "monthly_sales_summary"
+                  ? "Monthly Sales Summary"
                   : tab === "sds"
                   ? "Daily Data Summary"
                   : tab === "trends"
@@ -1520,7 +1528,17 @@ function MTDSummary() {
               </div>
             </div>
           )}
-          s{/* Trends Tab */}
+          {/* time sheet  Tab brand and staff */}
+          {activeTab === "timesheet_summary" && (
+            <TimesheetSB month={selectedMonths} />
+          )}
+
+          {/* time sheet  Tab brand and staff */}
+          {activeTab === "monthly_sales_summary" && (
+            <MonthSalesSummary month={selectedMonths} />
+          )}
+
+          {/* Trends Tab */}
           {activeTab === "trends" && chartData.length > 0 && (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "32px" }}

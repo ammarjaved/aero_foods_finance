@@ -44,7 +44,7 @@ import Salary from "./components/salary/Salary";
 import User from "./components/user/User";
 import Audit from "./components/audit/Audit";
 import LandingOjim from "./ojim/Landing";
-
+import TimeAnalysis from "./components/timeshete-analysis/TimeAnalysis";
 function App() {
   return (
     <BrowserRouter basename="/aero_foods_finance">
@@ -96,6 +96,7 @@ function App() {
         <Route path="/TimesheetABE" element={<TimesheetABE />} />
         <Route path="/TimesheetAmazon" element={<TimesheetAmazon />} />
         <Route path="/TimesheetOjim" element={<TimesheetOjim />} />
+        <Route path="/EmpTimeSheet" element={<TimeAnalysis />} />
         <Route path="/Expenses" element={<Expenses />} />
         <Route path="/Expenses-yus" element={<ExpensesYus />} />
         <Route path="/Expenses-amz" element={<ExpensesAmz />} />
