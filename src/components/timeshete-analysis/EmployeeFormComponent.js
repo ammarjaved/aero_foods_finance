@@ -102,6 +102,24 @@ const TimesheetFormComponent = ({ show, onClose, onSave, editData = null }) => {
     setEmployeeForms(updatedForms);
   };
 
+  // Helper function to calculate total hours minus break
+  const calculateTotalHours = (startDateTime, endDateTime, breakHours) => {
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+
+    // Calculate difference in milliseconds
+    const diffMs = end - start;
+
+    // Convert to hours
+    const totalHours = diffMs / (1000 * 60 * 60);
+
+    // Subtract break hours
+    const workingHours = totalHours - (parseFloat(breakHours) || 0);
+
+    // Return with 2 decimal places, minimum 0
+    return Math.max(0, Math.round(workingHours * 100) / 100);
+  };
+
   const handleSubmit = async () => {
     // Validation: Check if any non-off-day form has empty start or end time
     const hasEmptyFields = employeeForms.some((form) => {
@@ -148,10 +166,17 @@ const TimesheetFormComponent = ({ show, onClose, onSave, editData = null }) => {
         }
         const endDateTime = `${endDate} ${form.proposed_end_time}:00`;
 
+        // Calculate total hours minus break
+        const totalHours = calculateTotalHours(
+          startDateTime,
+          endDateTime,
+          form.break_hour
+        );
+
         return {
           employee_name: form.employee_name,
           month_date: globalDate,
-          total_hours: 0,
+          total_hours: totalHours,
           break_hour: parseFloat(form.break_hour) || 0,
           off_day: false,
           ...(form.id && { id: form.id }),
@@ -386,7 +411,8 @@ const TimesheetFormComponent = ({ show, onClose, onSave, editData = null }) => {
                         />
                         <small className="form-text text-muted">
                           Enter break duration in hours (e.g., 0.5 for 30
-                          minutes, 1 for 1 hour)
+                          minutes, 1 for 1 hour). Break time will be deducted
+                          from total hours.
                         </small>
                       </div>
 
