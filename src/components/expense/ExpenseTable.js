@@ -13,12 +13,21 @@ function ExpenseTable({ onRowClick }) {
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const year = date.getFullYear();
+  const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue);
+    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
+  };
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
   };
 
   // Calculate total amount from filtered data
@@ -40,11 +49,13 @@ function ExpenseTable({ onRowClick }) {
   // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
+    const yearvalue = localStorage.getItem("year");
     if (monthvalue) {
-      fetchData(monthvalue);
+      fetchData(monthvalue, yearvalue);
       setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedYear);
     }
 
     // Create event listeners for record updates
@@ -63,11 +74,14 @@ function ExpenseTable({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetchExpenseData.php?month=" + month
+      "http://121.121.232.54:88/aero-foods/fetchExpenseData.php?month=" +
+        month +
+        "&year=" +
+        year
     )
       .then((response) => response.json())
       .then((fetchedData) => {
@@ -334,6 +348,21 @@ function ExpenseTable({ onRowClick }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="yearSelect">Year</label>
                     </div>
                   </div>
                 </div>
