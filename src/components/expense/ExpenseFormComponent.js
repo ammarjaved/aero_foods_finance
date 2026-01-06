@@ -24,6 +24,7 @@ function ExpenseFormComponent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [mapKey, setMapKey] = useState(Date.now());
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const handleChange = async (e) => {
     const { name, value, type } = e.target;
@@ -245,6 +246,14 @@ function ExpenseFormComponent() {
     setReceiptPreview(null);
   };
 
+  const openImageModal = () => {
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+  };
+
   return (
     <div className="container-fluid p-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -376,7 +385,10 @@ function ExpenseFormComponent() {
                       maxHeight: "250px",
                       objectFit: "contain",
                       width: "100%",
+                      cursor: "pointer",
                     }}
+                    onClick={openImageModal}
+                    title="Click to enlarge"
                   />
                   <button
                     type="button"
@@ -387,6 +399,9 @@ function ExpenseFormComponent() {
                     ✕ Remove
                   </button>
                 </div>
+                <small className="text-muted d-block mt-1">
+                  Click image to view larger version
+                </small>
               </div>
             )}
 
@@ -438,6 +453,42 @@ function ExpenseFormComponent() {
           style={{ zIndex: 1040 }}
           onClick={closeForm}
         ></div>
+      )}
+
+      {/* Image Modal */}
+      {showImageModal && receiptPreview && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+          onClick={closeImageModal}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content bg-transparent border-0">
+              <div className="modal-header border-0 pb-0">
+                <button
+                  type="button"
+                  className="btn-close btn-close-white ms-auto"
+                  onClick={closeImageModal}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body text-center p-0">
+                <img
+                  src={receiptPreview}
+                  alt="Receipt full size"
+                  className="img-fluid rounded"
+                  style={{
+                    maxHeight: "85vh",
+                    maxWidth: "100%",
+                    objectFit: "contain",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <ExpenseTable onRowClick={handleRowClick} key={mapKey} />

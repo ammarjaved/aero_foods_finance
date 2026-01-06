@@ -50,7 +50,7 @@ function BankReconciliationComponent() {
     },
     {
       key: "touch_n_go",
-      label: "Touch N Go",
+      label: "Touch N Go/Online",
       isReadOnly: true,
       badge: "bg-success",
     },

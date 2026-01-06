@@ -26,7 +26,10 @@ function TableSDS() {
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
+  const currentYear = date.getFullYear();
+
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [data1, setData1] = useState([]);
   const [data2, setData2] = useState([]);
   const [data3, setData3] = useState([]);
@@ -36,14 +39,18 @@ function TableSDS() {
     setSelectedMonth(monthValue);
   };
 
+  const handleYearChange = (e) => {
+    setSelectedYear(e.target.value);
+  };
+
   const toggleChart = () => {
     setShowChart(!showChart);
   };
 
-  const fetchData1 = async (month) => {
+  const fetchData1 = async (month, year) => {
     try {
       const response = await fetch(
-        "http://121.121.232.54:88/aero-foods/mon-sum-mixiue.php?month=" + month
+        `http://121.121.232.54:88/aero-foods/mon-sum-mixiue.php?month=${month}&year=${year}`
       );
       const fetchedData = await response.json();
 
@@ -73,10 +80,10 @@ function TableSDS() {
     }
   };
 
-  const fetchData2 = async (month) => {
+  const fetchData2 = async (month, year) => {
     try {
       const response = await fetch(
-        "http://121.121.232.54:88/aero-foods/mon-sum-mixiue2.php?month=" + month
+        `http://121.121.232.54:88/aero-foods/mon-sum-mixiue2.php?month=${month}&year=${year}`
       );
       const fetchedData = await response.json();
 
@@ -106,10 +113,10 @@ function TableSDS() {
     }
   };
 
-  const fetchData3 = async (month) => {
+  const fetchData3 = async (month, year) => {
     try {
       const response = await fetch(
-        "http://121.121.232.54:88/aero-foods/mon-sum-mixiue3.php?month=" + month
+        `http://121.121.232.54:88/aero-foods/mon-sum-mixiue3.php?month=${month}&year=${year}`
       );
       const fetchedData = await response.json();
 
@@ -140,15 +147,15 @@ function TableSDS() {
   };
 
   // Combined fetch and process function
-  const fetchAllDataAndProcess = async (month) => {
+  const fetchAllDataAndProcess = async (month, year) => {
     setLoading(true);
 
     try {
       // Fetch all data concurrently
       const [fetchedData1, fetchedData2, fetchedData3] = await Promise.all([
-        fetchData1(month),
-        fetchData2(month),
-        fetchData3(month),
+        fetchData1(month, year),
+        fetchData2(month, year),
+        fetchData3(month, year),
       ]);
 
       // Update individual data states
@@ -164,19 +171,21 @@ function TableSDS() {
         const date = item.month_date || item.date;
         if (!date) return acc;
 
-        // Filter by month if specified
-        if (month && month !== "") {
-          const itemMonth = new Date(date).getMonth() + 1;
-          if (itemMonth !== parseInt(month)) return acc;
-        }
+        const itemDate = new Date(date);
+
+        // ✅ Month filter
+        if (month && itemDate.getMonth() + 1 !== parseInt(month)) return acc;
+
+        // ✅ Year filter
+        if (year && itemDate.getFullYear() !== parseInt(year)) return acc;
 
         if (!acc[date]) {
           acc[date] = {
             month_date: date,
-            day_of_week: new Date(date).toLocaleDateString("en-US", {
+            day_of_week: itemDate.toLocaleDateString("en-US", {
               weekday: "long",
             }),
-            chart_date: new Date(date).toLocaleDateString("en-US", {
+            chart_date: itemDate.toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
             }),
@@ -187,19 +196,10 @@ function TableSDS() {
           };
         }
 
-        // Sum the values
-        acc[date].total_sales += parseFloat(
-          item.total_sales || item.sales || 0
-        );
-        acc[date].total_actual += parseFloat(
-          item.total_actual || item.actual || 0
-        );
-        acc[date].total_variance += parseFloat(
-          item.total_variance || item.variance || 0
-        );
-        acc[date].total_expense += parseFloat(
-          item.total_expense || item.expense || 0
-        );
+        acc[date].total_sales += parseFloat(item.total_sales || 0);
+        acc[date].total_actual += parseFloat(item.total_actual || 0);
+        acc[date].total_variance += parseFloat(item.total_variance || 0);
+        acc[date].total_expense += parseFloat(item.total_expense || 0);
 
         return acc;
       }, {});
@@ -247,8 +247,8 @@ function TableSDS() {
 
   // Only trigger when selectedMonth changes
   useEffect(() => {
-    fetchAllDataAndProcess(selectedMonth);
-  }, [selectedMonth]);
+    fetchAllDataAndProcess(selectedMonth, selectedYear);
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     applyFilters();
@@ -481,6 +481,25 @@ function TableSDS() {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
+
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">All years</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="yearSelect">Year</label>
+                    </div>
+                  </div>
+
                   <div className="col">
                     <div className="form-floating">
                       <input

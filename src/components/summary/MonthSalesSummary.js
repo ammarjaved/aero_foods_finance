@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 
-function MonthSalesSummary() {
+function MonthSalesSummary({ mon, year }) {
   const [selectedCafe, setSelectedCafe] = useState("aero_foods_finance");
   const [selectedMonth, setSelectedMonth] = useState("11");
   const [data, setData] = useState(null);
@@ -14,7 +14,7 @@ function MonthSalesSummary() {
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
     { value: "abe_yus_finance", label: "Abe Yus" },
   ];
-
+  console.log(year);
   const months = [
     { value: "1", label: "January" },
     { value: "2", label: "February" },
@@ -33,9 +33,10 @@ function MonthSalesSummary() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+    console.log(year);
     try {
       const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}`
+        `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}&year=${year}`
       );
       const result = await response.json();
       setData(result[0]);
@@ -49,7 +50,7 @@ function MonthSalesSummary() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedCafe, selectedMonth]);
+  }, [selectedCafe, selectedMonth, year]);
 
   const formatCurrency = (value) => {
     return parseFloat(value || 0).toFixed(2);
