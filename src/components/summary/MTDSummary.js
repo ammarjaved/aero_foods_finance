@@ -100,7 +100,7 @@ function MTDSummary() {
   const fetchDataForStore = async (month, endpoint) => {
     try {
       const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/${endpoint}?month=${month}`
+        `http://121.121.232.54:88/aero-foods/${endpoint}?month=${month}&year=${selectedYear}`
       );
       const fetchedData = await response.json();
 
@@ -1535,7 +1535,7 @@ function MTDSummary() {
 
           {/* time sheet  Tab brand and staff */}
           {activeTab === "monthly_sales_summary" && (
-            <MonthSalesSummary month={selectedMonths} />
+            <MonthSalesSummary mon={selectedMonths} year={selectedYear} />
           )}
 
           {/* Trends Tab */}

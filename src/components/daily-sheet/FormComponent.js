@@ -586,7 +586,9 @@ function FormComponent() {
 
                 <div className="col-6 col-md-4">
                   <div className="form-group badge bg-success">
-                    <label className="form-label fw-bold">Touch N GO</label>
+                    <label className="form-label fw-bold">
+                      Touch N GO/Online
+                    </label>
                     <input
                       type="number"
                       step="0.01"

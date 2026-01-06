@@ -148,7 +148,7 @@ function Table({ onRowClick }) {
     },
     {
       key: "touch_n_go",
-      label: "Touch n Go",
+      label: "Touch n Go/Online",
       headerStyle: { backgroundColor: "#196F3D" },
       cellStyle: { backgroundColor: "#196F3D" },
     },
@@ -494,12 +494,15 @@ function Table({ onRowClick }) {
                             </td>
                           );
                         } else if (column.key === "day") {
+                          const dayNum = parseInt(record[column.key]);
+                          const dayIndex = dayNum === 7 ? 0 : dayNum - 1; // 7→Sun(0), 1→Mon(1), etc.
+
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
                               style={column.cellStyle || {}}
                             >
-                              {days[record[column.key]]}
+                              {days[dayIndex] || "Invalid"}
                             </td>
                           );
                         } else if (

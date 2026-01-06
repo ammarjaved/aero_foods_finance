@@ -319,6 +319,13 @@ function ExpenseTable({ onRowClick }) {
       // cellStyle: { backgroundColor: "#196F3D" },
     },
     {
+      key: "expense_type_name",
+      label: "Expense Type",
+      // ,
+      // headerStyle: { backgroundColor: "#196F3D" },
+      // cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
       key: "remarks",
       label: "Remarks",
       // ,
@@ -607,7 +614,7 @@ function ExpenseTable({ onRowClick }) {
               </tbody>
               <tfoot>
                 <tr className="table-info">
-                  <td colSpan={columns.length - 2} className="text-end fw-bold">
+                  <td colSpan={columns.length - 3} className="text-end fw-bold">
                     Total:
                   </td>
                   <td className="fw-bold">RM {formatAmount(totalAmount)}</td>

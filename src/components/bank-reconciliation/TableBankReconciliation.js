@@ -60,7 +60,7 @@ function TableBankReconciliation({ onRowClick }) {
 
   const fetchData = (month, year) => {
     setLoading(true);
-    // Fetch data from PHP backend
+
     fetch(
       "http://121.121.232.54:88/aero-foods/fetch_bank_reconciliation_sheet.php?month=" +
         month +
@@ -69,8 +69,13 @@ function TableBankReconciliation({ onRowClick }) {
     )
       .then((response) => response.json())
       .then((fetchedData) => {
-        setData(fetchedData);
-        setFilteredData(fetchedData);
+        const normalizedData = fetchedData.map((record) => ({
+          ...record,
+          dayIndex: Number(record.day) % 7, // 7 → 0 (Sunday)
+        }));
+
+        setData(normalizedData);
+        setFilteredData(normalizedData);
         setLoading(false);
       })
       .catch((error) => {
@@ -204,7 +209,7 @@ function TableBankReconciliation({ onRowClick }) {
     },
     {
       key: "touch_n_go",
-      label: "Touch N Go",
+      label: "Touch N Go/Online",
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
     },
@@ -623,10 +628,10 @@ function TableBankReconciliation({ onRowClick }) {
                         } else if (column.key === "day") {
                           return (
                             <td
-                              key={`${record.id}-${column.key}`}
-                              className={`${column.classBody}`}
+                              key={`${record.id}-day`}
+                              className={column.classBody}
                             >
-                              {days[record[column.key]]}
+                              {days[record.dayIndex] ?? "-"}
                             </td>
                           );
                         } else if (

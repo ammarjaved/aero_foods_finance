@@ -6,11 +6,13 @@ import ExpenseTable from "./ExpenseTable";
 const sevenDaysAgo = new Date();
 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 const dayOfWeek = sevenDaysAgo.getDay();
+const EXPENSE_TYPES = ["Rental", "Utilities", "Stock", "Logistik", "Claim"];
 
 function ExpenseFormComponent() {
   const defaultRecord = {
     month_date: new Date().toISOString().split("T")[0],
     day: dayOfWeek,
+    expense_type_name: "",
     company: "",
     vendor: "",
     amount: "",
@@ -269,6 +271,24 @@ function ExpenseFormComponent() {
                 required
               />
             </div>
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Expense Type *</label>
+            <select
+              className="form-select"
+              name="expense_type_name"
+              value={formData.expense_type_name}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select Expense Type</option>
+              {EXPENSE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="col-md-6">

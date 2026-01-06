@@ -6,16 +6,19 @@ function SalaryTable({ onRowClick }) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
-  const date = new Date();
-  const monthIndex = date.getMonth();
-  const monthNumber = monthIndex + 1;
-  const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [filterValues, setFilterValues] = useState({});
+  const [filteredData, setFilteredData] = useState([]);
 
-  const handleMonthChange = (e) => {
-    const monthValue = e.target.value;
-    localStorage.setItem("month", monthValue);
-    setSelectedMonth(monthValue);
-    fetchData(monthValue);
+  const date = new Date();
+  const currentYear = date.getFullYear();
+
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(yearValue);
   };
 
   // Calculate row total for a single record
@@ -66,9 +69,10 @@ function SalaryTable({ onRowClick }) {
     "NOV",
     "DEC",
   ];
-  const fetchData = useCallback((month) => {
+
+  const fetchData = useCallback((year) => {
     setLoading(true);
-    fetch("http://121.121.232.54:88/aero-foods/get_all_salary.php")
+    fetch(`http://121.121.232.54:88/aero-foods/get_all_salary.php?year=${year}`)
       .then((response) => response.json())
       .then((fetchedData) => {
         const cleanedData = fetchedData.results.map((record) => ({
@@ -90,7 +94,6 @@ function SalaryTable({ onRowClick }) {
         });
 
         setData(sortedData);
-
         setLoading(false);
 
         console.log("Sample data:", cleanedData.slice(0, 5));
@@ -100,6 +103,39 @@ function SalaryTable({ onRowClick }) {
         setLoading(false);
       });
   }, []);
+
+  // Apply filters
+  useEffect(() => {
+    applyFilters();
+  }, [data, filterValues]);
+
+  const applyFilters = () => {
+    let filtered = [...data];
+
+    Object.entries(filterValues).forEach(([key, value]) => {
+      if (value && value.trim() !== "") {
+        filtered = filtered.filter(
+          (record) =>
+            record[key] &&
+            record[key].toString().toLowerCase().includes(value.toLowerCase())
+        );
+      }
+    });
+
+    setFilteredData(filtered);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilterValues({});
+  };
 
   // Handler for new record event
   const handleNewRecord = useCallback((event) => {
@@ -142,17 +178,18 @@ function SalaryTable({ onRowClick }) {
   // Handler for general table refresh
   const handleTableRefresh = useCallback(() => {
     console.log("Table refresh requested");
-    const monthvalue = localStorage.getItem("month") || selectedMonth;
-    fetchData(monthvalue);
-  }, [fetchData, selectedMonth]);
+    const yearvalue = localStorage.getItem("year") || selectedYear;
+    fetchData(yearvalue);
+  }, [fetchData, selectedYear]);
 
   useEffect(() => {
-    const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
-      setSelectedMonth(monthvalue);
+    const yearvalue = localStorage.getItem("year");
+
+    if (yearvalue) {
+      fetchData(yearvalue);
+      setSelectedYear(yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedYear);
     }
 
     // Set up event listeners
@@ -174,7 +211,7 @@ function SalaryTable({ onRowClick }) {
     handleRecordDelete,
     handleTableRefresh,
     fetchData,
-    selectedMonth,
+    selectedYear,
   ]);
 
   // Column definitions - updated for new data structure
@@ -217,8 +254,11 @@ function SalaryTable({ onRowClick }) {
   // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = data.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(data.length / recordsPerPage);
+  const currentRecords = filteredData.slice(
+    indexOfFirstRecord,
+    indexOfLastRecord
+  );
+  const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -241,6 +281,19 @@ function SalaryTable({ onRowClick }) {
     handleTableRefresh();
   };
 
+  const hasActiveFilters = Object.values(filterValues).some(
+    (value) => value && value.trim() !== ""
+  );
+
+  // Generate year options (current year and previous 10 years)
+  const generateYearOptions = () => {
+    const years = [];
+    for (let i = 0; i <= 10; i++) {
+      years.push(currentYear - i);
+    }
+    return years;
+  };
+
   return (
     <div className="container-fluid mt-2">
       {loading ? (
@@ -251,12 +304,70 @@ function SalaryTable({ onRowClick }) {
         </div>
       ) : (
         <>
+          {/* Filter Section */}
+          <div className="card mb-3">
+            <div className="card-header">
+              <h5 className="mb-0">
+                Filters
+                {hasActiveFilters && (
+                  <span className="badge bg-primary ms-2">Active</span>
+                )}
+              </h5>
+            </div>
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-md-2">
+                  <label htmlFor="yearSelect" className="form-label">
+                    Year
+                  </label>
+                  <select
+                    className="form-select"
+                    id="yearSelect"
+                    value={selectedYear}
+                    onChange={handleYearChange}
+                  >
+                    {generateYearOptions().map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-2">
+                  <label htmlFor="filterMonth" className="form-label">
+                    Filter Month
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="filterMonth"
+                    placeholder="Search month..."
+                    value={filterValues.month || ""}
+                    onChange={(e) =>
+                      handleFilterChange("month", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="col-md-2 d-flex align-items-end">
+                  {hasActiveFilters && (
+                    <button
+                      className="btn btn-outline-secondary w-100"
+                      onClick={clearFilters}
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Controls row */}
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div>
               Showing {indexOfFirstRecord + 1} to{" "}
-              {Math.min(indexOfLastRecord, data.length)} of {data.length}{" "}
-              records
+              {Math.min(indexOfLastRecord, filteredData.length)} of{" "}
+              {filteredData.length} records
             </div>
             <div className="d-flex align-items-center gap-3">
               {/* Manual refresh button */}
@@ -362,7 +473,7 @@ function SalaryTable({ onRowClick }) {
                   </tr>
                 )}
               </tbody>
-              {data.length > 0 && (
+              {filteredData.length > 0 && (
                 <tfoot className="table-secondary">
                   <tr className="fw-bold">
                     <td colSpan={2} className="text-end">
@@ -399,12 +510,12 @@ function SalaryTable({ onRowClick }) {
           </div>
 
           {/* Summary Card */}
-          {data.length > 0 && (
+          {filteredData.length > 0 && (
             <div className="card mt-3">
               <div className="card-body">
                 <div className="row">
                   <div className="col-md-3">
-                    <h6>Total Records: {data.length}</h6>
+                    <h6>Total Records: {filteredData.length}</h6>
                   </div>
                   <div className="col-md-3">
                     <h6>
