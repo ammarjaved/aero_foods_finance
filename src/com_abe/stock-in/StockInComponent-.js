@@ -34,12 +34,10 @@ function StockInComponent() {
 
   const fetchMaterials = async () => {
     try {
-      const date = new Date();
-      const year = date.getFullYear();
       let month = parseInt(new Date().getMonth()) + 1;
 
       const response = await fetch(
-        `http://121.121.232.54:88/abe-yus/fetch_materials.php?month=${month}&year=${year}`,
+        `http://121.121.232.54:88/aero-foods/fetch_materials.php?month=${month}`,
         {
           method: "GET",
         }

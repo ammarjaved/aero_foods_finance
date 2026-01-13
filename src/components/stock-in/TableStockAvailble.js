@@ -13,8 +13,8 @@ function TableStockAvailable() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const [selectedProductDetails, setSelectedProductDetails] = useState(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
@@ -42,9 +42,9 @@ function TableStockAvailable() {
 
   // Handle sorting
   const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
     setSortConfig({ key, direction });
   };
@@ -76,7 +76,7 @@ function TableStockAvailable() {
   useEffect(() => {
     applyFilters();
     // Extract unique categories from data
-    const uniqueCategories = [...new Set(data.map(item => item.category))];
+    const uniqueCategories = [...new Set(data.map((item) => item.category))];
     setCategories(uniqueCategories);
   }, [data, filterValues]);
 
@@ -88,20 +88,25 @@ function TableStockAvailable() {
         let bValue = b[sortConfig.key];
 
         // Handle percentage columns specifically
-        if (sortConfig.key === 'remaining_percentage') {
+        if (sortConfig.key === "remaining_percentage") {
           // Convert to number (the data might come as string or number from backend)
           aValue = parseFloat(aValue) || 0;
           bValue = parseFloat(bValue) || 0;
         }
         // Handle other numeric columns
-        else if (sortConfig.key === 'remaining_boxes' || sortConfig.key === 'remaining_loose_packets') {
+        else if (
+          sortConfig.key === "remaining_boxes" ||
+          sortConfig.key === "remaining_loose_packets"
+        ) {
           aValue = parseFloat(aValue) || 0;
           bValue = parseFloat(bValue) || 0;
         }
         // Handle string columns
-        else if (typeof aValue === 'string' && typeof bValue === 'string') {
-          const comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
-          return sortConfig.direction === 'asc' ? comparison : -comparison;
+        else if (typeof aValue === "string" && typeof bValue === "string") {
+          const comparison = aValue
+            .toLowerCase()
+            .localeCompare(bValue.toLowerCase());
+          return sortConfig.direction === "asc" ? comparison : -comparison;
         }
         // Default numeric handling
         else {
@@ -110,8 +115,8 @@ function TableStockAvailable() {
         }
 
         // Numeric comparison
-        if (typeof aValue === 'number' && typeof bValue === 'number') {
-          if (sortConfig.direction === 'asc') {
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          if (sortConfig.direction === "asc") {
             return aValue - bValue;
           } else {
             return bValue - aValue;
@@ -181,7 +186,7 @@ function TableStockAvailable() {
   const clearFilters = () => {
     setFilterValues({});
     setCategory("");
-    setSortConfig({ key: null, direction: 'asc' }); // Reset sorting when clearing filters
+    setSortConfig({ key: null, direction: "asc" }); // Reset sorting when clearing filters
   };
 
   const toggleFilterPanel = () => {
@@ -191,9 +196,9 @@ function TableStockAvailable() {
   // Get sort icon for column headers
   const getSortIcon = (columnKey) => {
     if (sortConfig.key !== columnKey) {
-      return '↕️'; // Both arrows when not sorted
+      return "↕️"; // Both arrows when not sorted
     }
-    return sortConfig.direction === 'asc' ? '↑' : '↓';
+    return sortConfig.direction === "asc" ? "↑" : "↓";
   };
 
   const columns = [
@@ -224,7 +229,7 @@ function TableStockAvailable() {
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
       sortable: true,
-    }
+    },
   ];
 
   const filterableColumns = [
@@ -254,9 +259,9 @@ function TableStockAvailable() {
     }
   };
 
-  const hasActiveFilters = Object.values(filterValues).some(
-    (value) => value && value.trim() !== ""
-  ) || category !== "";
+  const hasActiveFilters =
+    Object.values(filterValues).some((value) => value && value.trim() !== "") ||
+    category !== "";
 
   return (
     <div className="container-fluid mt-2 position-relative">
@@ -317,7 +322,10 @@ function TableStockAvailable() {
               </div>
               {hasActiveFilters && (
                 <div className="mt-2">
-                  <button className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={clearFilters}
+                  >
                     Clear All Filters
                   </button>
                 </div>
@@ -351,18 +359,32 @@ function TableStockAvailable() {
 
           {/* Main content area */}
           <div className="row">
-            <div className={`col-12 ${isDetailPanelOpen ? 'col-lg-8' : ''} transition-all`}>
+            <div
+              className={`col-12 ${
+                isDetailPanelOpen ? "col-lg-8" : ""
+              } transition-all`}
+            >
               {/* Table */}
               <div className="table-responsive shadow rounded-3">
                 <table className="table table-striped table-hover table-bordered mb-0">
                   <thead>
                     <tr>
                       {columns.map((column) => (
-                        <th 
-                          key={column.key} 
-                          className={`${column.classHead} ${column.sortable ? 'sortable-header' : ''}`}
-                          onClick={column.sortable ? () => handleSort(column.key) : undefined}
-                          style={column.sortable ? { cursor: 'pointer', userSelect: 'none' } : {}}
+                        <th
+                          key={column.key}
+                          className={`${column.classHead} ${
+                            column.sortable ? "sortable-header" : ""
+                          }`}
+                          onClick={
+                            column.sortable
+                              ? () => handleSort(column.key)
+                              : undefined
+                          }
+                          style={
+                            column.sortable
+                              ? { cursor: "pointer", userSelect: "none" }
+                              : {}
+                          }
                         >
                           <div className="d-flex justify-content-between align-items-center">
                             <span>{column.label}</span>
@@ -413,7 +435,11 @@ function TableStockAvailable() {
               {/* Pagination controls - bottom */}
               <nav aria-label="Page navigation" className="mt-3">
                 <ul className="pagination justify-content-center">
-                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       className="page-link"
                       style={{ backgroundColor: "#F8D7DA" }}
@@ -429,12 +455,15 @@ function TableStockAvailable() {
                     if (
                       pageNumber === 1 ||
                       pageNumber === totalPages ||
-                      (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      (pageNumber >= currentPage - 1 &&
+                        pageNumber <= currentPage + 1)
                     ) {
                       return (
                         <li
                           key={pageNumber}
-                          className={`page-item ${currentPage === pageNumber ? "active" : ""}`}
+                          className={`page-item ${
+                            currentPage === pageNumber ? "active" : ""
+                          }`}
                         >
                           <button
                             style={{ backgroundColor: "#E80000" }}
@@ -447,7 +476,8 @@ function TableStockAvailable() {
                       );
                     } else if (
                       (pageNumber === 2 && currentPage > 3) ||
-                      (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
+                      (pageNumber === totalPages - 1 &&
+                        currentPage < totalPages - 2)
                     ) {
                       return (
                         <li key={pageNumber} className="page-item disabled">
@@ -458,7 +488,11 @@ function TableStockAvailable() {
                     return null;
                   })}
 
-                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       style={{ backgroundColor: "#F8D7DA" }}
                       className="page-link"
@@ -472,27 +506,27 @@ function TableStockAvailable() {
             </div>
 
             {/* Detail Panel */}
-            <div className={`col-lg-4 ${isDetailPanelOpen ? '' : 'd-none'}`}>
+            <div className={`col-lg-4 ${isDetailPanelOpen ? "" : "d-none"}`}>
               <div
-                className={`detail-panel ${isDetailPanelOpen ? 'slide-in' : 'slide-out'}`}
+                className={`detail-panel ${
+                  isDetailPanelOpen ? "slide-in" : "slide-out"
+                }`}
                 style={{
-                  position: 'fixed',
-                  right: isDetailPanelOpen ? '0' : '-400px',
-                  top: '0',
-                  width: '400px',
-                  height: '100vh',
-                  backgroundColor: 'white',
-                  boxShadow: '-2px 0 10px rgba(0,0,0,0.1)',
+                  position: "fixed",
+                  right: isDetailPanelOpen ? "0" : "-400px",
+                  top: "0",
+                  width: "400px",
+                  height: "100vh",
+                  backgroundColor: "white",
+                  boxShadow: "-2px 0 10px rgba(0,0,0,0.1)",
                   zIndex: 1050,
-                  transition: 'right 0.3s ease-in-out',
-                  overflowY: 'auto'
+                  transition: "right 0.3s ease-in-out",
+                  overflowY: "auto",
                 }}
               >
                 <div className="p-3">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="mb-0">
-                      Product Details
-                    </h5>
+                    <h5 className="mb-0">Product Details</h5>
                     <button
                       type="button"
                       className="btn-close"
@@ -506,12 +540,21 @@ function TableStockAvailable() {
                       <div className="mb-3">
                         <div className="card">
                           <div className="card-body">
-                            <h6 className="card-title">{selectedProductDetails.name}</h6>
+                            <h6 className="card-title">
+                              {selectedProductDetails.name}
+                            </h6>
                             <p className="card-text">
-                              <strong>Code:</strong> {selectedProductDetails.code}<br/>
-                              <strong>Category:</strong> {selectedProductDetails.category}<br/>
-                              <strong>Unit Price:</strong> RM{selectedProductDetails.unit_price}<br/>
-                              <strong>Unit:</strong> {selectedProductDetails.unit}
+                              <strong>Code:</strong>{" "}
+                              {selectedProductDetails.code}
+                              <br />
+                              <strong>Category:</strong>{" "}
+                              {selectedProductDetails.category}
+                              <br />
+                              <strong>Unit Price:</strong> RM
+                              {selectedProductDetails.unit_price}
+                              <br />
+                              <strong>Unit:</strong>{" "}
+                              {selectedProductDetails.unit}
                             </p>
                           </div>
                         </div>
@@ -525,27 +568,47 @@ function TableStockAvailable() {
                           <div className="row">
                             <div className="col-6">
                               <small className="text-muted">Total Boxes</small>
-                              <div className="fw-bold">{selectedProductDetails.total_boxes}</div>
+                              <div className="fw-bold">
+                                {selectedProductDetails.total_boxes}
+                              </div>
                             </div>
                             <div className="col-6">
-                              <small className="text-muted">Total Packets</small>
-                              <div className="fw-bold">{selectedProductDetails.total_packets}</div>
+                              <small className="text-muted">
+                                Total Packets
+                              </small>
+                              <div className="fw-bold">
+                                {selectedProductDetails.total_packets}
+                              </div>
                             </div>
                             <div className="col-6 mt-2">
-                              <small className="text-muted">Remaining Boxes</small>
-                              <div className="fw-bold text-warning">{selectedProductDetails.remaining_boxes}</div>
+                              <small className="text-muted">
+                                Remaining Boxes
+                              </small>
+                              <div className="fw-bold text-warning">
+                                {selectedProductDetails.remaining_boxes}
+                              </div>
                             </div>
                             <div className="col-6 mt-2">
-                              <small className="text-muted">Remaining Packets</small>
-                              <div className="fw-bold text-warning">{selectedProductDetails.remaining_packets}</div>
+                              <small className="text-muted">
+                                Remaining Packets
+                              </small>
+                              <div className="fw-bold text-warning">
+                                {selectedProductDetails.remaining_packets}
+                              </div>
                             </div>
                             <div className="col-6 mt-2">
-                              <small className="text-muted">Loose Packets</small>
-                              <div className="fw-bold text-info">{selectedProductDetails.remaining_loose_packets}</div>
+                              <small className="text-muted">
+                                Loose Packets
+                              </small>
+                              <div className="fw-bold text-info">
+                                {selectedProductDetails.remaining_loose_packets}
+                              </div>
                             </div>
                             <div className="col-6 mt-2">
                               <small className="text-muted">Remaining %</small>
-                              <div className="fw-bold text-success">{selectedProductDetails.remaining_percentage}%</div>
+                              <div className="fw-bold text-success">
+                                {selectedProductDetails.remaining_percentage}%
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -557,7 +620,9 @@ function TableStockAvailable() {
                             <h6 className="mb-0">Description</h6>
                           </div>
                           <div className="card-body">
-                            <p className="card-text small">{selectedProductDetails.description}</p>
+                            <p className="card-text small">
+                              {selectedProductDetails.description}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -573,13 +638,13 @@ function TableStockAvailable() {
             <div
               className="modal-backdrop"
               style={{
-                position: 'fixed',
+                position: "fixed",
                 top: 0,
                 left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                zIndex: 1040
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                zIndex: 1040,
               }}
               onClick={closeDetailPanel}
             ></div>

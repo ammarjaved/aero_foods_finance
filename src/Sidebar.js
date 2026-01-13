@@ -322,6 +322,36 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         >
           {isAdmin && (
             <div
+              onClick={() => handleNavigation("/payable")}
+              style={{
+                borderBottom: "1px white solid",
+                cursor: "pointer",
+                backgroundColor: isCurrentPage("/payable")
+                  ? "rgba(255,255,255,0.2)"
+                  : "rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                margin: "2px 0",
+                fontWeight: isCurrentPage("/payable") ? "bold" : "normal",
+                transition: "background-color 0.2s ease",
+              }}
+              className="nav-link text-white py-2"
+              onMouseEnter={(e) => {
+                if (!isCurrentPage("/payable")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCurrentPage("/payable")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+              }}
+            >
+              {isCurrentPage("/payable") && "► "} Payable
+            </div>
+          )}
+
+          {isAdmin && (
+            <div
               onClick={() => handleNavigation("/summary")}
               style={{
                 borderBottom: "1px white solid",

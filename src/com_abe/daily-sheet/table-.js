@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function TableBankReconciliation({ onRowClick }) {
+function Table({ onRowClick }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -13,34 +13,23 @@ function TableBankReconciliation({ onRowClick }) {
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
-  const year = date.getFullYear();
-  const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
-    // Note: localStorage is not available in Claude artifacts
-    // localStorage.setItem("month", monthValue);
+    localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
-  };
-
-  const handleYearChange = (e) => {
-    const yearValue = e.target.value;
-    localStorage.setItem("year", yearValue);
-    setSelectedYear(yearValue);
-    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
   // Subscribe to a custom event for new records
   useEffect(() => {
-    // Note: localStorage is not available in Claude artifacts
-    // const monthvalue = localStorage.getItem("month");
-    // if (monthvalue) {
-    //   fetchData(monthvalue);
-    //   setSelectedMonth(monthvalue);
-    // } else {
-    fetchData(selectedMonth, selectedYear);
-    // }
+    const monthvalue = localStorage.getItem("month");
+    if (monthvalue) {
+      fetchData(monthvalue);
+      setSelectedMonth(monthvalue);
+    } else {
+      fetchData(selectedMonth);
+    }
 
     // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
@@ -58,24 +47,14 @@ function TableBankReconciliation({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month, year) => {
+  const fetchData = (month) => {
     setLoading(true);
-
-    fetch(
-      "http://121.121.232.54:88/amazon-cafe/fetch_bank_reconciliation_sheet.php?month=" +
-        month +
-        "&year=" +
-        year
-    )
+    // Fetch data from PHP backend
+    fetch("http://121.121.232.54:88/abe-yus/fetchData.php?month=" + month)
       .then((response) => response.json())
       .then((fetchedData) => {
-        const normalizedData = fetchedData.map((record) => ({
-          ...record,
-          dayIndex: Number(record.day) % 7, // 7 → 0 (Sunday)
-        }));
-
-        setData(normalizedData);
-        setFilteredData(normalizedData);
+        setData(fetchedData);
+        setFilteredData(fetchedData);
         setLoading(false);
       })
       .catch((error) => {
@@ -137,266 +116,148 @@ function TableBankReconciliation({ onRowClick }) {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
-  // Calculate summary totals for numeric columns
-  const calculateSummary = () => {
-    const numericColumns = [
-      "cash",
-      "touch_n_go",
-      "duit_now",
-      "voucher",
-      "visa_master",
-      "sales_walk_in",
-      "shopee",
-      "grab",
-      "panda",
-      "sales_delivery",
-      "total_sales",
-      "visa",
-      "master",
-      "my_debit",
-      "total_terminal",
-      "comission",
-      "cash_box_amount",
-      "variance",
-      "tng",
-      "variance_1",
-      "dr_1",
-      "dr_2",
-      "cr",
-      "total_bank_card",
-      "variance_2",
-      "shopee_1",
-      "grab_1",
-      "panda_1",
-      "total_delivery",
-      "variance_3",
-      "actual_total",
-      "total_variance",
-    ];
-
-    const summary = {};
-
-    numericColumns.forEach((column) => {
-      summary[column] = filteredData.reduce((sum, record) => {
-        const value = parseFloat(record[column]) || 0;
-        return sum + value;
-      }, 0);
-    });
-
-    return summary;
-  };
-
   // Column definitions with friendly names and custom styling for specific columns
   const columns = [
-    {
-      key: "month_date",
-      label: "Month Date",
-      classHead: "bg-dark text-light",
-      classBody: "bg-dark text-light",
-    },
-    {
-      key: "day",
-      label: "Day",
-      classHead: "bg-dark text-light",
-      classBody: "bg-dark text-light",
-    },
-    //Constants
+    // { key: 'id', label: 'ID' },
+    { key: "month_date", label: "Month Date" },
+    { key: "day", label: "Day" },
+    // { key: 'month', label: 'Month' },
+    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
     {
       key: "cash",
       label: "Cash",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
       key: "touch_n_go",
-      label: "Touch N Go/Online",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      label: "Touch n Go",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
-    {
-      key: "duit_now",
-      label: "Duit Now",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "voucher",
-      label: "Voucher",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "visa_master",
-      label: "Bank Card",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "sales_walk_in",
-      label: "Net Sales Walk In",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "shopee",
-      label: "Shopee",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "grab",
-      label: "Grab",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "panda",
-      label: "Panda",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "sales_delivery",
-      label: "Net Sales Delivery",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-    {
-      key: "total_sales",
-      label: "Total Sales POS",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
-    },
-
-    //Form Values
     {
       key: "visa",
       label: "Visa",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
     },
     {
       key: "master",
       label: "Master",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
     },
     {
       key: "my_debit",
-      label: "Mydebit",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
+      label: "My Debit",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
     },
     {
-      key: "total_terminal",
-      label: "Total Terminal",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
+      key: "duit_now",
+      label: "DuitNow",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
     {
-      key: "comission",
-      label: "Comission",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
+      key: "voucher",
+      label: "Voucher",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
     },
-    //Constants
+    {
+      key: "visa_master",
+      label: "Bank Card",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "sales_walk_in",
+      label: "Walk-in Sales",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "shopee",
+      label: "Shopee",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "grab",
+      label: "Grab",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "panda",
+      label: "Foodpanda",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "sales_delivery",
+      label: "Delivery Sales",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+
+    {
+      key: "total_sales",
+      label: "Total Sales",
+      headerStyle: { backgroundColor: "#B7950B" },
+      cellStyle: { backgroundColor: "#B7950B" },
+    },
+    {
+      key: "month_date_sales",
+      label: "Month To Date Sales",
+      headerStyle: { backgroundColor: "#B7950B" },
+      cellStyle: { backgroundColor: "#B7950B" },
+    },
+    { key: "transaction_count", label: "Transaction Count" },
+    { key: "avg_transaction_value", label: "Avg Transaction" },
+    { key: "discount", label: "100% Discount" },
+    {
+      key: "labour_hours_used",
+      label: "Labour Hours",
+      headerStyle: { backgroundColor: "#8E44AD" },
+      cellStyle: { backgroundColor: "#8E44AD" },
+    },
+    {
+      key: "sales_per_labour_hours",
+      label: "Sales/Labour Hour",
+      headerStyle: { backgroundColor: "#8E44AD" },
+      cellStyle: { backgroundColor: "#8E44AD" },
+    },
+    //   { key: 'prev_day_balance', label: 'Previous Day Balance' ,
+    //     headerStyle: { backgroundColor: '#C0392B' },
+    //   cellStyle: { backgroundColor: '#C0392B' }
+    // },
+    //   { key: 'next_day_balance', label: 'Next Day Balance',
+    //     headerStyle: { backgroundColor: '#C0392B' },
+    //   cellStyle: { backgroundColor: '#C0392B' }
+    //  },
+    {
+      key: "actual_bank_amount",
+      label: "Actual Bank Amount",
+      headerStyle: { backgroundColor: "#C0392B" },
+      cellStyle: { backgroundColor: "#C0392B" },
+    },
     {
       key: "cash_box_amount",
       label: "Cash Box Amount",
-      classHead: "bg-success text-light",
-      classBody: "bg-success text-light text-end",
+      headerStyle: { backgroundColor: "#C0392B" },
+      cellStyle: { backgroundColor: "#C0392B" },
     },
     {
       key: "variance",
       label: "Variance",
-      classHead: "bg-light text-dark",
-      classBody: "bg-light text-end fw-bold",
+      headerStyle: { backgroundColor: "#fff" },
+      cellStyle: { backgroundColor: "#fff" },
     },
-
-    {
-      key: "tng",
-      label: "TNG",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "variance_1",
-      label: "Variance",
-      classHead: "bg-light text-dark",
-      classBody: "bg-light text-end fw-bold",
-    },
-    {
-      key: "dr_1",
-      label: "DR/1",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "dr_2",
-      label: "DR/2",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "cr",
-      label: "CR",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "total_bank_card",
-      label: "Total Bank Card",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "variance_2",
-      label: "Variance",
-      classHead: "bg-light text-dark",
-      classBody: "bg-light text-end fw-bold",
-    },
-    {
-      key: "shopee_1",
-      label: "Shopee",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "grab_1",
-      label: "Grab",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "panda_1",
-      label: "Panda",
-      classHead: "bg-danger text-light",
-      classBody: "bg-danger text-light text-end",
-    },
-    {
-      key: "total_delivery",
-      label: "Total Delivery",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "variance_3",
-      label: "Variance",
-      classHead: "bg-light text-dark",
-      classBody: "bg-light text-end fw-bold",
-    },
-    {
-      key: "actual_total",
-      label: "Actual Total",
-      classHead: "bg-secondary text-light",
-      classBody: "bg-secondary text-light text-end",
-    },
-    {
-      key: "total_variance",
-      label: "Total Variance",
-      classHead: "bg-light text-dark",
-      classBody: "bg-light text-end fw-bold",
-    },
+    { key: "bank_in_date", label: "Bank-in Date" },
+    { key: "recipt_ref_no", label: "Receipt Ref No." },
+    { key: "remarks", label: "Remarks" },
   ];
 
   // Specify which columns you want to include in the filter
@@ -437,9 +298,6 @@ function TableBankReconciliation({ onRowClick }) {
   const hasActiveFilters = Object.values(filterValues).some(
     (value) => value && value.trim() !== ""
   );
-
-  // Get summary data
-  const summaryData = calculateSummary();
 
   return (
     <div className="container-fluid mt-2">
@@ -533,21 +391,6 @@ function TableBankReconciliation({ onRowClick }) {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
-                  <div className="col">
-                    <div className="form-floating">
-                      <select
-                        className="form-select"
-                        id="yearSelect"
-                        value={selectedYear}
-                        onChange={handleYearChange}
-                      >
-                        <option value="">Select Year</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                      </select>
-                      <label htmlFor="monthSelect">Year</label>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -576,8 +419,8 @@ function TableBankReconciliation({ onRowClick }) {
           </div>
 
           {/* Table */}
-          <div className="table-responsive shadow rounded-3">
-            <table className="table table-striped table-hover table-bordered mb-0">
+          <div className="table-responsive">
+            <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
                   {columns.map((column, index) => {
@@ -585,21 +428,13 @@ function TableBankReconciliation({ onRowClick }) {
 
                     if (column.key === "month_date") {
                       return (
-                        <th
-                          key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
-                        >
+                        <th key={column.key} style={column.headerStyle || {}}>
                           {column.label}
                         </th>
                       );
                     } else {
                       return (
-                        <th
-                          key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
-                        >
+                        <th key={column.key} style={column.headerStyle || {}}>
                           {column.label}
                         </th>
                       );
@@ -620,7 +455,7 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
                               {record[column.key]}
                             </td>
@@ -628,27 +463,44 @@ function TableBankReconciliation({ onRowClick }) {
                         } else if (column.key === "day") {
                           return (
                             <td
-                              key={`${record.id}-day`}
-                              className={column.classBody}
+                              key={`${record.id}-${column.key}`}
+                              style={column.cellStyle || {}}
                             >
-                              {days[record.dayIndex] ?? "-"}
+                              {days[record[column.key]]}
                             </td>
                           );
                         } else if (
-                          column.key === "variance" ||
-                          column.key === "variance_1" ||
-                          column.key === "variance_2" ||
-                          column.key === "variance_3" ||
-                          column.key === "total_variance"
+                          column.key === "sales_walk_in" ||
+                          column.key === "total_sales" ||
+                          column.key === "sales_delivery" ||
+                          column.key === "month_date_sales" ||
+                          column.key === "avg_transaction_value" ||
+                          column.key === "transaction_count" ||
+                          column.key === "labour_hours_used" ||
+                          column.key === "sales_per_labour_hours"
                         ) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              className={
-                                parseFloat(record[column.key]) < 0
-                                  ? `${column.classBody} text-danger`
-                                  : `${column.classBody} text-success`
-                              }
+                              style={column.cellStyle || {}}
+                            >
+                              {parseFloat(record[column.key])
+                                .toFixed(2)
+                                .toString()}
+                            </td>
+                          );
+                        } else if (column.key === "variance") {
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={{
+                                ...(column.cellStyle || {}),
+                                color:
+                                  parseFloat(record[column.key]).toFixed(2) > 0
+                                    ? "green"
+                                    : "red",
+                                fontWeight: "bold",
+                              }}
                             >
                               {parseFloat(record[column.key])
                                 .toFixed(2)
@@ -659,9 +511,9 @@ function TableBankReconciliation({ onRowClick }) {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
-                              className={`${column.classBody}`}
+                              style={column.cellStyle || {}}
                             >
-                              {parseFloat(record[column.key]).toFixed(2)}
+                              {record[column.key]}
                             </td>
                           );
                         }
@@ -675,103 +527,6 @@ function TableBankReconciliation({ onRowClick }) {
                     </td>
                   </tr>
                 )}
-
-                {/* Summary Row */}
-                <tr className="table-info fw-bold border-top border-3 border-primary">
-                  {columns.map((column) => {
-                    if (column.key === "month_date") {
-                      return (
-                        <td
-                          key={`summary-${column.key}`}
-                          className="bg-info text-dark fw-bold text-center"
-                        >
-                          TOTAL
-                        </td>
-                      );
-                    } else if (column.key === "day") {
-                      return (
-                        <td
-                          key={`summary-${column.key}`}
-                          className="bg-info text-dark fw-bold text-center"
-                        >
-                          -
-                        </td>
-                      );
-                    } else if (
-                      column.key === "variance" ||
-                      column.key === "variance_1" ||
-                      column.key === "variance_2" ||
-                      column.key === "variance_3" ||
-                      column.key === "total_variance"
-                    ) {
-                      const value = parseFloat(summaryData[column.key]) || 0;
-                      return (
-                        <td
-                          key={`summary-${column.key}`}
-                          className={
-                            value < 0
-                              ? "bg-info text-danger fw-bold text-end"
-                              : "bg-info text-success fw-bold text-end"
-                          }
-                        >
-                          {value.toFixed(2)}
-                        </td>
-                      );
-                    } else {
-                      // Check if this is a numeric column
-                      const isNumericColumn = [
-                        "cash",
-                        "touch_n_go",
-                        "duit_now",
-                        "voucher",
-                        "visa_master",
-                        "sales_walk_in",
-                        "shopee",
-                        "grab",
-                        "panda",
-                        "sales_delivery",
-                        "total_sales",
-                        "visa",
-                        "master",
-                        "my_debit",
-                        "total_terminal",
-                        "comission",
-                        "cash_box_amount",
-                        "tng",
-                        "dr_1",
-                        "dr_2",
-                        "cr",
-                        "total_bank_card",
-                        "shopee_1",
-                        "grab_1",
-                        "panda_1",
-                        "total_delivery",
-                        "actual_total",
-                      ].includes(column.key);
-
-                      if (isNumericColumn) {
-                        const value = parseFloat(summaryData[column.key]) || 0;
-                        return (
-                          <td
-                            key={`summary-${column.key}`}
-                            className="bg-info text-dark fw-bold text-end"
-                          >
-                            {value.toFixed(2)}
-                          </td>
-                        );
-                      } else {
-                        return (
-                          <td
-                            key={`summary-${column.key}`}
-                            className="bg-info text-dark fw-bold text-center"
-                          >
-                            -
-                          </td>
-                        );
-                      }
-                    }
-                  })}
-                </tr>
               </tbody>
             </table>
           </div>
@@ -856,4 +611,4 @@ function TableBankReconciliation({ onRowClick }) {
   );
 }
 
-export default TableBankReconciliation;
+export default Table;

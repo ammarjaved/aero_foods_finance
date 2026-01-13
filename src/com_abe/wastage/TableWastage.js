@@ -12,23 +12,35 @@ function TableWastage({ onRowClick }) {
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
+  const year = date.getFullYear();
+  const [selectedYear, setSelectedYear] = useState(year);
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
+  };
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
   };
 
   // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
+    const yearvalue = localStorage.getItem("year");
+
     if (monthvalue) {
-      fetchData(monthvalue);
+      fetchData(monthvalue, yearvalue);
       setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedYear);
     }
 
     // Create event listeners for record updates
@@ -47,11 +59,14 @@ function TableWastage({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/abe-yus/fetch_daily_wastage.php?month=" + month
+      "http://121.121.232.54:88/abe-yus/fetch_daily_wastage.php?month=" +
+        month +
+        "&year=" +
+        year
     )
       .then((response) => response.json())
       .then((fetchedData) => {
@@ -320,6 +335,22 @@ function TableWastage({ onRowClick }) {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
+
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="monthSelect">Year</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -399,13 +430,12 @@ function TableWastage({ onRowClick }) {
                             </td>
                           );
                         } else if (column.key === "day") {
+                          // Calculate day from month_date instead of using the day field
+                          const date = new Date(record.month_date);
+                          const dayIndex = date.getDay(); // 0=Sun, 1=Mon, etc.
                           return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
-                            >
-                              {days[record[column.key]]}
+                            <td key={column.key} className={column.classBody}>
+                              {days[dayIndex]}
                             </td>
                           );
                         } else if (

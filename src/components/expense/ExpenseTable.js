@@ -225,6 +225,47 @@ function ExpenseTable({ onRowClick }) {
     }
   };
 
+  const handleReject = async (record, e) => {
+    e.stopPropagation();
+
+    if (
+      !window.confirm(
+        `Are you sure you want to reject and delete this claim for "${
+          record.vendor
+        }" with amount RM ${formatAmount(parseFloat(record.amount || 0))}?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://121.121.232.54:88/aero-foods/delete_daily_expenditure.php",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id: record.id }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("Record rejected and deleted successfully");
+
+        // Remove the record from the data
+        setData((prevData) => prevData.filter((item) => item.id !== record.id));
+      } else {
+        alert(result.error || "Failed to delete record");
+      }
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      alert("Network error");
+    }
+  };
+
   const applyFilters = () => {
     let filtered = [...data];
 
@@ -519,12 +560,6 @@ function ExpenseTable({ onRowClick }) {
                                 <span className="badge bg-success">
                                   Approved
                                 </span>
-                              ) : record.is_approved === false ||
-                                record.is_approved === 0 ||
-                                record.is_approved === "0" ? (
-                                <span className="badge bg-danger">
-                                  Rejected
-                                </span>
                               ) : (
                                 (user === "admin" || user === "manager") && (
                                   <div className="btn-group btn-group-sm">
@@ -539,9 +574,7 @@ function ExpenseTable({ onRowClick }) {
                                     </button>
                                     <button
                                       className="btn btn-danger btn-sm"
-                                      onClick={(e) =>
-                                        handleApproval(record, false, e)
-                                      }
+                                      onClick={(e) => handleReject(record, e)}
                                       title="Reject"
                                     >
                                       ✗ Reject

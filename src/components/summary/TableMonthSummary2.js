@@ -96,8 +96,7 @@ function TableMonthSummary2() {
         `http://121.121.232.54:88/aero-foods/mon-sum-mixiue2.php?month=${month}&year=${year}`
       );
       const fetchedData = await response.json();
-
-      const processedData = fetchedData
+      const processedData = fetchedData.monthly_data
         .map((item) => ({
           ...item,
           total_sales:
@@ -221,7 +220,7 @@ function TableMonthSummary2() {
       .then((fetchedData) => {
         // Convert string values to numbers and sort by date ascending
 
-        const processedData = fetchedData
+        const processedData = fetchedData.monthly_data
           .map((item) => ({
             ...item,
             total_sales:

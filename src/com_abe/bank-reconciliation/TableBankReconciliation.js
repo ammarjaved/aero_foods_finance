@@ -13,13 +13,22 @@ function TableBankReconciliation({ onRowClick }) {
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const year = date.getFullYear();
+  const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     // Note: localStorage is not available in Claude artifacts
     // localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
+  };
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
   };
 
   // Subscribe to a custom event for new records
@@ -30,7 +39,7 @@ function TableBankReconciliation({ onRowClick }) {
     //   fetchData(monthvalue);
     //   setSelectedMonth(monthvalue);
     // } else {
-      fetchData(selectedMonth);
+    fetchData(selectedMonth, selectedYear);
     // }
 
     // Create event listeners for record updates
@@ -49,17 +58,24 @@ function TableBankReconciliation({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
-    // Fetch data from PHP backend
+
     fetch(
       "http://121.121.232.54:88/abe-yus/fetch_bank_reconciliation_sheet.php?month=" +
-        month
+        month +
+        "&year=" +
+        year
     )
       .then((response) => response.json())
       .then((fetchedData) => {
-        setData(fetchedData);
-        setFilteredData(fetchedData);
+        const normalizedData = fetchedData.map((record) => ({
+          ...record,
+          dayIndex: Number(record.day) % 7, // 7 → 0 (Sunday)
+        }));
+
+        setData(normalizedData);
+        setFilteredData(normalizedData);
         setLoading(false);
       })
       .catch((error) => {
@@ -124,17 +140,43 @@ function TableBankReconciliation({ onRowClick }) {
   // Calculate summary totals for numeric columns
   const calculateSummary = () => {
     const numericColumns = [
-      'cash', 'touch_n_go', 'duit_now', 'voucher', 'visa_master', 'sales_walk_in',
-      'shopee', 'grab', 'panda', 'sales_delivery', 'total_sales', 'visa', 'master',
-      'my_debit', 'total_terminal', 'comission', 'cash_box_amount', 'variance',
-      'tng', 'variance_1', 'dr_1', 'dr_2', 'cr', 'total_bank_card', 'variance_2',
-      'shopee_1', 'grab_1', 'panda_1', 'total_delivery', 'variance_3', 'actual_total',
-      'total_variance'
+      "cash",
+      "touch_n_go",
+      "duit_now",
+      "voucher",
+      "visa_master",
+      "sales_walk_in",
+      "shopee",
+      "grab",
+      "panda",
+      "sales_delivery",
+      "total_sales",
+      "visa",
+      "master",
+      "my_debit",
+      "total_terminal",
+      "comission",
+      "cash_box_amount",
+      "variance",
+      "tng",
+      "variance_1",
+      "dr_1",
+      "dr_2",
+      "cr",
+      "total_bank_card",
+      "variance_2",
+      "shopee_1",
+      "grab_1",
+      "panda_1",
+      "total_delivery",
+      "variance_3",
+      "actual_total",
+      "total_variance",
     ];
 
     const summary = {};
-    
-    numericColumns.forEach(column => {
+
+    numericColumns.forEach((column) => {
       summary[column] = filteredData.reduce((sum, record) => {
         const value = parseFloat(record[column]) || 0;
         return sum + value;
@@ -167,7 +209,7 @@ function TableBankReconciliation({ onRowClick }) {
     },
     {
       key: "touch_n_go",
-      label: "Touch N Go",
+      label: "Touch N Go/Online",
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
     },
@@ -491,6 +533,21 @@ function TableBankReconciliation({ onRowClick }) {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="monthSelect">Year</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -571,10 +628,10 @@ function TableBankReconciliation({ onRowClick }) {
                         } else if (column.key === "day") {
                           return (
                             <td
-                              key={`${record.id}-${column.key}`}
-                              className={`${column.classBody}`}
+                              key={`${record.id}-day`}
+                              className={column.classBody}
                             >
-                              {days[record[column.key]]}
+                              {days[record.dayIndex] ?? "-"}
                             </td>
                           );
                         } else if (
@@ -604,7 +661,7 @@ function TableBankReconciliation({ onRowClick }) {
                               key={`${record.id}-${column.key}`}
                               className={`${column.classBody}`}
                             >
-                              {record[column.key]}
+                              {parseFloat(record[column.key]).toFixed(2)}
                             </td>
                           );
                         }
@@ -618,7 +675,7 @@ function TableBankReconciliation({ onRowClick }) {
                     </td>
                   </tr>
                 )}
-                
+
                 {/* Summary Row */}
                 <tr className="table-info fw-bold border-top border-3 border-primary">
                   {columns.map((column) => {
@@ -647,7 +704,7 @@ function TableBankReconciliation({ onRowClick }) {
                       column.key === "variance_3" ||
                       column.key === "total_variance"
                     ) {
-                      const value = summaryData[column.key] || 0;
+                      const value = parseFloat(summaryData[column.key]) || 0;
                       return (
                         <td
                           key={`summary-${column.key}`}
@@ -663,15 +720,37 @@ function TableBankReconciliation({ onRowClick }) {
                     } else {
                       // Check if this is a numeric column
                       const isNumericColumn = [
-                        'cash', 'touch_n_go', 'duit_now', 'voucher', 'visa_master', 'sales_walk_in',
-                        'shopee', 'grab', 'panda', 'sales_delivery', 'total_sales', 'visa', 'master',
-                        'my_debit', 'total_terminal', 'comission', 'cash_box_amount', 'tng', 'dr_1', 
-                        'dr_2', 'cr', 'total_bank_card', 'shopee_1', 'grab_1', 'panda_1', 
-                        'total_delivery', 'actual_total'
+                        "cash",
+                        "touch_n_go",
+                        "duit_now",
+                        "voucher",
+                        "visa_master",
+                        "sales_walk_in",
+                        "shopee",
+                        "grab",
+                        "panda",
+                        "sales_delivery",
+                        "total_sales",
+                        "visa",
+                        "master",
+                        "my_debit",
+                        "total_terminal",
+                        "comission",
+                        "cash_box_amount",
+                        "tng",
+                        "dr_1",
+                        "dr_2",
+                        "cr",
+                        "total_bank_card",
+                        "shopee_1",
+                        "grab_1",
+                        "panda_1",
+                        "total_delivery",
+                        "actual_total",
                       ].includes(column.key);
 
                       if (isNumericColumn) {
-                        const value = summaryData[column.key] || 0;
+                        const value = parseFloat(summaryData[column.key]) || 0;
                         return (
                           <td
                             key={`summary-${column.key}`}
