@@ -45,6 +45,7 @@ import User from "./components/user/User";
 import Audit from "./components/audit/Audit";
 import LandingOjim from "./ojim/Landing";
 import TimeAnalysis from "./components/timeshete-analysis/TimeAnalysis";
+import Payable from "./components/payable/Payable";
 function App() {
   return (
     <BrowserRouter basename="/aero_foods_finance">
@@ -93,6 +94,7 @@ function App() {
         <Route path="/stockin-ojim" element={<StockInOjim />} />
 
         <Route path="/summary" element={<Summary />} />
+        <Route path="/payable" element={<Payable />} />
         <Route path="/TimesheetABE" element={<TimesheetABE />} />
         <Route path="/TimesheetAmazon" element={<TimesheetAmazon />} />
         <Route path="/TimesheetOjim" element={<TimesheetOjim />} />

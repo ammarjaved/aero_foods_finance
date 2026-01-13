@@ -44,7 +44,7 @@ function ExpenseTable({ onRowClick }) {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue);
   };
 
   // Calculate total amount from filtered data
@@ -63,26 +63,96 @@ function ExpenseTable({ onRowClick }) {
     });
   };
 
-  // Get unique company names for dropdown - with proper cleaning
+  // Extract year and month from date string
+  const extractDateParts = (dateString) => {
+    if (!dateString) return { year: null, month: null };
+
+    try {
+      let year, month;
+
+      if (dateString.includes("/")) {
+        // Handle MM/DD/YYYY format
+        const parts = dateString.split("/");
+        if (parts.length === 3) {
+          month = parts[0];
+          year = parts[2];
+        }
+      } else if (dateString.includes("-")) {
+        // Handle YYYY-MM-DD format
+        const parts = dateString.split("-");
+        if (parts.length === 3) {
+          year = parts[0];
+          month = parts[1].replace(/^0/, ""); // Remove leading zero
+        }
+      }
+
+      return {
+        year: year ? year.toString() : null,
+        month: month ? month.toString() : null,
+      };
+    } catch (error) {
+      console.error("Error extracting date parts:", dateString, error);
+      return { year: null, month: null };
+    }
+  };
+
+  // Get unique values for dropdown filters
   const getUniqueCompanies = () => {
     const companies = data
       .map((record) => record.company)
       .filter((company) => company && company.trim() !== "")
-      .map((company) => company.trim()) // Remove extra whitespace
+      .map((company) => company.trim())
       .filter((company, index, arr) => arr.indexOf(company) === index)
       .sort();
-
-    // Debug: Log all unique companies found
-    console.log("Unique companies found:", companies);
-
     return companies;
+  };
+
+  const getUniqueYears = () => {
+    const years = data
+      .map((record) => {
+        const dateParts = extractDateParts(record.month_date);
+        return dateParts.year;
+      })
+      .filter((year) => year)
+      .filter((year, index, arr) => arr.indexOf(year) === index)
+      .sort((a, b) => b - a); // Sort descending
+
+    console.log("Unique years found:", years);
+    return years;
+  };
+
+  const getUniqueExpenseTypes = () => {
+    const expenseTypes = data
+      .map((record) => record.expense_type_name)
+      .filter((type) => type && type.trim() !== "")
+      .map((type) => type.trim())
+      .filter((type, index, arr) => arr.indexOf(type) === index)
+      .sort();
+
+    console.log("Unique expense types found:", expenseTypes);
+    return expenseTypes;
+  };
+
+  const getUniqueMonths = () => {
+    return [
+      { value: "1", label: "January" },
+      { value: "2", label: "February" },
+      { value: "3", label: "March" },
+      { value: "4", label: "April" },
+      { value: "5", label: "May" },
+      { value: "6", label: "June" },
+      { value: "7", label: "July" },
+      { value: "8", label: "August" },
+      { value: "9", label: "September" },
+      { value: "10", label: "October" },
+      { value: "11", label: "November" },
+      { value: "12", label: "December" },
+    ];
   };
 
   // Subscribe to a custom event for new records
   useEffect(() => {
-    // Load saved filters first
     const savedFilters = loadFiltersFromStorage();
-
     const monthvalue = localStorage.getItem("month");
     if (monthvalue) {
       fetchData(monthvalue);
@@ -91,12 +161,10 @@ function ExpenseTable({ onRowClick }) {
       fetchData(selectedMonth);
     }
 
-    // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
 
     return () => {
-      // Clean up event listeners
       window.removeEventListener("newRecordAdded", handleNewRecord);
       window.removeEventListener("recordUpdated", handleRecordUpdate);
     };
@@ -112,21 +180,18 @@ function ExpenseTable({ onRowClick }) {
 
   const fetchData = (month) => {
     setLoading(true);
-    // Fetch data from PHP backend
     fetch("http://121.121.232.54:88/aero-foods/get_all_sds_expenditure.php")
       .then((response) => response.json())
       .then((fetchedData) => {
-        // Clean company names in the fetched data
         const cleanedData = fetchedData.results.map((record) => ({
           ...record,
           company: record.company ? record.company.trim() : "",
+          vendor: record.vendor ? record.vendor.trim() : "",
         }));
 
         setData(cleanedData);
         setFilteredData(cleanedData);
         setLoading(false);
-
-        // Debug: Log sample data to check company names
         console.log("Sample data:", cleanedData.slice(0, 5));
       })
       .catch((error) => {
@@ -135,13 +200,11 @@ function ExpenseTable({ onRowClick }) {
       });
   };
 
-  // Handler for new record event
   const handleNewRecord = (event) => {
     const newRecord = event.detail;
     setData((prevData) => [newRecord, ...prevData]);
   };
 
-  // Handler for updated record event
   const handleRecordUpdate = (event) => {
     const updatedRecord = event.detail;
     setData((prevData) =>
@@ -151,7 +214,7 @@ function ExpenseTable({ onRowClick }) {
     );
   };
 
-  // Apply filters to the data - FIXED VERSION with date range
+  // Apply filters to the data
   const applyFilters = () => {
     let filtered = [...data];
 
@@ -169,22 +232,63 @@ function ExpenseTable({ onRowClick }) {
         console.log(`Applying filter: ${key} = "${value}"`);
 
         if (key === "company") {
-          // Exact match for company dropdown with proper trimming
+          // Exact match for company dropdown
           const filterValue = value.trim();
           const beforeFilter = filtered.length;
 
           filtered = filtered.filter((record) => {
             const recordCompany = record[key] ? record[key].trim() : "";
             const isMatch = recordCompany === filterValue;
-
             return isMatch;
           });
 
           console.log(
             `Company filter "${filterValue}": ${beforeFilter} → ${filtered.length} records`
           );
+        } else if (key === "expense_type_name") {
+          // Exact match for expense type dropdown
+          const filterValue = value.trim();
+          const beforeFilter = filtered.length;
+
+          filtered = filtered.filter((record) => {
+            const recordExpenseType = record[key] ? record[key].trim() : "";
+            const isMatch = recordExpenseType === filterValue;
+            return isMatch;
+          });
+
+          console.log(
+            `Expense Type filter "${filterValue}": ${beforeFilter} → ${filtered.length} records`
+          );
+        } else if (key === "year") {
+          // Year filter - extract from month_date
+          const filterValue = value;
+          const beforeFilter = filtered.length;
+
+          filtered = filtered.filter((record) => {
+            const dateParts = extractDateParts(record.month_date);
+            const isMatch = dateParts.year === filterValue;
+            return isMatch;
+          });
+
+          console.log(
+            `Year filter "${filterValue}": ${beforeFilter} → ${filtered.length} records`
+          );
+        } else if (key === "month") {
+          // Month filter - extract from month_date
+          const filterValue = value;
+          const beforeFilter = filtered.length;
+
+          filtered = filtered.filter((record) => {
+            const dateParts = extractDateParts(record.month_date);
+            const isMatch = dateParts.month === filterValue;
+            return isMatch;
+          });
+
+          console.log(
+            `Month filter "${filterValue}": ${beforeFilter} → ${filtered.length} records`
+          );
         } else {
-          // Partial match for other filters
+          // Partial match for text filters (vendor)
           filtered = filtered.filter(
             (record) =>
               record[key] &&
@@ -194,7 +298,7 @@ function ExpenseTable({ onRowClick }) {
       }
     });
 
-    // Apply date range filter separately with better debugging
+    // Apply date range filter
     const fromDate = filterValues.fromDate;
     const toDate = filterValues.toDate;
 
@@ -203,28 +307,18 @@ function ExpenseTable({ onRowClick }) {
       console.log("From date:", fromDate);
       console.log("To date:", toDate);
 
-      // Sample record dates for debugging
-      console.log(
-        "Sample record dates:",
-        filtered.slice(0, 3).map((r) => r.month_date)
-      );
-
       const beforeDateFilter = filtered.length;
 
       filtered = filtered.filter((record) => {
         const recordDate = record.month_date;
         if (!recordDate) {
-          console.log("Record has no date:", record);
           return false;
         }
 
-        // Normalize dates to YYYY-MM-DD format for comparison
         let normalizedRecordDate = recordDate;
         if (recordDate.includes("/")) {
-          // Convert MM/DD/YYYY or DD/MM/YYYY to YYYY-MM-DD
           const parts = recordDate.split("/");
           if (parts.length === 3) {
-            // Assuming MM/DD/YYYY format, adjust if your data uses DD/MM/YYYY
             normalizedRecordDate = `${parts[2]}-${parts[0].padStart(
               2,
               "0"
@@ -248,18 +342,14 @@ function ExpenseTable({ onRowClick }) {
       console.log(
         `Date range filter applied: ${beforeDateFilter} → ${filtered.length} records`
       );
-      console.log(
-        "Sample filtered dates:",
-        filtered.slice(0, 3).map((r) => r.month_date)
-      );
     }
 
     console.log(`Final filtered data count: ${filtered.length}`);
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
-  // Handle filter input change - UPDATED with localStorage save
+  // Handle filter input change
   const handleFilterChange = (key, value) => {
     console.log(`Filter changed: ${key} = "${value}"`);
     setFilterValues((prev) => {
@@ -268,18 +358,14 @@ function ExpenseTable({ onRowClick }) {
         [key]: value,
       };
       console.log("New filter values:", newFilters);
-
-      // Save to localStorage
       saveFiltersToStorage(newFilters);
-
       return newFilters;
     });
   };
 
-  // Clear all filters - UPDATED to clear localStorage
+  // Clear all filters
   const clearFilters = () => {
     setFilterValues({});
-    // Clear from localStorage
     localStorage.removeItem("expenseTableFilters");
     console.log("Cleared all filters and localStorage");
   };
@@ -289,64 +375,60 @@ function ExpenseTable({ onRowClick }) {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
-  // Column definitions with friendly names and custom styling for specific columns
+  // Get day name from date string
+  const getDayName = (dateString) => {
+    if (!dateString) return "";
+
+    try {
+      let date;
+      if (dateString.includes("/")) {
+        // Handle MM/DD/YYYY format
+        const parts = dateString.split("/");
+        if (parts.length === 3) {
+          // JavaScript Date expects month as 0-indexed
+          date = new Date(parts[2], parts[0] - 1, parts[1]);
+        }
+      } else if (dateString.includes("-")) {
+        // Handle YYYY-MM-DD format
+        date = new Date(dateString);
+      }
+
+      if (date && !isNaN(date.getTime())) {
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        return days[date.getDay()];
+      }
+    } catch (error) {
+      console.error("Error parsing date:", dateString, error);
+    }
+
+    return "";
+  };
+
+  // Column definitions
   const columns = [
-    // { key: 'id', label: 'ID' },
     { key: "month_date", label: "Month Date" },
     { key: "day", label: "Day" },
-    // { key: 'month', label: 'Month' },
-    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
-    {
-      key: "company",
-      label: "Company",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "vendor",
-      label: "Vendor",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-
-    {
-      key: "amount",
-      label: "Amount",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "expense_type_name",
-      label: "Expense Type",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "remarks",
-      label: "Remarks",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-  ];
-
-  // Specify which columns you want to include in the filter - UPDATED to remove month_date and add date range
-  const filterableColumns = [
-    // { key: 'day', label: 'Day' },
     { key: "company", label: "Company" },
+    { key: "vendor", label: "Vendor" },
+    { key: "amount", label: "Amount" },
+    { key: "expense_type_name", label: "Expense Type" },
+    { key: "remarks", label: "Remarks" },
   ];
 
-  // Add date range filters separately
+  // Filterable columns - updated with year, month, and vendor
+  const filterableColumns = [
+    { key: "company", label: "Company", type: "dropdown" },
+    { key: "year", label: "Year", type: "dropdown" },
+    { key: "month", label: "Month", type: "dropdown" },
+    { key: "expense_type_name", label: "Expense Type", type: "dropdown" },
+    { key: "vendor", label: "Vendor", type: "text" },
+  ];
+
+  // Date range filters
   const dateRangeFilters = [
     { key: "fromDate", label: "From Date", type: "date" },
     { key: "toDate", label: "To Date", type: "date" },
   ];
-
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
@@ -405,7 +487,7 @@ function ExpenseTable({ onRowClick }) {
             </div>
           </div>
 
-          {/* Filter section - UPDATED */}
+          {/* Filter section */}
           <div className="card mb-3">
             <div className="card-header d-flex justify-content-between align-items-center">
               <div className="d-flex align-items-center">
@@ -467,7 +549,7 @@ function ExpenseTable({ onRowClick }) {
                   {filterableColumns.map((column) => (
                     <div className="col" key={`filter-${column.key}`}>
                       <div className="form-floating">
-                        {column.key === "company" ? (
+                        {column.type === "dropdown" ? (
                           <select
                             className="form-select"
                             id={`filter-${column.key}`}
@@ -476,12 +558,31 @@ function ExpenseTable({ onRowClick }) {
                               handleFilterChange(column.key, e.target.value)
                             }
                           >
-                            <option value="">All Companies</option>
-                            {getUniqueCompanies().map((company) => (
-                              <option key={company} value={company}>
-                                {company}
-                              </option>
-                            ))}
+                            <option value="">All {column.label}s</option>
+                            {column.key === "company" &&
+                              getUniqueCompanies().map((company) => (
+                                <option key={company} value={company}>
+                                  {company}
+                                </option>
+                              ))}
+                            {column.key === "year" &&
+                              getUniqueYears().map((year) => (
+                                <option key={year} value={year}>
+                                  {year}
+                                </option>
+                              ))}
+                            {column.key === "month" &&
+                              getUniqueMonths().map((month) => (
+                                <option key={month.value} value={month.value}>
+                                  {month.label}
+                                </option>
+                              ))}
+                            {column.key === "expense_type_name" &&
+                              getUniqueExpenseTypes().map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
                           </select>
                         ) : (
                           <input
@@ -533,23 +634,11 @@ function ExpenseTable({ onRowClick }) {
             <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
-                  {columns.map((column, index) => {
-                    const prevColumn = columns[index - 1];
-
-                    if (column.key === "month_date") {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    } else {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    }
-                  })}
+                  {columns.map((column) => (
+                    <th key={column.key} style={column.headerStyle || {}}>
+                      {column.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -561,22 +650,13 @@ function ExpenseTable({ onRowClick }) {
                       style={{ cursor: "pointer" }}
                     >
                       {columns.map((column) => {
-                        if (column.key === "month_date") {
+                        if (column.key === "day") {
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
                               style={column.cellStyle || {}}
                             >
-                              {record[column.key]}
-                            </td>
-                          );
-                        } else if (column.key === "day") {
-                          return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
-                            >
-                              {days[record[column.key]]}
+                              {getDayName(record.month_date)}
                             </td>
                           );
                         } else if (column.key === "amount") {
@@ -618,7 +698,7 @@ function ExpenseTable({ onRowClick }) {
                     Total:
                   </td>
                   <td className="fw-bold">RM {formatAmount(totalAmount)}</td>
-                  <td></td>
+                  <td colSpan={2}></td>
                 </tr>
               </tfoot>
             </table>
@@ -639,11 +719,9 @@ function ExpenseTable({ onRowClick }) {
                 </button>
               </li>
 
-              {/* Display page numbers with ellipsis for large sets */}
               {Array.from({ length: totalPages }).map((_, index) => {
                 const pageNumber = index + 1;
 
-                // Show first page, last page, current page, and pages around current
                 if (
                   pageNumber === 1 ||
                   pageNumber === totalPages ||
@@ -666,9 +744,7 @@ function ExpenseTable({ onRowClick }) {
                       </button>
                     </li>
                   );
-                }
-                // Show ellipsis
-                else if (
+                } else if (
                   (pageNumber === 2 && currentPage > 3) ||
                   (pageNumber === totalPages - 1 &&
                     currentPage < totalPages - 2)

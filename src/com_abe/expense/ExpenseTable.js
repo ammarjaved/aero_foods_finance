@@ -13,15 +13,23 @@ function ExpenseTable({ onRowClick }) {
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const year = date.getFullYear();
+  const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear);
   };
 
-  // Calculate total amount from filtered data
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue);
+  };
+
   const calculateTotalAmount = () => {
     return filteredData.reduce((total, record) => {
       const amount = parseFloat(record.amount) || 0;
@@ -29,7 +37,6 @@ function ExpenseTable({ onRowClick }) {
     }, 0);
   };
 
-  // Format number with commas
   const formatAmount = (amount) => {
     return amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -37,37 +44,116 @@ function ExpenseTable({ onRowClick }) {
     });
   };
 
-  // Subscribe to a custom event for new records
+  const downloadExcel = () => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    let tableHTML = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Expenses</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+      </head>
+      <body>
+        <table border="1">
+          <thead>
+            <tr style="background-color: #f8f9fa; font-weight: bold;">
+            <th>id</th>  
+            <th>Month Date</th>
+              <th>Day</th>
+              <th>Type</th>
+              <th>Company</th>
+              <th>Vendor</th>
+              <th>Amount</th>
+              <th>Remarks</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    filteredData.forEach((record) => {
+      const status =
+        record.is_approved === true ||
+        record.is_approved === 1 ||
+        record.is_approved === "1"
+          ? "Approved"
+          : record.is_approved === false ||
+            record.is_approved === 0 ||
+            record.is_approved === "0"
+          ? "Rejected"
+          : "Pending";
+
+      tableHTML += `
+        <tr>
+         <td>${record.id || ""}</td>
+          <td>${record.month_date || ""}</td>
+          <td>${days[record.day] || ""}</td>
+          <td>${record.expense_type_name || ""}</td>
+          <td>${record.company || ""}</td>
+          <td>${record.vendor || ""}</td>
+          <td>RM ${formatAmount(parseFloat(record.amount || 0))}</td>
+          <td>${record.remarks || ""}</td>
+          <td>${status}</td>
+        </tr>
+      `;
+    });
+
+    tableHTML += `
+          <tr style="background-color: #d1ecf1; font-weight: bold;">
+           
+            <td colspan="2"></td>
+          </tr>
+        </tbody>
+      </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([tableHTML], { type: "application/vnd.ms-excel" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `expense_report_${selectedMonth}_${selectedYear}.xls`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
+    const yearvalue = localStorage.getItem("year");
     if (monthvalue) {
-      fetchData(monthvalue);
+      fetchData(monthvalue, yearvalue);
       setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedYear);
     }
 
-    // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
 
     return () => {
-      // Clean up event listeners
       window.removeEventListener("newRecordAdded", handleNewRecord);
       window.removeEventListener("recordUpdated", handleRecordUpdate);
     };
   }, []);
 
-  // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
-    // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/abe-yus/fetchExpenseData.php?month=" + month
+      "http://121.121.232.54:88/abe-yus/fetchExpenseData.php?month=" +
+        month +
+        "&year=" +
+        year
     )
       .then((response) => response.json())
       .then((fetchedData) => {
@@ -81,13 +167,11 @@ function ExpenseTable({ onRowClick }) {
       });
   };
 
-  // Handler for new record event
   const handleNewRecord = (event) => {
     const newRecord = event.detail;
     setData((prevData) => [newRecord, ...prevData]);
   };
 
-  // Handler for updated record event
   const handleRecordUpdate = (event) => {
     const updatedRecord = event.detail;
     setData((prevData) =>
@@ -97,11 +181,94 @@ function ExpenseTable({ onRowClick }) {
     );
   };
 
-  // Apply filters to the data
+  const handleApproval = async (record, isApproved, e) => {
+    e.stopPropagation();
+
+    const action = isApproved ? "approve" : "reject";
+    if (!window.confirm(`Are you sure you want to ${action} this claim?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://121.121.232.54:88/abe-yus/daily_expenditure.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "approve",
+            id: record.id,
+            is_approved: isApproved,
+            username: localStorage.getItem("user"),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(`Claim ${action}d successfully`);
+
+        setData((prevData) =>
+          prevData.map((item) =>
+            item.id === record.id ? { ...item, is_approved: isApproved } : item
+          )
+        );
+      } else {
+        alert(result.error || `Failed to ${action} claim`);
+      }
+    } catch (error) {
+      console.error("Error updating approval:", error);
+      alert("Error updating approval status");
+    }
+  };
+
+  const handleReject = async (record, e) => {
+    e.stopPropagation();
+
+    if (
+      !window.confirm(
+        `Are you sure you want to reject and delete this claim for "${
+          record.vendor
+        }" with amount RM ${formatAmount(parseFloat(record.amount || 0))}?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://121.121.232.54:88/abe-yus/delete_daily_expenditure.php",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id: record.id }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("Record rejected and deleted successfully");
+
+        // Remove the record from the data
+        setData((prevData) => prevData.filter((item) => item.id !== record.id));
+      } else {
+        alert(result.error || "Failed to delete record");
+      }
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      alert("Network error");
+    }
+  };
+
   const applyFilters = () => {
     let filtered = [...data];
 
-    // Apply each filter if it has a value
     Object.entries(filterValues).forEach(([key, value]) => {
       if (value && value.trim() !== "") {
         filtered = filtered.filter(
@@ -113,10 +280,9 @@ function ExpenseTable({ onRowClick }) {
     });
 
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
-  // Handle filter input change
   const handleFilterChange = (key, value) => {
     setFilterValues((prev) => ({
       ...prev,
@@ -124,63 +290,29 @@ function ExpenseTable({ onRowClick }) {
     }));
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setFilterValues({});
   };
 
-  // Toggle filter panel
   const toggleFilterPanel = () => {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
-  // Column definitions with friendly names and custom styling for specific columns
   const columns = [
-    // { key: 'id', label: 'ID' },
     { key: "month_date", label: "Month Date" },
     { key: "day", label: "Day" },
-    // { key: 'month', label: 'Month' },
-    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
-    {
-      key: "company",
-      label: "Company",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "vendor",
-      label: "Vendor",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "amount",
-      label: "Amount",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
-    {
-      key: "remarks",
-      label: "Remarks",
-      // ,
-      // headerStyle: { backgroundColor: "#196F3D" },
-      // cellStyle: { backgroundColor: "#196F3D" },
-    },
+    { key: "expense_type_name", label: "Type" },
+    { key: "company", label: "Company" },
+    { key: "vendor", label: "Vendor" },
+    { key: "amount", label: "Amount" },
+    { key: "remarks", label: "Remarks" },
+    { key: "status", label: "Status" },
   ];
 
-  // Specify which columns you want to include in the filter
-  const filterableColumns = [
-    // { key: 'day', label: 'Day' },
-    { key: "month_date", label: "Month Date" },
-    // { key: 'year', label: 'Year' }
-  ];
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
   const currentRecords = filteredData.slice(
@@ -189,10 +321,8 @@ function ExpenseTable({ onRowClick }) {
   );
   const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Previous and next page handlers
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -205,7 +335,6 @@ function ExpenseTable({ onRowClick }) {
     }
   };
 
-  // Check if any filters are active
   const hasActiveFilters = Object.values(filterValues).some(
     (value) => value && value.trim() !== ""
   );
@@ -222,7 +351,6 @@ function ExpenseTable({ onRowClick }) {
         </div>
       ) : (
         <>
-          {/* Total Amount Display */}
           <div className="alert alert-info d-flex justify-content-between align-items-center mb-3">
             <div>
               <h5 className="mb-0">
@@ -235,9 +363,16 @@ function ExpenseTable({ onRowClick }) {
                 {hasActiveFilters && "(filtered)"}
               </small>
             </div>
+            <button
+              className="btn btn-primary"
+              onClick={downloadExcel}
+              title="Download as Excel"
+            >
+              <i className="bi bi-file-earmark-excel me-2"></i>
+              Download Excel
+            </button>
           </div>
 
-          {/* Filter section */}
           <div className="card mb-3">
             <div className="card-header d-flex justify-content-between align-items-center">
               <div className="d-flex align-items-center">
@@ -319,12 +454,26 @@ function ExpenseTable({ onRowClick }) {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="yearSelect">Year</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Pagination controls - top */}
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div>
               Showing {indexOfFirstRecord + 1} to{" "}
@@ -346,28 +495,15 @@ function ExpenseTable({ onRowClick }) {
             </div>
           </div>
 
-          {/* Table */}
           <div className="table-responsive">
             <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
-                  {columns.map((column, index) => {
-                    const prevColumn = columns[index - 1];
-
-                    if (column.key === "month_date") {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    } else {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    }
-                  })}
+                  {columns.map((column) => (
+                    <th key={column.key} style={column.headerStyle || {}}>
+                      {column.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -409,6 +545,45 @@ function ExpenseTable({ onRowClick }) {
                               )}
                             </td>
                           );
+                        } else if (column.key === "status") {
+                          const user = localStorage.getItem("user");
+
+                          return (
+                            <td
+                              key={`${record.id}-${column.key}`}
+                              style={column.cellStyle || {}}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {record.is_approved === true ||
+                              record.is_approved === 1 ||
+                              record.is_approved === "1" ? (
+                                <span className="badge bg-success">
+                                  Approved
+                                </span>
+                              ) : (
+                                (user === "admin" || user === "manager") && (
+                                  <div className="btn-group btn-group-sm">
+                                    <button
+                                      className="btn btn-success btn-sm"
+                                      onClick={(e) =>
+                                        handleApproval(record, true, e)
+                                      }
+                                      title="Approve"
+                                    >
+                                      ✓ Approve
+                                    </button>
+                                    <button
+                                      className="btn btn-danger btn-sm"
+                                      onClick={(e) => handleReject(record, e)}
+                                      title="Reject"
+                                    >
+                                      ✗ Reject
+                                    </button>
+                                  </div>
+                                )
+                              )}
+                            </td>
+                          );
                         } else {
                           return (
                             <td
@@ -432,7 +607,7 @@ function ExpenseTable({ onRowClick }) {
               </tbody>
               <tfoot>
                 <tr className="table-info">
-                  <td colSpan={columns.length - 2} className="text-end fw-bold">
+                  <td colSpan={columns.length - 3} className="text-end fw-bold">
                     Total:
                   </td>
                   <td className="fw-bold">RM {formatAmount(totalAmount)}</td>
@@ -442,7 +617,6 @@ function ExpenseTable({ onRowClick }) {
             </table>
           </div>
 
-          {/* Pagination controls - bottom */}
           <nav aria-label="Page navigation">
             <ul className="pagination justify-content-center">
               <li
@@ -457,11 +631,9 @@ function ExpenseTable({ onRowClick }) {
                 </button>
               </li>
 
-              {/* Display page numbers with ellipsis for large sets */}
               {Array.from({ length: totalPages }).map((_, index) => {
                 const pageNumber = index + 1;
 
-                // Show first page, last page, current page, and pages around current
                 if (
                   pageNumber === 1 ||
                   pageNumber === totalPages ||
@@ -484,9 +656,7 @@ function ExpenseTable({ onRowClick }) {
                       </button>
                     </li>
                   );
-                }
-                // Show ellipsis
-                else if (
+                } else if (
                   (pageNumber === 2 && currentPage > 3) ||
                   (pageNumber === totalPages - 1 &&
                     currentPage < totalPages - 2)

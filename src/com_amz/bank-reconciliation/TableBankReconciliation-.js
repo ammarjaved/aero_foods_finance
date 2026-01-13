@@ -13,22 +13,13 @@ function TableBankReconciliation({ onRowClick }) {
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
-  const year = date.getFullYear();
-  const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     // Note: localStorage is not available in Claude artifacts
     // localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
-  };
-
-  const handleYearChange = (e) => {
-    const yearValue = e.target.value;
-    localStorage.setItem("year", yearValue);
-    setSelectedYear(yearValue);
-    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue); // Call your fetchData function with the selected month value
   };
 
   // Subscribe to a custom event for new records
@@ -39,7 +30,7 @@ function TableBankReconciliation({ onRowClick }) {
     //   fetchData(monthvalue);
     //   setSelectedMonth(monthvalue);
     // } else {
-    fetchData(selectedMonth, selectedYear);
+    fetchData(selectedMonth);
     // }
 
     // Create event listeners for record updates
@@ -58,24 +49,17 @@ function TableBankReconciliation({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month, year) => {
+  const fetchData = (month) => {
     setLoading(true);
-
+    // Fetch data from PHP backend
     fetch(
       "http://121.121.232.54:88/amazon-cafe/fetch_bank_reconciliation_sheet.php?month=" +
-        month +
-        "&year=" +
-        year
+        month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
-        const normalizedData = fetchedData.map((record) => ({
-          ...record,
-          dayIndex: Number(record.day) % 7, // 7 → 0 (Sunday)
-        }));
-
-        setData(normalizedData);
-        setFilteredData(normalizedData);
+        setData(fetchedData);
+        setFilteredData(fetchedData);
         setLoading(false);
       })
       .catch((error) => {
@@ -209,7 +193,7 @@ function TableBankReconciliation({ onRowClick }) {
     },
     {
       key: "touch_n_go",
-      label: "Touch N Go/Online",
+      label: "Touch N Go",
       classHead: "bg-success text-light",
       classBody: "bg-success text-light text-end",
     },
@@ -533,21 +517,6 @@ function TableBankReconciliation({ onRowClick }) {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
-                  <div className="col">
-                    <div className="form-floating">
-                      <select
-                        className="form-select"
-                        id="yearSelect"
-                        value={selectedYear}
-                        onChange={handleYearChange}
-                      >
-                        <option value="">Select Year</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                      </select>
-                      <label htmlFor="monthSelect">Year</label>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -628,10 +597,10 @@ function TableBankReconciliation({ onRowClick }) {
                         } else if (column.key === "day") {
                           return (
                             <td
-                              key={`${record.id}-day`}
-                              className={column.classBody}
+                              key={`${record.id}-${column.key}`}
+                              className={`${column.classBody}`}
                             >
-                              {days[record.dayIndex] ?? "-"}
+                              {days[record[column.key]]}
                             </td>
                           );
                         } else if (
@@ -704,7 +673,7 @@ function TableBankReconciliation({ onRowClick }) {
                       column.key === "variance_3" ||
                       column.key === "total_variance"
                     ) {
-                      const value = parseFloat(summaryData[column.key]) || 0;
+                      const value = summaryData[column.key] || 0;
                       return (
                         <td
                           key={`summary-${column.key}`}
@@ -750,7 +719,7 @@ function TableBankReconciliation({ onRowClick }) {
                       ].includes(column.key);
 
                       if (isNumericColumn) {
-                        const value = parseFloat(summaryData[column.key]) || 0;
+                        const value = summaryData[column.key] || 0;
                         return (
                           <td
                             key={`summary-${column.key}`}

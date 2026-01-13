@@ -62,7 +62,7 @@ function TableBankReconciliation({ onRowClick }) {
     setLoading(true);
 
     fetch(
-      "http://121.121.232.54:88/amazon-cafe/fetch_bank_reconciliation_sheet.php?month=" +
+      "http://121.121.232.54:88/aero-foods/fetch_bank_reconciliation_sheet.php?month=" +
         month +
         "&year=" +
         year

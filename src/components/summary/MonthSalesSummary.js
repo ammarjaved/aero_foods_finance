@@ -3,7 +3,7 @@ import { RefreshCw } from "lucide-react";
 
 function MonthSalesSummary({ mon, year }) {
   const [selectedCafe, setSelectedCafe] = useState("aero_foods_finance");
-  const [selectedMonth, setSelectedMonth] = useState("11");
+  const [selectedMonth, setSelectedMonth] = useState(mon);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,6 +15,7 @@ function MonthSalesSummary({ mon, year }) {
     { value: "abe_yus_finance", label: "Abe Yus" },
   ];
   console.log(year);
+  // setSelectedMonth = mon;
   const months = [
     { value: "1", label: "January" },
     { value: "2", label: "February" },
@@ -118,7 +119,7 @@ function MonthSalesSummary({ mon, year }) {
         </div>
 
         {/* Month Selection */}
-        <div className="card shadow-sm mb-4">
+        {/* <div className="card shadow-sm mb-4">
           <div className="card-body">
             <h5 className="card-title fw-semibold mb-3">Select Month</h5>
             <select
@@ -134,7 +135,7 @@ function MonthSalesSummary({ mon, year }) {
               ))}
             </select>
           </div>
-        </div>
+        </div> */}
 
         {error && (
           <div

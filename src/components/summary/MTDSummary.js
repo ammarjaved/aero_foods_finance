@@ -42,7 +42,13 @@ function MTDSummary() {
     Ojim: true,
     SDS: true,
   });
-
+  const handleYearChange = (newYear) => {
+    setSelectedYear(parseInt(newYear));
+    // Reset to current month only
+    const now = new Date();
+    const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+    setSelectedMonths([currentMonth]);
+  };
   function handleToggle(line) {
     setVisibleLines({ ...visibleLines, [line]: !visibleLines[line] });
   }
@@ -104,7 +110,14 @@ function MTDSummary() {
       );
       const fetchedData = await response.json();
 
-      const processedData = fetchedData
+      // Handle both old format (array) and new format (object with monthly_data)
+      const monthlyData = Array.isArray(fetchedData)
+        ? fetchedData
+        : fetchedData.monthly_data || [];
+
+      const overallStats = fetchedData.overall_stats || null;
+
+      const processedData = monthlyData
         .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),
@@ -120,13 +133,12 @@ function MTDSummary() {
         }))
         .sort((a, b) => new Date(a.month_date) - new Date(b.month_date));
 
-      return processedData;
+      return { data: processedData, overallStats };
     } catch (error) {
       console.error(`Error fetching data from ${endpoint}:`, error);
-      return [];
+      return { data: [], overallStats: null };
     }
   };
-
   const calculateTotals = (data) => {
     return data.reduce(
       (acc, item) => ({
@@ -141,33 +153,38 @@ function MTDSummary() {
 
   const fetchDataForMonth = async (month) => {
     try {
-      const [mixieData, abyYusData, amazonData, OjimData] = await Promise.all([
-        fetchDataForStore(month, "mon-sum-mixiue.php"),
-        fetchDataForStore(month, "mon-sum-mixiue2.php"),
-        fetchDataForStore(month, "mon-sum-mixiue3.php"),
-        fetchDataForStore(month, "mon-sum-mixiue5.php"),
-      ]);
+      const [mixieResult, abyYusResult, amazonResult, OjimResult] =
+        await Promise.all([
+          fetchDataForStore(month, "mon-sum-mixiue.php"),
+          fetchDataForStore(month, "mon-sum-mixiue2.php"),
+          fetchDataForStore(month, "mon-sum-mixiue3.php"),
+          fetchDataForStore(month, "mon-sum-mixiue5.php"),
+        ]);
 
       const stores = [
         {
           name: "Mixue",
-          data: mixieData,
-          totals: calculateTotals(mixieData),
+          data: mixieResult.data,
+          totals: calculateTotals(mixieResult.data),
+          overallStats: mixieResult.overallStats,
         },
         {
           name: "Aby Yus",
-          data: abyYusData,
-          totals: calculateTotals(abyYusData),
+          data: abyYusResult.data,
+          totals: calculateTotals(abyYusResult.data),
+          overallStats: abyYusResult.overallStats,
         },
         {
           name: "D' Amazon Café",
-          data: amazonData,
-          totals: calculateTotals(amazonData),
+          data: amazonResult.data,
+          totals: calculateTotals(amazonResult.data),
+          overallStats: amazonResult.overallStats,
         },
         {
           name: "Ojim Café",
-          data: OjimData,
-          totals: calculateTotals(OjimData),
+          data: OjimResult.data,
+          totals: calculateTotals(OjimResult.data),
+          overallStats: OjimResult.overallStats,
         },
       ];
 
@@ -182,9 +199,39 @@ function MTDSummary() {
         { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
       );
 
+      // Calculate SDS overall stats
+      const sdsOverallStats = stores.reduce(
+        (acc, store) => {
+          if (store.overallStats) {
+            return {
+              overall_actual:
+                acc.overall_actual +
+                (parseFloat(store.overallStats.overall_actual) || 0),
+              overall_expense:
+                acc.overall_expense +
+                (parseFloat(store.overallStats.overall_expense) || 0),
+              overall_profit:
+                acc.overall_profit +
+                (parseFloat(store.overallStats.overall_profit) || 0),
+            };
+          }
+          return acc;
+        },
+        { overall_actual: 0, overall_expense: 0, overall_profit: 0 }
+      );
+
+      if (sdsOverallStats.overall_actual > 0) {
+        sdsOverallStats.overall_profit_percentage =
+          (sdsOverallStats.overall_profit / sdsOverallStats.overall_actual) *
+          100;
+      } else {
+        sdsOverallStats.overall_profit_percentage = 0;
+      }
+
       stores.push({
         name: "SDS",
         totals: sdsTotal,
+        overallStats: sdsOverallStats,
         isTotal: true,
       });
 
@@ -279,6 +326,7 @@ function MTDSummary() {
   };
 
   // Calculate combined totals for all selected months
+  // Calculate combined totals for all selected months
   const calculateCombinedTotals = () => {
     const storeNames = ["Mixue", "Aby Yus", "D' Amazon Café", "Ojim Café"];
     const invest = [280, 40, 80, 60];
@@ -292,6 +340,9 @@ function MTDSummary() {
         total_cash_box: 0,
       };
 
+      // Get overallStats from the first month's data (they should be the same for all months)
+      let overallStats = null;
+
       selectedMonths.forEach((month) => {
         const monthData = data[month];
         if (monthData) {
@@ -301,6 +352,11 @@ function MTDSummary() {
             combinedTotals.total_actual += storeData.totals.total_actual;
             combinedTotals.total_expense += storeData.totals.total_expense;
             combinedTotals.total_cash_box += storeData.totals.total_cash_box;
+
+            // Capture overallStats (they should be the same across all months for a store)
+            if (!overallStats && storeData.overallStats) {
+              overallStats = storeData.overallStats;
+            }
           }
         }
       });
@@ -309,6 +365,7 @@ function MTDSummary() {
         name: storeName,
         totals: combinedTotals,
         invst: invest[index],
+        overallStats: overallStats, // ✅ Add overallStats here
       });
     });
 
@@ -328,16 +385,44 @@ function MTDSummary() {
       0
     );
 
+    // Calculate SDS overall stats
+    const sdsOverallStats = combinedData.reduce(
+      (acc, store) => {
+        if (store.overallStats) {
+          return {
+            overall_actual:
+              acc.overall_actual +
+              (parseFloat(store.overallStats.overall_actual) || 0),
+            overall_expense:
+              acc.overall_expense +
+              (parseFloat(store.overallStats.overall_expense) || 0),
+            overall_profit:
+              acc.overall_profit +
+              (parseFloat(store.overallStats.overall_profit) || 0),
+          };
+        }
+        return acc;
+      },
+      { overall_actual: 0, overall_expense: 0, overall_profit: 0 }
+    );
+
+    if (sdsOverallStats.overall_actual > 0) {
+      sdsOverallStats.overall_profit_percentage =
+        (sdsOverallStats.overall_profit / sdsOverallStats.overall_actual) * 100;
+    } else {
+      sdsOverallStats.overall_profit_percentage = 0;
+    }
+
     combinedData.push({
       name: "SDS",
       totals: sdsTotal,
-      invst: totalInvestment, // ✅ Add this
+      invst: totalInvestment,
+      overallStats: sdsOverallStats, // ✅ Add overallStats for SDS
       isTotal: true,
     });
 
     return combinedData;
   };
-
   // Prepare chart data
   const prepareChartData = () => {
     const chartData = [];
@@ -504,7 +589,7 @@ function MTDSummary() {
               <label style={{ fontWeight: "500" }}>Year:</label>
               <select
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                onChange={(e) => handleYearChange(e.target.value)}
                 style={{
                   padding: "8px 12px",
                   border: "1px solid #ccc",
@@ -969,6 +1054,30 @@ function MTDSummary() {
                       >
                         % Profit
                       </th>
+
+                      <th
+                        style={{
+                          border: "1px solid #ddd",
+                          padding: "12px",
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          backgroundColor: "#d1ecf1",
+                        }}
+                      >
+                        Overall Profit
+                      </th>
+                      <th
+                        style={{
+                          border: "1px solid #ddd",
+                          padding: "12px",
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          backgroundColor: "#d1ecf1",
+                        }}
+                      >
+                        % Overall Profit
+                      </th>
+
                       <th
                         style={{
                           border: "1px solid #ddd",
@@ -1104,6 +1213,38 @@ function MTDSummary() {
                             style={{
                               border: "1px solid #ddd",
                               padding: "12px",
+                              textAlign: "right",
+                              backgroundColor: "#d1ecf1",
+                              fontWeight: store.isTotal ? "bold" : "normal",
+                            }}
+                          >
+                            {store.overallStats
+                              ? formatCurrency(
+                                  store.overallStats.overall_profit
+                                )
+                              : "N/A"}
+                          </td>
+
+                          <td
+                            style={{
+                              border: "1px solid #ddd",
+                              padding: "12px",
+                              textAlign: "center",
+                              backgroundColor: "#d1ecf1",
+                              fontWeight: store.isTotal ? "bold" : "normal",
+                            }}
+                          >
+                            {store.overallStats
+                              ? formatPercentage(
+                                  store.overallStats.overall_profit_percentage
+                                )
+                              : "N/A"}
+                          </td>
+
+                          <td
+                            style={{
+                              border: "1px solid #ddd",
+                              padding: "12px",
                               textAlign: "center",
                             }}
                           >
@@ -1117,7 +1258,13 @@ function MTDSummary() {
                               textAlign: "center",
                             }}
                           >
-                            {calculateROI(profit, store.invst * 1000)}
+                            {store.overallStats &&
+                            store.overallStats.overall_profit !== undefined
+                              ? calculateROI(
+                                  store.overallStats.overall_profit,
+                                  store.invst * 1000
+                                )
+                              : "N/A"}
                           </td>
                         </tr>
                       );

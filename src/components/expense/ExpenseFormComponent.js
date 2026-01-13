@@ -7,7 +7,15 @@ sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 const dayOfWeek = sevenDaysAgo.getDay();
 
 // Expense types from the image
-const EXPENSE_TYPES = ["Rental", "Utilities", "Stock", "Logistik", "Claim"];
+const EXPENSE_TYPES = [
+  "Rental",
+  "Utilities",
+  "Stock",
+  "Logistik",
+  "Claim",
+  "Salary",
+  "Others",
+];
 
 function ExpenseFormComponent() {
   const [formData, setFormData] = useState({

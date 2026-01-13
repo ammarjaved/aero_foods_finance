@@ -9,50 +9,73 @@ function TableWastage({ onRowClick }) {
   const [filterValues, setFilterValues] = useState({});
   const [filteredData, setFilteredData] = useState([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
+
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
+  const currentYear = date.getFullYear();
+
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  // Generate array of years (current year and past 5 years)
+  const generateYearOptions = () => {
+    const years = [];
+    for (let i = 0; i < 10; i++) {
+      years.push(currentYear - i);
+    }
+    return years;
+  };
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear);
   };
 
-  // Subscribe to a custom event for new records
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue);
+  };
+
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
+    const yearvalue = localStorage.getItem("year");
+
+    if (monthvalue && yearvalue) {
       setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
+      fetchData(monthvalue, yearvalue);
+    } else if (monthvalue) {
+      setSelectedMonth(monthvalue);
+      fetchData(monthvalue, selectedYear);
+    } else if (yearvalue) {
+      setSelectedYear(yearvalue);
+      fetchData(selectedMonth, yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedYear);
     }
 
-    // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
 
     return () => {
-      // Clean up event listeners
       window.removeEventListener("newRecordAdded", handleNewRecord);
       window.removeEventListener("recordUpdated", handleRecordUpdate);
     };
   }, []);
 
-  // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
-    // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/ojim-cafe/fetch_daily_wastage.php?month=" +
-        month
+      `http://121.121.232.54:88/ojim-cafe/fetch_daily_wastage.php?month=${month}&year=${year}`
     )
       .then((response) => response.json())
       .then((fetchedData) => {
@@ -66,13 +89,11 @@ function TableWastage({ onRowClick }) {
       });
   };
 
-  // Handler for new record event
   const handleNewRecord = (event) => {
     const newRecord = event.detail;
     setData((prevData) => [newRecord, ...prevData]);
   };
 
-  // Handler for updated record event
   const handleRecordUpdate = (event) => {
     const updatedRecord = event.detail;
     setData((prevData) =>
@@ -82,11 +103,9 @@ function TableWastage({ onRowClick }) {
     );
   };
 
-  // Apply filters to the data
   const applyFilters = () => {
     let filtered = [...data];
 
-    // Apply each filter if it has a value
     Object.entries(filterValues).forEach(([key, value]) => {
       if (value && value.trim() !== "") {
         filtered = filtered.filter(
@@ -98,10 +117,9 @@ function TableWastage({ onRowClick }) {
     });
 
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
-  // Handle filter input change
   const handleFilterChange = (key, value) => {
     setFilterValues((prev) => ({
       ...prev,
@@ -109,17 +127,14 @@ function TableWastage({ onRowClick }) {
     }));
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setFilterValues({});
   };
 
-  // Toggle filter panel
   const toggleFilterPanel = () => {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
-  // Column definitions with friendly names and custom styling for specific columns
   const columns = [
     {
       key: "month_date",
@@ -411,16 +426,10 @@ function TableWastage({ onRowClick }) {
     },
   ];
 
-  // Specify which columns you want to include in the filter
-  const filterableColumns = [
-    // { key: 'day', label: 'Day' },
-    { key: "month_date", label: "Month Date" },
-    // { key: 'year', label: 'Year' }
-  ];
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
   const currentRecords = filteredData.slice(
@@ -429,10 +438,8 @@ function TableWastage({ onRowClick }) {
   );
   const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Previous and next page handlers
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -445,45 +452,32 @@ function TableWastage({ onRowClick }) {
     }
   };
 
-  // Check if any filters are active
   const hasActiveFilters = Object.values(filterValues).some(
     (value) => value && value.trim() !== ""
   );
 
   return (
-    <div className="container-fluid mt-2">
+    <div className="container-fluid p-3">
       {loading ? (
-        <div className="text-center">
-          <div className="spinner-border text-primary" role="status">
+        <div className="text-center py-5">
+          <div className="spinner-border" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
       ) : (
         <>
-          {/* Filter section */}
           <div className="card mb-3">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <div className="d-flex align-items-center">
-                <button
-                  className="btn btn-sm btn-link p-0 me-2"
-                  onClick={toggleFilterPanel}
-                  aria-expanded={isFilterPanelOpen}
-                  aria-controls="filterPanel"
-                >
-                  <i
-                    className={`bi ${
-                      isFilterPanelOpen ? "bi-chevron-down" : "bi-chevron-right"
-                    }`}
-                  ></i>
-                </button>
-                <h5 className="mb-0">
-                  Filters{" "}
-                  {hasActiveFilters && (
-                    <span className="badge bg-primary ms-2">Active</span>
-                  )}
-                </h5>
-              </div>
               <div>
+                <button
+                  className="btn btn-sm btn-outline-primary me-2"
+                  onClick={toggleFilterPanel}
+                >
+                  {isFilterPanelOpen ? "Hide" : "Show"} Filters{" "}
+                  {hasActiveFilters && (
+                    <span className="badge bg-primary ms-1">Active</span>
+                  )}
+                </button>
                 {hasActiveFilters && (
                   <button
                     className="btn btn-sm btn-outline-secondary"
@@ -494,68 +488,82 @@ function TableWastage({ onRowClick }) {
                 )}
               </div>
             </div>
+
             {isFilterPanelOpen && (
-              <div className="card-body" id="filterPanel">
-                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
+              <div className="card-body">
+                <div className="row g-3">
                   {filterableColumns.map((column) => (
-                    <div className="col" key={`filter-${column.key}`}>
-                      <div className="form-floating">
-                        <input
-                          type="date"
-                          className="form-control"
-                          id={`filter-${column.key}`}
-                          placeholder={column.label}
-                          value={filterValues[column.key] || ""}
-                          onChange={(e) =>
-                            handleFilterChange(column.key, e.target.value)
-                          }
-                        />
-                        <label htmlFor={`filter-${column.key}`}>
-                          {column.label}
-                        </label>
-                      </div>
+                    <div key={column.key} className="col-md-3">
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder={`Filter by ${column.label}`}
+                        value={filterValues[column.key] || ""}
+                        onChange={(e) =>
+                          handleFilterChange(column.key, e.target.value)
+                        }
+                      />
+                      <label className="form-label text-muted small mt-1">
+                        {column.label}
+                      </label>
                     </div>
                   ))}
 
-                  <div className="col">
-                    <div className="form-floating">
-                      <select
-                        className="form-select"
-                        id="monthSelect"
-                        value={selectedMonth}
-                        onChange={handleMonthChange}
-                      >
-                        <option value="">Select month</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                      </select>
-                      <label htmlFor="monthSelect">Month</label>
-                    </div>
+                  <div className="col-md-3">
+                    <select
+                      className="form-select form-select-sm"
+                      value={selectedMonth}
+                      onChange={handleMonthChange}
+                    >
+                      <option value="">Select month</option>
+                      <option value="1">January</option>
+                      <option value="2">February</option>
+                      <option value="3">March</option>
+                      <option value="4">April</option>
+                      <option value="5">May</option>
+                      <option value="6">June</option>
+                      <option value="7">July</option>
+                      <option value="8">August</option>
+                      <option value="9">September</option>
+                      <option value="10">October</option>
+                      <option value="11">November</option>
+                      <option value="12">December</option>
+                    </select>
+                    <label className="form-label text-muted small mt-1">
+                      Month
+                    </label>
+                  </div>
+
+                  <div className="col-md-3">
+                    <select
+                      className="form-select form-select-sm"
+                      value={selectedYear}
+                      onChange={handleYearChange}
+                    >
+                      <option value="">Select year</option>
+                      {generateYearOptions().map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="form-label text-muted small mt-1">
+                      Year
+                    </label>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Pagination controls - top */}
-          <div className="d-flex justify-content-between align-items-center mb-2">
+          <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
               Showing {indexOfFirstRecord + 1} to{" "}
               {Math.min(indexOfLastRecord, filteredData.length)} of{" "}
               {filteredData.length} records
             </div>
-            <div className="d-flex align-items-center">
-              <label className="me-2">Records per page:</label>
+            <div className="d-flex align-items-center gap-2">
+              <label className="mb-0">Records per page:</label>
               <select
                 className="form-select form-select-sm"
                 value={recordsPerPage}
@@ -569,20 +577,22 @@ function TableWastage({ onRowClick }) {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="table-responsive shadow rounded-3">
-            <table className="table table-striped table-hover table-bordered mb-0">
-              <thead>
+          <div className="table-responsive">
+            <table className="table table-sm table-bordered table-hover">
+              <thead className="sticky-top">
                 <tr>
                   {columns.map((column, index) => {
                     const prevColumn = columns[index - 1];
-
                     if (column.key === "month_date") {
                       return (
                         <th
                           key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
+                          className={`${column.classHead} text-center sticky-column`}
+                          style={{
+                            position: "sticky",
+                            left: 0,
+                            zIndex: 10,
+                          }}
                         >
                           {column.label}
                         </th>
@@ -591,8 +601,7 @@ function TableWastage({ onRowClick }) {
                       return (
                         <th
                           key={column.key}
-                          className={`${column.classHead}`}
-                          style={{}}
+                          className={`${column.classHead} text-center`}
                         >
                           {column.label}
                         </th>
@@ -613,20 +622,20 @@ function TableWastage({ onRowClick }) {
                         if (column.key === "month_date") {
                           return (
                             <td
-                              key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
+                              key={column.key}
+                              className={`${column.classBody} sticky-column`}
+                              style={{
+                                position: "sticky",
+                                left: 0,
+                                zIndex: 5,
+                              }}
                             >
                               {record[column.key]}
                             </td>
                           );
                         } else if (column.key === "day") {
                           return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
-                            >
+                            <td key={column.key} className={column.classBody}>
                               {days[record[column.key]]}
                             </td>
                           );
@@ -636,11 +645,7 @@ function TableWastage({ onRowClick }) {
                           column.key === "sales_walk_in"
                         ) {
                           return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
-                            >
+                            <td key={column.key} className={column.classBody}>
                               {parseFloat(record[column.key])
                                 .toFixed(2)
                                 .toString()}
@@ -648,11 +653,7 @@ function TableWastage({ onRowClick }) {
                           );
                         } else {
                           return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={{}}
-                              className={`${column.classBody}`}
-                            >
+                            <td key={column.key} className={column.classBody}>
                               {record[column.key]}
                             </td>
                           );
@@ -662,7 +663,7 @@ function TableWastage({ onRowClick }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={columns.length} className="text-center">
+                    <td colSpan={columns.length} className="text-center py-4">
                       No records found
                     </td>
                   </tr>
@@ -671,26 +672,19 @@ function TableWastage({ onRowClick }) {
             </table>
           </div>
 
-          {/* Pagination controls - bottom */}
-          <nav aria-label="Page navigation">
-            <ul className="pagination justify-content-center">
+          <div className="d-flex justify-content-center mt-3">
+            <ul className="pagination pagination-sm">
               <li
                 className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
               >
-                <button
-                  className="page-link"
-                  style={{ backgroundColor: "#F8D7DA" }}
-                  onClick={goToPreviousPage}
-                >
+                <button className="page-link" onClick={goToPreviousPage}>
                   Previous
                 </button>
               </li>
 
-              {/* Display page numbers with ellipsis for large sets */}
               {Array.from({ length: totalPages }).map((_, index) => {
                 const pageNumber = index + 1;
 
-                // Show first page, last page, current page, and pages around current
                 if (
                   pageNumber === 1 ||
                   pageNumber === totalPages ||
@@ -699,13 +693,12 @@ function TableWastage({ onRowClick }) {
                 ) {
                   return (
                     <li
-                      key={pageNumber}
+                      key={index}
                       className={`page-item ${
                         currentPage === pageNumber ? "active" : ""
                       }`}
                     >
                       <button
-                        style={{ backgroundColor: "#E80000" }}
                         className="page-link"
                         onClick={() => paginate(pageNumber)}
                       >
@@ -713,20 +706,17 @@ function TableWastage({ onRowClick }) {
                       </button>
                     </li>
                   );
-                }
-                // Show ellipsis
-                else if (
+                } else if (
                   (pageNumber === 2 && currentPage > 3) ||
                   (pageNumber === totalPages - 1 &&
                     currentPage < totalPages - 2)
                 ) {
                   return (
-                    <li key={pageNumber} className="page-item disabled">
+                    <li key={index} className="page-item disabled">
                       <span className="page-link">...</span>
                     </li>
                   );
                 }
-
                 return null;
               })}
 
@@ -735,16 +725,12 @@ function TableWastage({ onRowClick }) {
                   currentPage === totalPages ? "disabled" : ""
                 }`}
               >
-                <button
-                  style={{ backgroundColor: "#F8D7DA" }}
-                  className="page-link"
-                  onClick={goToNextPage}
-                >
+                <button className="page-link" onClick={goToNextPage}>
                   Next
                 </button>
               </li>
             </ul>
-          </nav>
+          </div>
         </>
       )}
     </div>

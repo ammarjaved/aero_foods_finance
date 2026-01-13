@@ -12,23 +12,41 @@ function TableWastage({ onRowClick }) {
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
+  const currentYear = date.getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear);
+  };
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue);
   };
 
   // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
-    if (monthvalue) {
-      fetchData(monthvalue);
+    const yearvalue = localStorage.getItem("year");
+
+    if (monthvalue && yearvalue) {
+      fetchData(monthvalue, yearvalue);
       setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
+    } else if (monthvalue) {
+      fetchData(monthvalue, selectedYear);
+      setSelectedMonth(monthvalue);
+    } else if (yearvalue) {
+      fetchData(selectedMonth, yearvalue);
+      setSelectedYear(yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedYear);
     }
 
     // Create event listeners for record updates
@@ -47,12 +65,11 @@ function TableWastage({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
-    // Fetch data from PHP backend
+    // Fetch data from PHP backend with both month and year
     fetch(
-      "http://121.121.232.54:88/amazon-cafe/fetch_daily_wastage.php?month=" +
-        month
+      `http://121.121.232.54:88/amazon-cafe/fetch_daily_wastage.php?month=${month}&year=${year}`
     )
       .then((response) => response.json())
       .then((fetchedData) => {
@@ -310,13 +327,15 @@ function TableWastage({ onRowClick }) {
   ];
 
   // Specify which columns you want to include in the filter
-  const filterableColumns = [
-    // { key: 'day', label: 'Day' },
-    { key: "month_date", label: "Month Date" },
-    // { key: 'year', label: 'Year' }
-  ];
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Generate year options (current year and 5 years before/after)
+  const yearOptions = [];
+  for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+    yearOptions.push(i);
+  }
 
   // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
@@ -438,6 +457,25 @@ function TableWastage({ onRowClick }) {
                         <option value="12">December</option>
                       </select>
                       <label htmlFor="monthSelect">Month</label>
+                    </div>
+                  </div>
+
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select year</option>
+                        {yearOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                      <label htmlFor="yearSelect">Year</label>
                     </div>
                   </div>
                 </div>

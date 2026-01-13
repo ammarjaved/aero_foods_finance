@@ -54,7 +54,7 @@ function TableSDS() {
       );
       const fetchedData = await response.json();
 
-      const processedData = fetchedData
+      const processedData = fetchedData.monthly_data
         .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),
@@ -87,7 +87,7 @@ function TableSDS() {
       );
       const fetchedData = await response.json();
 
-      const processedData = fetchedData
+      const processedData = fetchedData.monthly_data
         .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),
@@ -120,7 +120,7 @@ function TableSDS() {
       );
       const fetchedData = await response.json();
 
-      const processedData = fetchedData
+      const processedData = fetchedData.monthly_data
         .map((item) => ({
           ...item,
           total_sales: parseFloat(item.total_sales || 0),

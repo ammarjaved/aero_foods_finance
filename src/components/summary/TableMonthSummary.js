@@ -97,7 +97,7 @@ function TableMonthSummary() {
       );
       const fetchedData = await response.json();
 
-      const processedData = fetchedData
+      const processedData = fetchedData.monthly_data
         .map((item) => ({
           ...item,
           total_sales:
@@ -221,7 +221,7 @@ function TableMonthSummary() {
       .then((fetchedData) => {
         // Convert string values to numbers and sort by date ascending
 
-        const processedData = fetchedData
+        const processedData = fetchedData.monthly_data
           .map((item) => ({
             ...item,
             total_sales:
