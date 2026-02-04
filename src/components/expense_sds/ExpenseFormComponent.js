@@ -417,6 +417,19 @@ function ExpenseFormComponent() {
     }
 
     try {
+      // Prepare delete payload with source information
+      const deletePayload = {
+        id: editFormData.id,
+      };
+
+      // Include source database and table if available
+      if (editFormData.source_database) {
+        deletePayload.source_database = editFormData.source_database;
+      }
+      if (editFormData.source_table) {
+        deletePayload.source_table = editFormData.source_table;
+      }
+
       const response = await fetch(
         "http://121.121.232.54:88/aero-foods/delete_sds_expenditure.php",
         {
@@ -424,7 +437,7 @@ function ExpenseFormComponent() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ id: editFormData.id }),
+          body: JSON.stringify(deletePayload),
         }
       );
 
@@ -444,7 +457,8 @@ function ExpenseFormComponent() {
     }
   };
 
-  const isDeleteEnabled = isEditing && editFormData.company === "SDS HQ";
+  const isDeleteEnabled =
+    isEditing && (editFormData.company === "SDS HQ" || !editFormData.company);
 
   const renderRecordForm = (record, index, isEditMode = false) => {
     const handleChange = isEditMode
