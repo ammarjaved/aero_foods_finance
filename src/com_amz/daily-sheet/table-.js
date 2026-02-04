@@ -12,23 +12,35 @@ function Table({ onRowClick }) {
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
+  const year = date.getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
+  };
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
   };
 
   // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
+    const yearvalue = localStorage.getItem("year");
+
     if (monthvalue) {
-      fetchData(monthvalue);
+      fetchData(monthvalue, yearvalue);
       setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
     } else {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedYear);
     }
 
     // Create event listeners for record updates
@@ -47,10 +59,15 @@ function Table({ onRowClick }) {
     applyFilters();
   }, [data, filterValues]);
 
-  const fetchData = (month) => {
+  const fetchData = (month, year) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch("http://121.121.232.54:88/amazon-cafe/fetchData.php?month=" + month)
+    fetch(
+      "http://121.121.232.54:88/amazon-cafe/fetchData.php?month=" +
+        month +
+        "&year=" +
+        year
+    )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -131,7 +148,7 @@ function Table({ onRowClick }) {
     },
     {
       key: "touch_n_go",
-      label: "Touch n Go",
+      label: "Touch n Go/Online",
       headerStyle: { backgroundColor: "#196F3D" },
       cellStyle: { backgroundColor: "#196F3D" },
     },
@@ -391,6 +408,22 @@ function Table({ onRowClick }) {
                       <label htmlFor="monthSelect">Month</label>
                     </div>
                   </div>
+
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="yearSelect">Year</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -461,12 +494,15 @@ function Table({ onRowClick }) {
                             </td>
                           );
                         } else if (column.key === "day") {
+                          const dayNum = parseInt(record[column.key]);
+                          const dayIndex = dayNum === 7 ? 0 : dayNum - 1; // 7→Sun(0), 1→Mon(1), etc.
+
                           return (
                             <td
                               key={`${record.id}-${column.key}`}
                               style={column.cellStyle || {}}
                             >
-                              {days[record[column.key]]}
+                              {days[dayIndex] || "Invalid"}
                             </td>
                           );
                         } else if (

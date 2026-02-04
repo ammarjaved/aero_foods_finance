@@ -35,6 +35,7 @@ import StockInAmz from "./com_amz/stock-in/StockIn";
 import StockInOjim from "./ojim/stock-in/StockIn";
 
 import Summary from "./components/summary/Summary";
+import ReCalculate from "./components/summary/ReCalculate";
 import Expenses from "./components/expense/Expense";
 import ExpensesYus from "./com_abe/expense/Expense";
 import ExpensesAmz from "./com_amz/expense/Expense";
@@ -94,6 +95,7 @@ function App() {
         <Route path="/stockin-ojim" element={<StockInOjim />} />
 
         <Route path="/summary" element={<Summary />} />
+        <Route path="/recalculate" element={<ReCalculate />} />
         <Route path="/payable" element={<Payable />} />
         <Route path="/TimesheetABE" element={<TimesheetABE />} />
         <Route path="/TimesheetAmazon" element={<TimesheetAmazon />} />

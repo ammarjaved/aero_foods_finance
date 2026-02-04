@@ -5,6 +5,7 @@ function MonthSalesSummary({ mon, year }) {
   const [selectedCafe, setSelectedCafe] = useState("aero_foods_finance");
   const [selectedMonth, setSelectedMonth] = useState(mon);
   const [data, setData] = useState(null);
+  const [dataExp, setDataExp] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -40,7 +41,8 @@ function MonthSalesSummary({ mon, year }) {
         `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}&year=${year}`
       );
       const result = await response.json();
-      setData(result[0]);
+      setData(result.summary);
+      setDataExp(result.expense_by_type);
     } catch (err) {
       setError("Failed to fetch data. Please try again.");
       console.error("Error fetching data:", err);
@@ -471,6 +473,103 @@ function MonthSalesSummary({ mon, year }) {
                         </strong>
                       </td>
                     </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Summary TNG/Duit Now */}
+            <div class="container mt-4">
+              <h4 class="mb-3">Avg Sales/ Avg Transactions/ Avg Labour hrs</h4>
+
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col">Description</th>
+                      <th scope="col" class="text-end">
+                        Avg or Sum
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Average Daily Sales</td>
+                      <td class="text-end">{data.avg_month_sales}</td>
+                    </tr>
+                    <tr>
+                      <td>Average Transection Count</td>
+                      <td class="text-end">{data.avg_trans_count}</td>
+                    </tr>
+                    <tr class="table-primary">
+                      <td>
+                        <strong>Average Transection Value</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>{data.avg_trans_val}</strong>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>100% Discount Value</td>
+                      <td class="text-end">{data.dis_hundred_per}</td>
+                    </tr>
+                    <tr class="table-warning">
+                      <td>
+                        <strong>Total Hours</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>{data.total_hours}</strong>
+                      </td>
+                    </tr>
+                    <tr class="table-info">
+                      <td>
+                        <strong>Average Labor Hours</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>{data.avg_labour_hrs}</strong>
+                      </td>
+                    </tr>
+                    <tr class="table-info">
+                      <td>
+                        <strong>Average Sales/ Labors Hours</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>{data.avg_sales_labour_hrs}</strong>
+                      </td>
+                    </tr>
+                    <tr class="table-info">
+                      <td>
+                        <strong>Total Wastage</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>
+                          {Number(data.total_wastage || 0).toFixed(2)}
+                        </strong>{" "}
+                      </td>
+                    </tr>
+
+                    <tr class="table-info">
+                      <td>
+                        <strong>Total Epenses</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>
+                          {Number(data.total_expense || 0).toFixed(2)}
+                        </strong>{" "}
+                      </td>
+                    </tr>
+                    {dataExp.map((item, index) => (
+                      <tr class="table-info" key={index}>
+                        <td>
+                          <strong>{item.expense_type_name}</strong>
+                        </td>
+                        <td class="text-end">
+                          <strong>
+                            {Number(item.total_amount || 0).toFixed(2)}
+                          </strong>{" "}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

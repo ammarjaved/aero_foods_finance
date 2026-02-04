@@ -20,17 +20,16 @@ function Table({ onRowClick }) {
     const monthValue = e.target.value;
     localStorage.setItem("month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear);
   };
 
   const handleYearChange = (e) => {
     const yearValue = e.target.value;
     localStorage.setItem("year", yearValue);
     setSelectedYear(yearValue);
-    fetchData(selectedMonth, yearValue); // Call your fetchData function with the selected month value
+    fetchData(selectedMonth, yearValue);
   };
 
-  // Subscribe to a custom event for new records
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
     const yearvalue = localStorage.getItem("year");
@@ -43,25 +42,21 @@ function Table({ onRowClick }) {
       fetchData(selectedMonth, selectedYear);
     }
 
-    // Create event listeners for record updates
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
 
     return () => {
-      // Clean up event listeners
       window.removeEventListener("newRecordAdded", handleNewRecord);
       window.removeEventListener("recordUpdated", handleRecordUpdate);
     };
   }, []);
 
-  // Apply filters when data or filter values change
   useEffect(() => {
     applyFilters();
   }, [data, filterValues]);
 
   const fetchData = (month, year) => {
     setLoading(true);
-    // Fetch data from PHP backend
     fetch(
       "http://121.121.232.54:88/aero-foods/fetchData.php?month=" +
         month +
@@ -80,13 +75,11 @@ function Table({ onRowClick }) {
       });
   };
 
-  // Handler for new record event
   const handleNewRecord = (event) => {
     const newRecord = event.detail;
     setData((prevData) => [newRecord, ...prevData]);
   };
 
-  // Handler for updated record event
   const handleRecordUpdate = (event) => {
     const updatedRecord = event.detail;
     setData((prevData) =>
@@ -96,11 +89,9 @@ function Table({ onRowClick }) {
     );
   };
 
-  // Apply filters to the data
   const applyFilters = () => {
     let filtered = [...data];
 
-    // Apply each filter if it has a value
     Object.entries(filterValues).forEach(([key, value]) => {
       if (value && value.trim() !== "") {
         filtered = filtered.filter(
@@ -112,10 +103,9 @@ function Table({ onRowClick }) {
     });
 
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
-  // Handle filter input change
   const handleFilterChange = (key, value) => {
     setFilterValues((prev) => ({
       ...prev,
@@ -123,23 +113,54 @@ function Table({ onRowClick }) {
     }));
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setFilterValues({});
   };
 
-  // Toggle filter panel
   const toggleFilterPanel = () => {
     setIsFilterPanelOpen(!isFilterPanelOpen);
   };
 
-  // Column definitions with friendly names and custom styling for specific columns
+  // Calculate totals for numeric columns
+  const calculateTotals = () => {
+    const totals = {};
+    const numericColumns = [
+      "cash",
+      "touch_n_go",
+      "visa",
+      "master",
+      "my_debit",
+      "duit_now",
+      "voucher",
+      "visa_master",
+      "sales_walk_in",
+      "shopee",
+      "grab",
+      "panda",
+      "sales_delivery",
+      "total_sales",
+      "transaction_count",
+      "avg_transaction_value",
+      "discount",
+      "labour_hours_used",
+      "sales_per_labour_hours",
+      "actual_bank_amount",
+      "cash_box_amount",
+      "variance",
+    ];
+
+    numericColumns.forEach((col) => {
+      totals[col] = currentRecords.reduce((sum, record) => {
+        return sum + (parseFloat(record[col]) || 0);
+      }, 0);
+    });
+
+    return totals;
+  };
+
   const columns = [
-    // { key: 'id', label: 'ID' },
     { key: "month_date", label: "Month Date" },
     { key: "day", label: "Day" },
-    // { key: 'month', label: 'Month' },
-    // { key: 'year', label: 'Year' },2E86C1,8E44AD,B7950B,283747,C0392B
     {
       key: "cash",
       label: "Cash",
@@ -218,7 +239,6 @@ function Table({ onRowClick }) {
       headerStyle: { backgroundColor: "#2E86C1" },
       cellStyle: { backgroundColor: "#2E86C1" },
     },
-
     {
       key: "total_sales",
       label: "Total Sales",
@@ -246,14 +266,6 @@ function Table({ onRowClick }) {
       headerStyle: { backgroundColor: "#8E44AD" },
       cellStyle: { backgroundColor: "#8E44AD" },
     },
-    //   { key: 'prev_day_balance', label: 'Previous Day Balance' ,
-    //     headerStyle: { backgroundColor: '#C0392B' },
-    //   cellStyle: { backgroundColor: '#C0392B' }
-    // },
-    //   { key: 'next_day_balance', label: 'Next Day Balance',
-    //     headerStyle: { backgroundColor: '#C0392B' },
-    //   cellStyle: { backgroundColor: '#C0392B' }
-    //  },
     {
       key: "actual_bank_amount",
       label: "Actual Bank Amount",
@@ -277,16 +289,10 @@ function Table({ onRowClick }) {
     { key: "remarks", label: "Remarks" },
   ];
 
-  // Specify which columns you want to include in the filter
-  const filterableColumns = [
-    // { key: 'day', label: 'Day' },
-    { key: "month_date", label: "Month Date" },
-    // { key: 'year', label: 'Year' }
-  ];
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
   const currentRecords = filteredData.slice(
@@ -294,11 +300,10 @@ function Table({ onRowClick }) {
     indexOfLastRecord
   );
   const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+  const totals = calculateTotals();
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Previous and next page handlers
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -311,7 +316,6 @@ function Table({ onRowClick }) {
     }
   };
 
-  // Check if any filters are active
   const hasActiveFilters = Object.values(filterValues).some(
     (value) => value && value.trim() !== ""
   );
@@ -456,106 +460,162 @@ function Table({ onRowClick }) {
             <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>
-                  {columns.map((column, index) => {
-                    const prevColumn = columns[index - 1];
-
-                    if (column.key === "month_date") {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    } else {
-                      return (
-                        <th key={column.key} style={column.headerStyle || {}}>
-                          {column.label}
-                        </th>
-                      );
-                    }
-                  })}
+                  {columns.map((column) => (
+                    <th key={column.key} style={column.headerStyle || {}}>
+                      {column.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {currentRecords.length > 0 ? (
-                  currentRecords.map((record) => (
+                  <>
+                    {currentRecords.map((record) => (
+                      <tr
+                        key={record.id}
+                        onClick={() => onRowClick(record)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {columns.map((column) => {
+                          if (column.key === "month_date") {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {record[column.key]}
+                              </td>
+                            );
+                          } else if (column.key === "day") {
+                            const dayNum = parseInt(record[column.key]);
+                            const dayIndex = dayNum === 7 ? 0 : dayNum - 1;
+
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {days[dayIndex] || "Invalid"}
+                              </td>
+                            );
+                          } else if (
+                            column.key === "sales_walk_in" ||
+                            column.key === "total_sales" ||
+                            column.key === "sales_delivery" ||
+                            column.key === "month_date_sales" ||
+                            column.key === "avg_transaction_value" ||
+                            column.key === "transaction_count" ||
+                            column.key === "labour_hours_used" ||
+                            column.key === "sales_per_labour_hours"
+                          ) {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {parseFloat(record[column.key])
+                                  .toFixed(2)
+                                  .toString()}
+                              </td>
+                            );
+                          } else if (column.key === "variance") {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={{
+                                  ...(column.cellStyle || {}),
+                                  color:
+                                    parseFloat(record[column.key]).toFixed(2) >
+                                    0
+                                      ? "green"
+                                      : "red",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                {parseFloat(record[column.key])
+                                  .toFixed(2)
+                                  .toString()}
+                              </td>
+                            );
+                          } else {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {record[column.key]}
+                              </td>
+                            );
+                          }
+                        })}
+                      </tr>
+                    ))}
+
+                    {/* Total Row */}
                     <tr
-                      key={record.id}
-                      onClick={() => onRowClick(record)}
-                      style={{ cursor: "pointer" }}
+                      style={{ fontWeight: "bold", backgroundColor: "#f0f0f0" }}
                     >
                       {columns.map((column) => {
                         if (column.key === "month_date") {
                           return (
                             <td
-                              key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
+                              key={`total-${column.key}`}
+                              style={{ fontWeight: "bold" }}
                             >
-                              {record[column.key]}
+                              TOTAL
                             </td>
                           );
                         } else if (column.key === "day") {
-                          const dayNum = parseInt(record[column.key]);
-                          const dayIndex = dayNum === 7 ? 0 : dayNum - 1; // 7→Sun(0), 1→Mon(1), etc.
-
-                          return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
-                            >
-                              {days[dayIndex] || "Invalid"}
-                            </td>
-                          );
+                          return <td key={`total-${column.key}`}></td>;
                         } else if (
+                          column.key === "cash" ||
+                          column.key === "touch_n_go" ||
+                          column.key === "visa" ||
+                          column.key === "master" ||
+                          column.key === "my_debit" ||
+                          column.key === "duit_now" ||
+                          column.key === "voucher" ||
+                          column.key === "visa_master" ||
                           column.key === "sales_walk_in" ||
-                          column.key === "total_sales" ||
+                          column.key === "shopee" ||
+                          column.key === "grab" ||
+                          column.key === "panda" ||
                           column.key === "sales_delivery" ||
-                          column.key === "month_date_sales" ||
-                          column.key === "avg_transaction_value" ||
+                          column.key === "total_sales" ||
                           column.key === "transaction_count" ||
+                          column.key === "avg_transaction_value" ||
+                          column.key === "discount" ||
                           column.key === "labour_hours_used" ||
-                          column.key === "sales_per_labour_hours"
+                          column.key === "sales_per_labour_hours" ||
+                          column.key === "actual_bank_amount" ||
+                          column.key === "cash_box_amount"
                         ) {
                           return (
                             <td
-                              key={`${record.id}-${column.key}`}
+                              key={`total-${column.key}`}
                               style={column.cellStyle || {}}
                             >
-                              {parseFloat(record[column.key])
-                                .toFixed(2)
-                                .toString()}
+                              {totals[column.key].toFixed(2)}
                             </td>
                           );
                         } else if (column.key === "variance") {
                           return (
                             <td
-                              key={`${record.id}-${column.key}`}
+                              key={`total-${column.key}`}
                               style={{
-                                ...(column.cellStyle || {}),
-                                color:
-                                  parseFloat(record[column.key]).toFixed(2) > 0
-                                    ? "green"
-                                    : "red",
+                                color: totals[column.key] > 0 ? "green" : "red",
                                 fontWeight: "bold",
                               }}
                             >
-                              {parseFloat(record[column.key])
-                                .toFixed(2)
-                                .toString()}
+                              {totals[column.key].toFixed(2)}
                             </td>
                           );
                         } else {
-                          return (
-                            <td
-                              key={`${record.id}-${column.key}`}
-                              style={column.cellStyle || {}}
-                            >
-                              {record[column.key]}
-                            </td>
-                          );
+                          return <td key={`total-${column.key}`}></td>;
                         }
                       })}
                     </tr>
-                  ))
+                  </>
                 ) : (
                   <tr>
                     <td colSpan={columns.length} className="text-center">
@@ -582,11 +642,9 @@ function Table({ onRowClick }) {
                 </button>
               </li>
 
-              {/* Display page numbers with ellipsis for large sets */}
               {Array.from({ length: totalPages }).map((_, index) => {
                 const pageNumber = index + 1;
 
-                // Show first page, last page, current page, and pages around current
                 if (
                   pageNumber === 1 ||
                   pageNumber === totalPages ||
@@ -609,9 +667,7 @@ function Table({ onRowClick }) {
                       </button>
                     </li>
                   );
-                }
-                // Show ellipsis
-                else if (
+                } else if (
                   (pageNumber === 2 && currentPage > 3) ||
                   (pageNumber === totalPages - 1 &&
                     currentPage < totalPages - 2)
