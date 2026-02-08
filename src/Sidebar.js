@@ -99,6 +99,17 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/Expenses-amz", label: "Expenditure" },
   ];
 
+  const menuItems_amz_lyp = [
+    { href: "/landing-amz-lyp", label: "Home" },
+    { href: "/TimesheetAmazonLyp", label: "Time Sheet" },
+    { href: "/dashboard-amz-lyp", label: "Daily Sheet" },
+    { href: "/wastage-amz-lyp", label: "Daily Wastage" },
+    { href: "/reconciliation-amz-lyp", label: "Bank Reconciliation" },
+    { href: "/materials-amz-lyp", label: "Materials" },
+    { href: "/stockin-amz-lyp", label: "Stock In" },
+    { href: "/Expenses-amz-lyp", label: "Expenditure" },
+  ];
+
   const menuItems_ojim = [
     { href: "/landing-ojim", label: "Home" },
     { href: "/TimesheetOjim", label: "Time Sheet" },
@@ -163,11 +174,12 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     });
 
   const renderCollapsibleSection = (sectionKey, title) => {
-    // Check if any item in this section is currently active
+    // Check if any item in this section is currently active menuItems_amz_lyp
     let items = [];
     if (sectionKey === "mixiue") items = menuItems_mixe;
     if (sectionKey === "abeYus") items = menuItems_abe;
     if (sectionKey === "amazon") items = menuItems_amz;
+    if (sectionKey === "amazon-lyp") items = menuItems_amz_lyp;
     if (sectionKey === "ojim") items = menuItems_ojim;
 
     const hasActivePage = items.some((item) => isCurrentPage(item.href));
@@ -233,6 +245,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
               {renderMenuItems(menuItems_amz)}
             </div>
           )}
+          {sectionKey === "amazon-lyp" && (
+            <div className="nav flex-column" style={{ padding: "5px 0" }}>
+              {renderMenuItems(menuItems_amz_lyp)}
+            </div>
+          )}
           {sectionKey === "ojim" && (
             <div className="nav flex-column" style={{ padding: "5px 0" }}>
               {renderMenuItems(menuItems_ojim)}
@@ -279,6 +296,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           {renderCollapsibleSection("mixiue", "Mixiue")}
           {renderCollapsibleSection("abeYus", "Abe Yus")}
           {renderCollapsibleSection("amazon", "Amazon")}
+          {renderCollapsibleSection("amazon-lyp", "Amazon LYP")}
           {renderCollapsibleSection("ojim", "Ojim")}
         </div>
 

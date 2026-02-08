@@ -3,35 +3,47 @@ import LoginForm from "./LoginForm";
 import Dashboard from "./components/daily-sheet/Dashboard";
 import DashboardYus from "./com_abe/daily-sheet/Dashboard";
 import DashboardAmz from "./com_amz/daily-sheet/Dashboard";
+import DashboardAmzLyp from "./com_amz_lyp/daily-sheet/Dashboard";
 import DashboardOjim from "./ojim/daily-sheet/Dashboard";
 
 import Landing from "./Landing";
 import LandingYus from "./com_abe/Landing";
 import LandingAmz from "./com_amz/Landing";
+import LandingAmzLyp from "./com_amz_lyp/Landing";
 
 import Timesheet from "./components/time-sheet/Timesheet";
 import TimesheetABE from "./com_abe/time-sheet-abe/TimesheetABE";
 import TimesheetAmazon from "./com_amz/time-sheet-amz/TimesheetAmazon";
+import TimesheetAmazonLyp from "./com_amz_lyp/time-sheet-amz/TimesheetAmazon";
+
 import TimesheetOjim from "./ojim/time-sheet-ojim/TimesheetOjim";
 
 import DailyWastage from "./components/wastage/DailyWastage";
 import DailyWastageYus from "./com_abe/wastage/DailyWastage";
 import DailyWastageAmz from "./com_amz/wastage/DailyWastage";
+import DailyWastageAmzLyp from "./com_amz_lyp/wastage/DailyWastage";
+
 import DailyWastageOjim from "./ojim/wastage/DailyWastage";
 
 import DailyBankReconciliation from "./components/bank-reconciliation/DailyBankReconciliation";
 import DailyBankReconciliationYus from "./com_abe/bank-reconciliation/DailyBankReconciliation";
 import DailyBankReconciliationAmz from "./com_amz/bank-reconciliation/DailyBankReconciliation";
+import DailyBankReconciliationAmzLyp from "./com_amz_lyp/bank-reconciliation/DailyBankReconciliation";
+
 import DailyBankReconciliationOjim from "./ojim/bank-reconciliation/DailyBankReconciliation";
 
 import MonthlyMaterials from "./components/materials/MonthlyMaterials";
 import MonthlyMaterialsYus from "./com_abe/materials/MonthlyMaterials";
 import MonthlyMaterialsAmz from "./com_amz/materials/MonthlyMaterials";
+import MonthlyMaterialsAmzLyp from "./com_amz_lyp/materials/MonthlyMaterials";
+
 import MonthlyMaterialsOjim from "./ojim/materials/MonthlyMaterials";
 
 import StockIn from "./components/stock-in/StockIn";
 import StockInYus from "./com_abe/stock-in/StockIn";
 import StockInAmz from "./com_amz/stock-in/StockIn";
+import StockInAmzLyp from "./com_amz_lyp/stock-in/StockIn";
+
 import StockInOjim from "./ojim/stock-in/StockIn";
 
 import Summary from "./components/summary/Summary";
@@ -39,6 +51,7 @@ import ReCalculate from "./components/summary/ReCalculate";
 import Expenses from "./components/expense/Expense";
 import ExpensesYus from "./com_abe/expense/Expense";
 import ExpensesAmz from "./com_amz/expense/Expense";
+import ExpensesAmzLyp from "./com_amz_lyp/expense/Expense";
 import ExpensesOjim from "./ojim/expense/Expense";
 import ExpensesSDS from "./components/expense_sds/Expense";
 import Salary from "./components/salary/Salary";
@@ -56,17 +69,20 @@ function App() {
         <Route path="/landing" element={<Landing />} />
         <Route path="/landing-yus" element={<LandingYus />} />
         <Route path="/landing-amz" element={<LandingAmz />} />
+        <Route path="/landing-amz-lyp" element={<LandingAmzLyp />} />
         <Route path="/landing-ojim" element={<LandingOjim />} />
 
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard-yus" element={<DashboardYus />} />
         <Route path="/dashboard-amz" element={<DashboardAmz />} />
+        <Route path="/dashboard-amz-lyp" element={<DashboardAmzLyp />} />
         <Route path="/dashboard-ojim" element={<DashboardOjim />} />
 
         <Route path="/timesheet" element={<Timesheet />} />
         <Route path="/wastage" element={<DailyWastage />} />
         <Route path="/wastage-yus" element={<DailyWastageYus />} />
         <Route path="/wastage-amz" element={<DailyWastageAmz />} />
+        <Route path="/wastage-amz-lyp" element={<DailyWastageAmzLyp />} />
         <Route path="/wastage-ojim" element={<DailyWastageOjim />} />
 
         <Route path="/reconciliation" element={<DailyBankReconciliation />} />
@@ -80,6 +96,11 @@ function App() {
         />
 
         <Route
+          path="/reconciliation-amz-lyp"
+          element={<DailyBankReconciliationAmzLyp />}
+        />
+
+        <Route
           path="/reconciliation-ojim"
           element={<DailyBankReconciliationOjim />}
         />
@@ -87,11 +108,13 @@ function App() {
         <Route path="/materials" element={<MonthlyMaterials />} />
         <Route path="/materials-yus" element={<MonthlyMaterialsYus />} />
         <Route path="/materials-amz" element={<MonthlyMaterialsAmz />} />
+        <Route path="/materials-amz-lyp" element={<MonthlyMaterialsAmzLyp />} />
         <Route path="/materials-ojim" element={<MonthlyMaterialsOjim />} />
 
         <Route path="/stockin" element={<StockIn />} />
         <Route path="/stockin-yus" element={<StockInYus />} />
         <Route path="/stockin-amz" element={<StockInAmz />} />
+        <Route path="/stockin-amz-lyp" element={<StockInAmzLyp />} />
         <Route path="/stockin-ojim" element={<StockInOjim />} />
 
         <Route path="/summary" element={<Summary />} />
@@ -99,11 +122,14 @@ function App() {
         <Route path="/payable" element={<Payable />} />
         <Route path="/TimesheetABE" element={<TimesheetABE />} />
         <Route path="/TimesheetAmazon" element={<TimesheetAmazon />} />
+        <Route path="/TimesheetAmazonLyp" element={<TimesheetAmazonLyp />} />
         <Route path="/TimesheetOjim" element={<TimesheetOjim />} />
         <Route path="/EmpTimeSheet" element={<TimeAnalysis />} />
         <Route path="/Expenses" element={<Expenses />} />
         <Route path="/Expenses-yus" element={<ExpensesYus />} />
         <Route path="/Expenses-amz" element={<ExpensesAmz />} />
+        <Route path="/Expenses-amz-lyp" element={<ExpensesAmzLyp />} />
+
         <Route path="/Expenses-ojim" element={<ExpensesOjim />} />
 
         <Route path="/ExpensesSDS" element={<ExpensesSDS />} />
