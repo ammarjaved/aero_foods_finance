@@ -50,7 +50,7 @@ function BankReconciliationComponent() {
     },
     {
       key: "touch_n_go",
-      label: "Touch N Go/Online",
+      label: "Touch N Go",
       isReadOnly: true,
       badge: "bg-success",
     },
@@ -240,7 +240,7 @@ function BankReconciliationComponent() {
   const [isEditing, setIsEditing] = useState(false);
   const [mapKey, setMapKey] = useState(Date.now());
 
-  const API_BASE_URL = "http://121.121.232.54:88/aero-foods";
+  const API_BASE_URL = "http://121.121.232.54:88/amazon-cafe-lyp";
 
   const handleSum = () => {};
 
@@ -406,27 +406,35 @@ function BankReconciliationComponent() {
     e.preventDefault();
 
     try {
+      // Create a FormData object for handling file uploads
       const submitData = new FormData();
+
+      // Append all form fields to the FormData
       Object.keys(formData).forEach((key) => {
         submitData.append(key, formData[key]);
       });
 
+      // Make the API call with FormData
       const response = await fetch(
-        "http://121.121.232.54:88/aero-foods/bank_reconciliation_sheet.php",
+        "http://121.121.232.54:88/amazon-cafe-lyp/bank_reconciliation_sheet.php",
         {
           method: "POST",
-          body: submitData,
+          body: submitData, // No need to set Content-Type header; browser will set it properly with boundary
         },
       );
 
       const result = await response.json();
 
       if (response.ok) {
+        // alert(result.message);
+
+        // Create a complete record with the returned ID
         const updatedRecord = {
           ...formData,
           id: result.id,
         };
 
+        // Dispatch appropriate event based on operation type
         if (isEditing) {
           window.dispatchEvent(
             new CustomEvent("recordUpdated", {
@@ -443,17 +451,7 @@ function BankReconciliationComponent() {
 
         resetForm();
         setIsFormOpen(false);
-
-        // Instead of full reload, just update the table key to refresh data
-        // The selected month in localStorage will be preserved
-        setMapKey(Date.now());
-
-        // If you absolutely need a reload, preserve the month first:
-        // const currentMonth = localStorage.getItem("month");
-        // if (currentMonth) {
-        //   sessionStorage.setItem("preserveMonth", currentMonth);
-        // }
-        // window.location.reload();
+        window.location.reload();
       } else {
         throw new Error(result.error || "Failed to save data");
       }
@@ -462,66 +460,6 @@ function BankReconciliationComponent() {
       alert("Error saving data. Please try again.");
     }
   };
-
-  // const handleSubmit = async (e) => {
-  //   handleSum();
-  //   e.preventDefault();
-
-  //   try {
-  //     // Create a FormData object for handling file uploads
-  //     const submitData = new FormData();
-
-  //     // Append all form fields to the FormData
-  //     Object.keys(formData).forEach((key) => {
-  //       submitData.append(key, formData[key]);
-  //     });
-
-  //     // Make the API call with FormData
-  //     const response = await fetch(
-  //       "http://121.121.232.54:88/aero-foods/bank_reconciliation_sheet.php",
-  //       {
-  //         method: "POST",
-  //         body: submitData, // No need to set Content-Type header; browser will set it properly with boundary
-  //       }
-  //     );
-
-  //     const result = await response.json();
-
-  //     if (response.ok) {
-  //       // alert(result.message);
-
-  //       // Create a complete record with the returned ID
-  //       const updatedRecord = {
-  //         ...formData,
-  //         id: result.id,
-  //       };
-
-  //       // Dispatch appropriate event based on operation type
-  //       if (isEditing) {
-  //         window.dispatchEvent(
-  //           new CustomEvent("recordUpdated", {
-  //             detail: updatedRecord,
-  //           })
-  //         );
-  //       } else {
-  //         window.dispatchEvent(
-  //           new CustomEvent("newRecordAdded", {
-  //             detail: updatedRecord,
-  //           })
-  //         );
-  //       }
-
-  //       resetForm();
-  //       setIsFormOpen(false);
-  //       window.location.reload();
-  //     } else {
-  //       throw new Error(result.error || "Failed to save data");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error saving data:", error);
-  //     alert("Error saving data. Please try again.");
-  //   }
-  // };
 
   const resetForm = () => {
     // Clean up existing preview URLs

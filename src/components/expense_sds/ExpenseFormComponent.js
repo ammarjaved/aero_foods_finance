@@ -280,7 +280,7 @@ function ExpenseFormComponent() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(submitData),
-        }
+        },
       );
 
       const result = await response.json();
@@ -306,13 +306,13 @@ function ExpenseFormComponent() {
             window.dispatchEvent(
               new CustomEvent("recordUpdated", {
                 detail: updatedRecord,
-              })
+              }),
             );
           } else {
             window.dispatchEvent(
               new CustomEvent("newRecordAdded", {
                 detail: updatedRecord,
-              })
+              }),
             );
           }
         });
@@ -410,7 +410,7 @@ function ExpenseFormComponent() {
   const deleteRecord = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete the expense for "${editFormData.vendor}" with amount ${editFormData.amount}?`
+        `Are you sure you want to delete the expense for "${editFormData.vendor}" with amount ${editFormData.amount}?`,
       )
     ) {
       return;
@@ -438,7 +438,7 @@ function ExpenseFormComponent() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(deletePayload),
-        }
+        },
       );
 
       const result = await response.json();
@@ -682,7 +682,7 @@ function ExpenseFormComponent() {
             // Multiple records mode
             <>
               {formRecords.map((record, index) =>
-                renderRecordForm(record, index, false)
+                renderRecordForm(record, index, false),
               )}
               <div className="text-center mb-3">
                 <button
@@ -733,7 +733,7 @@ function ExpenseFormComponent() {
         <div
           className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
           style={{ zIndex: 1040 }}
-          onClick={closeForm}
+          // onClick={closeForm}
         ></div>
       )}
 

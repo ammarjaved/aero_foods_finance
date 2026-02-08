@@ -23,7 +23,7 @@ function PayableForm() {
   const [isEditing, setIsEditing] = useState(false);
   const [mapKey, setMapKey] = useState(Date.now());
 
-  const PAYMENT_TYPES = ["Loan", "Payment"];
+  const PAYMENT_TYPES = ["Loan", "Payment", "Advance"];
 
   const PAYMENT_STATUSES = ["Pending", "Done"];
 
@@ -129,7 +129,7 @@ function PayableForm() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(submitData),
-        }
+        },
       );
 
       const result = await response.json();
@@ -155,13 +155,13 @@ function PayableForm() {
             window.dispatchEvent(
               new CustomEvent("recordUpdated", {
                 detail: updatedRecord,
-              })
+              }),
             );
           } else {
             window.dispatchEvent(
               new CustomEvent("newRecordAdded", {
                 detail: updatedRecord,
-              })
+              }),
             );
           }
         });
@@ -214,7 +214,7 @@ function PayableForm() {
   const deleteRecord = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete the payment to "${editFormData.payment_to}" with amount ${editFormData.due_amount}?`
+        `Are you sure you want to delete the payment to "${editFormData.payment_to}" with amount ${editFormData.due_amount}?`,
       )
     ) {
       return;
@@ -230,7 +230,7 @@ function PayableForm() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ id: editFormData.id }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -419,7 +419,7 @@ function PayableForm() {
           ) : (
             <>
               {formRecords.map((record, index) =>
-                renderRecordForm(record, index, false)
+                renderRecordForm(record, index, false),
               )}
               <div className="text-center mb-3">
                 <button
