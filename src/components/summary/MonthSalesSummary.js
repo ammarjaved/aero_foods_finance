@@ -13,6 +13,7 @@ function MonthSalesSummary({ mon, year }) {
     { value: "ojim_finance", label: "Ojim Cafe" },
     { value: "aero_foods_finance", label: "Mixue" },
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
+    { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
     { value: "abe_yus_finance", label: "Abe Yus" },
   ];
   console.log(year);
@@ -38,7 +39,7 @@ function MonthSalesSummary({ mon, year }) {
     console.log(year);
     try {
       const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}&year=${year}`
+        `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}&year=${year}`,
       );
       const result = await response.json();
       setData(result.summary);
@@ -187,7 +188,7 @@ function MonthSalesSummary({ mon, year }) {
                       <span className="fw-semibold text-primary">
                         {calculatePercentage(
                           data.total_sales,
-                          data.total_recon
+                          data.total_recon,
                         )}
                         %
                       </span>
@@ -259,7 +260,7 @@ function MonthSalesSummary({ mon, year }) {
                         <td className="text-end">
                           {calculatePercentage(
                             data.total_shopee,
-                            data.recon_shopee
+                            data.recon_shopee,
                           )}
                           %
                         </td>
@@ -278,7 +279,7 @@ function MonthSalesSummary({ mon, year }) {
                         <td className="text-end">
                           {calculatePercentage(
                             data.total_grab,
-                            data.recon_grab
+                            data.recon_grab,
                           )}
                           %
                         </td>
@@ -297,7 +298,7 @@ function MonthSalesSummary({ mon, year }) {
                         <td className="text-end">
                           {calculatePercentage(
                             data.total_panda,
-                            data.recon_panda
+                            data.recon_panda,
                           )}
                           %
                         </td>
@@ -308,14 +309,14 @@ function MonthSalesSummary({ mon, year }) {
                           {formatCurrency(
                             Number(data.total_panda) +
                               Number(data.total_grab) +
-                              Number(data.total_shopee)
+                              Number(data.total_shopee),
                           )}
                         </td>
                         <td className="text-end">
                           {formatCurrency(
                             Number(data.recon_panda) +
                               Number(data.recon_grab) +
-                              Number(data.recon_shopee)
+                              Number(data.recon_shopee),
                           )}
                         </td>
                         <td className="text-end">
@@ -325,7 +326,7 @@ function MonthSalesSummary({ mon, year }) {
                               Number(data.recon_shopee) -
                               (Number(data.total_panda) +
                                 Number(data.total_grab) +
-                                Number(data.total_shopee))
+                                Number(data.total_shopee)),
                           )}
                         </td>
                         <td className="text-end">
@@ -377,7 +378,7 @@ function MonthSalesSummary({ mon, year }) {
                       <span className="fw-semibold">
                         {calculateDiff(
                           data.cash_box_amount,
-                          data.total_cash_box_amount
+                          data.total_cash_box_amount,
                         )}
                       </span>
                     </div>
@@ -390,7 +391,7 @@ function MonthSalesSummary({ mon, year }) {
                         {(
                           (calculateDiff(
                             data.cash_box_amount,
-                            data.total_cash_box_amount
+                            data.total_cash_box_amount,
                           ) /
                             data.cash_box_amount) *
                           100
@@ -433,7 +434,7 @@ function MonthSalesSummary({ mon, year }) {
                       <td class="text-end">
                         <strong>
                           {formatCurrency(
-                            Number(data.duit_now) + Number(data.total_tng)
+                            Number(data.duit_now) + Number(data.total_tng),
                           )}
                         </strong>
                       </td>
@@ -613,7 +614,7 @@ function MonthSalesSummary({ mon, year }) {
                             Number(data.dr1) +
                               Number(data.dr2) +
                               Number(data.cr) -
-                              Number(data.total_bank_card)
+                              Number(data.total_bank_card),
                           )}
                         </td>
                         <td
@@ -645,7 +646,7 @@ function MonthSalesSummary({ mon, year }) {
                           {formatCurrency(
                             Number(data.dr1) +
                               Number(data.dr2) +
-                              Number(data.cr)
+                              Number(data.cr),
                           )}
                         </td>
                       </tr>
@@ -686,7 +687,7 @@ function MonthSalesSummary({ mon, year }) {
                           {formatCurrency(
                             Number(data.dr1) +
                               Number(data.dr2) +
-                              Number(data.cr)
+                              Number(data.cr),
                           )}
                         </td>
                         <td rowSpan="4" className="align-middle">
@@ -730,7 +731,7 @@ function MonthSalesSummary({ mon, year }) {
                           {formatCurrency(
                             Number(data.visa) +
                               Number(data.master) +
-                              Number(data.my_debit)
+                              Number(data.my_debit),
                           )}
                         </td>
                       </tr>

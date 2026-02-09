@@ -17,6 +17,7 @@ const ReCalculate = () => {
   const databases = [
     { value: "aero_foods_finance", label: "Mixue Finance" },
     { value: "amazon_cafe_finance", label: "Amazon Cafe Finance" },
+    { value: "amazon_cafe_finance_lyp", label: "Amazon Cafe Finance LYP" },
     { value: "abe_yus_finance", label: "Abe Yus Finance" },
     { value: "ojim_finance", label: "Ojim Finance" },
   ];
@@ -38,7 +39,7 @@ const ReCalculate = () => {
 
   const years = Array.from(
     { length: 10 },
-    (_, i) => new Date().getFullYear() - 5 + i
+    (_, i) => new Date().getFullYear() - 5 + i,
   );
 
   const handleChange = (e) => {
@@ -272,7 +273,7 @@ const ReCalculate = () => {
                             <div className="card-body py-2 px-3">
                               <div className="d-flex align-items-center gap-2 mb-1">
                                 {getStatusIcon(
-                                  result.bank_reconciliation.success
+                                  result.bank_reconciliation.success,
                                 )}
                                 <strong className="small">
                                   Bank Reconciliation

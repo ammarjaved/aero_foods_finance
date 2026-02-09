@@ -10,6 +10,7 @@ function SalaryFormComponent() {
     mixue: "",
     abeyus: "",
     dac: "",
+    dac_lyp: "",
     ojim: "",
     sds_hq: "",
   };
@@ -66,7 +67,14 @@ function SalaryFormComponent() {
         // Single record edit
         const editData = {};
         Object.keys(editFormData).forEach((key) => {
-          let floatKeys = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
+          let floatKeys = [
+            "mixue",
+            "abeyus",
+            "dac",
+            "dac_lyp",
+            "ojim",
+            "sds_hq",
+          ];
           if (floatKeys.includes(key)) {
             editData[key] = editFormData[key]
               ? parseFloat(editFormData[key]).toFixed(2)
@@ -83,7 +91,14 @@ function SalaryFormComponent() {
         submitData = formRecords.map((record) => {
           const recordData = {};
           Object.keys(record).forEach((key) => {
-            let floatKeys = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
+            let floatKeys = [
+              "mixue",
+              "abeyus",
+              "dac",
+              "dac_lyp",
+              "ojim",
+              "sds_hq",
+            ];
             if (floatKeys.includes(key)) {
               recordData[key] = record[key]
                 ? parseFloat(record[key]).toFixed(2)
@@ -107,7 +122,7 @@ function SalaryFormComponent() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(submitData),
-        }
+        },
       );
 
       const result = await response.json();
@@ -137,20 +152,20 @@ function SalaryFormComponent() {
               window.dispatchEvent(
                 new CustomEvent("recordUpdated", {
                   detail: updatedRecord,
-                })
+                }),
               );
             } else {
               window.dispatchEvent(
                 new CustomEvent("newRecordAdded", {
                   detail: updatedRecord,
-                })
+                }),
               );
             }
           });
         } else {
           // Fallback if API response doesn't have results array
           console.warn(
-            "API response doesn't have expected structure, triggering table refresh"
+            "API response doesn't have expected structure, triggering table refresh",
           );
           triggerTableRefresh();
         }
@@ -205,7 +220,7 @@ function SalaryFormComponent() {
   const deleteRecord = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete the salary record for "${editFormData.month} ${editFormData.year}"?`
+        `Are you sure you want to delete the salary record for "${editFormData.month} ${editFormData.year}"?`,
       )
     ) {
       return;
@@ -220,7 +235,7 @@ function SalaryFormComponent() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ id: editFormData.id }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -232,7 +247,7 @@ function SalaryFormComponent() {
         window.dispatchEvent(
           new CustomEvent("recordDeleted", {
             detail: { id: editFormData.id },
-          })
+          }),
         );
 
         resetForm();
@@ -384,6 +399,21 @@ function SalaryFormComponent() {
 
           <div className="col-md-6">
             <div className="form-group">
+              <label className="form-label">DAC LYP Amount</label>
+              <input
+                type="number"
+                name="dac_lyp"
+                step="0.01"
+                value={formData.dac_lyp}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="form-group">
               <label className="form-label">Ojim Amount</label>
               <input
                 type="number"
@@ -422,6 +452,7 @@ function SalaryFormComponent() {
                 (parseFloat(formData.mixue) || 0) +
                 (parseFloat(formData["abeyus"]) || 0) +
                 (parseFloat(formData.dac) || 0) +
+                (parseFloat(formData.dac_lyp) || 0) +
                 (parseFloat(formData.ojim) || 0) +
                 (parseFloat(formData.sds_hq) || 0)
               ).toLocaleString("en-US", {
@@ -479,7 +510,7 @@ function SalaryFormComponent() {
               // Multiple records mode
               <>
                 {formRecords.map((record, index) =>
-                  renderRecordForm(record, index, false)
+                  renderRecordForm(record, index, false),
                 )}
 
                 <div className="text-center mb-3">

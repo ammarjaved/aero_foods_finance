@@ -383,6 +383,8 @@ function ExpenseFormComponent() {
           basePath = "abe-yus";
         } else if (company === "ojim") {
           basePath = "ojim-cafe";
+        } else if (company === "amazon_lyp") {
+          basePath = "amazon-cafe-lyp";
         } else if (
           company === "mixue" ||
           company === "sds hq" ||
@@ -547,6 +549,7 @@ function ExpenseFormComponent() {
                   <option value="">Select a company</option>
                   <option value="Mixue">Mixue</option>
                   <option value="Amazon">Amazon</option>
+                  <option value="Amazon_LYP">Amazon LYP</option>
                   <option value="Abe Yus">Abe Yus</option>
                   <option value="Ojim">Ojim</option>
                   <option value="SDS HQ">SDS HQ</option>

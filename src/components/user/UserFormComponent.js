@@ -61,7 +61,7 @@ function UserFormComponent() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(submitData),
-        }
+        },
       );
 
       const result = await response.json();
@@ -122,7 +122,7 @@ function UserFormComponent() {
   const deleteRecord = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete user "${formData.username}"?`
+        `Are you sure you want to delete user "${formData.username}"?`,
       )
     ) {
       return;
@@ -137,7 +137,7 @@ function UserFormComponent() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ id: formData.id, db: currentCafe }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -148,7 +148,7 @@ function UserFormComponent() {
         window.dispatchEvent(
           new CustomEvent("recordDeleted", {
             detail: { id: formData.id },
-          })
+          }),
         );
 
         resetForm();
@@ -241,6 +241,7 @@ function UserFormComponent() {
                 <option value="mixue">Mixue</option>
                 <option value="abe">Abe-Yus</option>
                 <option value="amz">Amazon</option>
+                <option value={"amz-lyp"}>Amazon-LYP</option>
                 <option value="ojim">Ojim</option>
               </select>
               <small className="text-muted">

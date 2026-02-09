@@ -10,6 +10,7 @@ const TimesheetSB = ({ month = 11 }) => {
     { value: "ojim_finance", label: "Ojim Cafe" },
     { value: "aero_foods_finance", label: "Mixue" },
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
+    { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
     { value: "abe_yus_finance", label: "Abe Yus" },
   ];
 
@@ -22,7 +23,7 @@ const TimesheetSB = ({ month = 11 }) => {
     setError(null);
     try {
       const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/timesheet_sb.php?month=${month}&db=${selectedCafe}`
+        `http://121.121.232.54:88/aero-foods/timesheet_sb.php?month=${month}&db=${selectedCafe}`,
       );
       const result = await response.json();
       setData(Array.isArray(result) ? result : []);
