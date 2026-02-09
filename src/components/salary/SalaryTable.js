@@ -23,7 +23,14 @@ function SalaryTable({ onRowClick }) {
 
   // Calculate row total for a single record
   const calculateRowTotal = (record) => {
-    const companyFields = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
+    const companyFields = [
+      "mixue",
+      "abeyus",
+      "dac",
+      "dac_lyp",
+      "ojim",
+      "sds_hq",
+    ];
     return companyFields.reduce((total, field) => {
       const value = parseFloat(record[field]) || 0;
       return total + value;
@@ -40,7 +47,14 @@ function SalaryTable({ onRowClick }) {
 
   // Calculate grand total of all amounts
   const calculateGrandTotal = () => {
-    const companyFields = ["mixue", "abeyus", "dac", "ojim", "sds_hq"];
+    const companyFields = [
+      "mixue",
+      "abeyus",
+      "dac",
+      "dac_lyp",
+      "ojim",
+      "sds_hq",
+    ];
     return companyFields.reduce((grandTotal, field) => {
       return grandTotal + calculateColumnTotal(field);
     }, 0);
@@ -117,7 +131,7 @@ function SalaryTable({ onRowClick }) {
         filtered = filtered.filter(
           (record) =>
             record[key] &&
-            record[key].toString().toLowerCase().includes(value.toLowerCase())
+            record[key].toString().toLowerCase().includes(value.toLowerCase()),
         );
       }
     });
@@ -162,8 +176,8 @@ function SalaryTable({ onRowClick }) {
       prevData.map((record) =>
         record.id === updatedRecord.id
           ? { ...record, ...updatedRecord }
-          : record
-      )
+          : record,
+      ),
     );
   }, []);
 
@@ -234,6 +248,11 @@ function SalaryTable({ onRowClick }) {
       isAmount: true,
     },
     {
+      key: "dac_lyp",
+      label: "DAC LYP",
+      isAmount: true,
+    },
+    {
       key: "ojim",
       label: "Ojim",
       isAmount: true,
@@ -256,7 +275,7 @@ function SalaryTable({ onRowClick }) {
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
   const currentRecords = filteredData.slice(
     indexOfFirstRecord,
-    indexOfLastRecord
+    indexOfLastRecord,
   );
   const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
@@ -282,7 +301,7 @@ function SalaryTable({ onRowClick }) {
   };
 
   const hasActiveFilters = Object.values(filterValues).some(
-    (value) => value && value.trim() !== ""
+    (value) => value && value.trim() !== "",
   );
 
   // Generate year options (current year and previous 10 years)
@@ -524,22 +543,27 @@ function SalaryTable({ onRowClick }) {
                   </div>
                   <div className="col-md-6">
                     <div className="d-flex justify-content-end">
-                      {["mixue", "abeyus", "dac", "ojim", "sds_hq"].map(
-                        (field) => {
-                          const total = calculateColumnTotal(field);
-                          const label =
-                            columns.find((col) => col.key === field)?.label ||
-                            field;
-                          return (
-                            <div key={field} className="me-3">
-                              <small className="text-muted">{label}:</small>
-                              <div className="fw-bold">
-                                RM {formatAmount(total)}
-                              </div>
+                      {[
+                        "mixue",
+                        "abeyus",
+                        "dac",
+                        "dac_lyp",
+                        "ojim",
+                        "sds_hq",
+                      ].map((field) => {
+                        const total = calculateColumnTotal(field);
+                        const label =
+                          columns.find((col) => col.key === field)?.label ||
+                          field;
+                        return (
+                          <div key={field} className="me-3">
+                            <small className="text-muted">{label}:</small>
+                            <div className="fw-bold">
+                              RM {formatAmount(total)}
                             </div>
-                          );
-                        }
-                      )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

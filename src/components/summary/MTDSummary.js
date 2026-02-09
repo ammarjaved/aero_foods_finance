@@ -40,6 +40,7 @@ function MTDSummary() {
     AbyYus: true,
     Amazon: true,
     Ojim: true,
+    AmazonLYP: true,
     SDS: true,
   });
   const handleYearChange = (newYear) => {
@@ -58,6 +59,7 @@ function MTDSummary() {
     AbyYus: true,
     Amazon: true,
     Ojim: true,
+    AmazonLYP: true,
     SDS: true,
   });
 
@@ -90,6 +92,7 @@ function MTDSummary() {
     "Aby Yus": true,
     "D' Amazon Café": true,
     "Ojim Café": true,
+    "D' Amazon Café LYP": true,
   });
 
   // Add this handler function
@@ -106,7 +109,7 @@ function MTDSummary() {
   const fetchDataForStore = async (month, endpoint) => {
     try {
       const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/${endpoint}?month=${month}&year=${selectedYear}`
+        `http://121.121.232.54:88/aero-foods/${endpoint}?month=${month}&year=${selectedYear}`,
       );
       const fetchedData = await response.json();
 
@@ -147,19 +150,25 @@ function MTDSummary() {
         total_expense: acc.total_expense + (item.total_expense || 0),
         total_cash_box: acc.total_cash_box + (item.cash_box || 0),
       }),
-      { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
+      { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 },
     );
   };
 
   const fetchDataForMonth = async (month) => {
     try {
-      const [mixieResult, abyYusResult, amazonResult, OjimResult] =
-        await Promise.all([
-          fetchDataForStore(month, "mon-sum-mixiue.php"),
-          fetchDataForStore(month, "mon-sum-mixiue2.php"),
-          fetchDataForStore(month, "mon-sum-mixiue3.php"),
-          fetchDataForStore(month, "mon-sum-mixiue5.php"),
-        ]);
+      const [
+        mixieResult,
+        abyYusResult,
+        amazonResult,
+        OjimResult,
+        amazonLYPResult,
+      ] = await Promise.all([
+        fetchDataForStore(month, "mon-sum-mixiue.php"),
+        fetchDataForStore(month, "mon-sum-mixiue2.php"),
+        fetchDataForStore(month, "mon-sum-mixiue3.php"),
+        fetchDataForStore(month, "mon-sum-mixiue5.php"),
+        fetchDataForStore(month, "mon-sum-mixiue6.php"),
+      ]);
 
       const stores = [
         {
@@ -186,6 +195,12 @@ function MTDSummary() {
           totals: calculateTotals(OjimResult.data),
           overallStats: OjimResult.overallStats,
         },
+        {
+          name: "D' Amazon Café LYP",
+          data: amazonLYPResult.data,
+          totals: calculateTotals(amazonLYPResult.data),
+          overallStats: amazonLYPResult.overallStats,
+        },
       ];
 
       const sdsTotal = stores.reduce(
@@ -196,7 +211,12 @@ function MTDSummary() {
           total_cash_box:
             acc.total_cash_box + (store.totals.total_cash_box || 0),
         }),
-        { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
+        {
+          total_sales: 0,
+          total_actual: 0,
+          total_expense: 0,
+          total_cash_box: 0,
+        },
       );
 
       // Calculate SDS overall stats
@@ -217,7 +237,7 @@ function MTDSummary() {
           }
           return acc;
         },
-        { overall_actual: 0, overall_expense: 0, overall_profit: 0 }
+        { overall_actual: 0, overall_expense: 0, overall_profit: 0 },
       );
 
       if (sdsOverallStats.overall_actual > 0) {
@@ -250,7 +270,7 @@ function MTDSummary() {
 
     try {
       const monthDataPromises = selectedMonths.map((month) =>
-        fetchDataForMonth(month).then((stores) => ({ month, stores }))
+        fetchDataForMonth(month).then((stores) => ({ month, stores })),
       );
 
       const results = await Promise.all(monthDataPromises);
@@ -328,8 +348,14 @@ function MTDSummary() {
   // Calculate combined totals for all selected months
   // Calculate combined totals for all selected months
   const calculateCombinedTotals = () => {
-    const storeNames = ["Mixue", "Aby Yus", "D' Amazon Café", "Ojim Café"];
-    const invest = [280, 40, 80, 60];
+    const storeNames = [
+      "Mixue",
+      "Aby Yus",
+      "D' Amazon Café",
+      "Ojim Café",
+      "D' Amazon Café LYP",
+    ];
+    const invest = [280, 40, 80, 60, 105];
     const combinedData = [];
 
     storeNames.forEach((storeName, index) => {
@@ -377,12 +403,12 @@ function MTDSummary() {
         total_expense: acc.total_expense + store.totals.total_expense,
         total_cash_box: acc.total_cash_box + store.totals.total_cash_box,
       }),
-      { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 }
+      { total_sales: 0, total_actual: 0, total_expense: 0, total_cash_box: 0 },
     );
 
     const totalInvestment = combinedData.reduce(
       (sum, store) => sum + store.invst,
-      0
+      0,
     );
 
     // Calculate SDS overall stats
@@ -403,7 +429,7 @@ function MTDSummary() {
         }
         return acc;
       },
-      { overall_actual: 0, overall_expense: 0, overall_profit: 0 }
+      { overall_actual: 0, overall_expense: 0, overall_profit: 0 },
     );
 
     if (sdsOverallStats.overall_actual > 0) {
@@ -431,6 +457,7 @@ function MTDSummary() {
       "Aby Yus": "#82ca9d",
       "D' Amazon Café": "#ffc658",
       Ojim: "#d4edda",
+      "D' Amazon Café LYP": "#e8536f",
       SDS: "#ff7300",
     };
 
@@ -452,7 +479,7 @@ function MTDSummary() {
           dataPoint[`${store.name}_expense`] = store.totals.total_expense;
           dataPoint[`${store.name}_profit`] = calculateProfit(
             store.totals.total_actual,
-            store.totals.total_expense
+            store.totals.total_expense,
           );
         });
 
@@ -478,8 +505,14 @@ function MTDSummary() {
           store.name === "Mixue"
             ? "#8884d8"
             : store.name === "Aby Yus"
-            ? "#82ca9d"
-            : "#ffc658",
+              ? "#82ca9d"
+              : store.name === "D' Amazon Café"
+                ? "#ffc658"
+                : store.name === "Ojim Café"
+                  ? "#d4edda"
+                  : store.name === "D' Amazon Café LYP"
+                    ? "#e8536f"
+                    : "#ffc658",
       }));
   };
 
@@ -494,14 +527,20 @@ function MTDSummary() {
         name: store.name,
         value: calculateProfit(
           store.totals.total_actual,
-          store.totals.total_expense
+          store.totals.total_expense,
         ),
         color:
           store.name === "Mixue"
             ? "#8884d8"
             : store.name === "Aby Yus"
-            ? "#82ca9d"
-            : "#ffc658",
+              ? "#82ca9d"
+              : store.name === "D' Amazon Café"
+                ? "#ffc658"
+                : store.name === "Ojim Café"
+                  ? "#d4edda"
+                  : store.name === "D' Amazon Café LYP"
+                    ? "#e8536f"
+                    : "#ffc658",
       }));
   };
 
@@ -653,7 +692,7 @@ function MTDSummary() {
                             .map((store) => {
                               const profit = calculateProfit(
                                 store.totals.total_actual,
-                                store.totals.total_expense
+                                store.totals.total_expense,
                               );
                               return {
                                 name: store.name,
@@ -698,13 +737,13 @@ function MTDSummary() {
                     {/* Overall SDS Total Chart */}
                     {(() => {
                       const sdsData = combinedTotals.find(
-                        (store) => store.isTotal
+                        (store) => store.isTotal,
                       );
                       if (!sdsData) return null;
 
                       const totalProfit = calculateProfit(
                         sdsData.totals.total_actual,
-                        sdsData.totals.total_expense
+                        sdsData.totals.total_expense,
                       );
                       const chartData = [
                         {
@@ -904,18 +943,18 @@ function MTDSummary() {
                 {tab === "tables"
                   ? "Data Summary"
                   : tab === "timesheet_summary"
-                  ? "Time Sheet Summary Brand & Staff"
-                  : tab === "monthly_sales_summary"
-                  ? "Monthly Sales Summary"
-                  : tab === "sds"
-                  ? "Daily Data Summary"
-                  : tab === "trends"
-                  ? "Trends"
-                  : tab === "comparison"
-                  ? "Store Comparison"
-                  : tab === "distribution"
-                  ? "Revenue Distribution"
-                  : "Profit & Loss"}
+                    ? "Time Sheet Summary Brand & Staff"
+                    : tab === "monthly_sales_summary"
+                      ? "Monthly Sales Summary"
+                      : tab === "sds"
+                        ? "Daily Data Summary"
+                        : tab === "trends"
+                          ? "Trends"
+                          : tab === "comparison"
+                            ? "Store Comparison"
+                            : tab === "distribution"
+                              ? "Revenue Distribution"
+                              : "Profit & Loss"}
               </button>
             ))}
           </div>
@@ -1106,15 +1145,15 @@ function MTDSummary() {
                     {combinedTotals.map((store) => {
                       const costPercentage = calculateCostPercentage(
                         store.totals.total_expense,
-                        store.totals.total_actual
+                        store.totals.total_actual,
                       );
                       const profit = calculateProfit(
                         store.totals.total_actual,
-                        store.totals.total_expense
+                        store.totals.total_expense,
                       );
                       const profitPercentage = calculateProfitPercentage(
                         profit,
-                        store.totals.total_actual
+                        store.totals.total_actual,
                       );
 
                       return (
@@ -1220,7 +1259,7 @@ function MTDSummary() {
                           >
                             {store.overallStats
                               ? formatCurrency(
-                                  store.overallStats.overall_profit
+                                  store.overallStats.overall_profit,
                                 )
                               : "N/A"}
                           </td>
@@ -1236,7 +1275,7 @@ function MTDSummary() {
                           >
                             {store.overallStats
                               ? formatPercentage(
-                                  store.overallStats.overall_profit_percentage
+                                  store.overallStats.overall_profit_percentage,
                                 )
                               : "N/A"}
                           </td>
@@ -1262,7 +1301,7 @@ function MTDSummary() {
                             store.overallStats.overall_profit !== undefined
                               ? calculateROI(
                                   store.overallStats.overall_profit,
-                                  store.invst * 1000
+                                  store.invst * 1000,
                                 )
                               : "N/A"}
                           </td>
@@ -1377,6 +1416,21 @@ function MTDSummary() {
                     />
                     <span>Ojim Café</span>
                   </label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleCafes["D' Amazon Café LYP"]}
+                      onChange={() => handleCafeToggle("D' Amazon Café LYP")}
+                    />
+                    <span>D' Amazon Café LYP</span>
+                  </label>
                 </div>
               </div>
 
@@ -1452,6 +1506,19 @@ function MTDSummary() {
                           Ojim Café
                         </th>
                       )}
+                      {visibleCafes["D' Amazon Café LYP"] && (
+                        <th
+                          style={{
+                            border: "1px solid #ddd",
+                            padding: "12px",
+                            textAlign: "center",
+                            fontWeight: "bold",
+                            backgroundColor: "#f8f9fa",
+                          }}
+                        >
+                          D' Amazon Café LYP
+                        </th>
+                      )}
                       <th
                         style={{
                           border: "1px solid #ddd",
@@ -1474,6 +1541,7 @@ function MTDSummary() {
                         "Aby Yus": 0,
                         "D' Amazon Café": 0,
                         "Ojim Café": 0,
+                        "D' Amazon Café LYP": 0,
                       };
 
                       selectedMonths.forEach((month) => {
@@ -1490,6 +1558,7 @@ function MTDSummary() {
                                     "Aby Yus": 0,
                                     "D' Amazon Café": 0,
                                     "Ojim Café": 0,
+                                    "D' Amazon Café LYP": 0,
                                   });
                                 }
                                 const dateEntry = dateMap.get(dateKey);
@@ -1503,7 +1572,7 @@ function MTDSummary() {
 
                       // Convert map to sorted array
                       const sortedDates = Array.from(dateMap.values()).sort(
-                        (a, b) => new Date(a.date) - new Date(b.date)
+                        (a, b) => new Date(a.date) - new Date(b.date),
                       );
 
                       const visibleTotal = Object.entries(storeTotals)
@@ -1515,7 +1584,7 @@ function MTDSummary() {
                           {sortedDates.map((row) => {
                             const dailyTotal = Object.entries(row)
                               .filter(
-                                ([key]) => key !== "date" && visibleCafes[key]
+                                ([key]) => key !== "date" && visibleCafes[key],
                               )
                               .reduce((sum, [, val]) => sum + val, 0);
 
@@ -1535,7 +1604,7 @@ function MTDSummary() {
                                       year: "numeric",
                                       month: "short",
                                       day: "numeric",
-                                    }
+                                    },
                                   )}
                                 </td>
                                 {visibleCafes.Mixue && (
@@ -1580,6 +1649,17 @@ function MTDSummary() {
                                     }}
                                   >
                                     {formatCurrency(row["Ojim Café"])}
+                                  </td>
+                                )}
+                                {visibleCafes["D' Amazon Café LYP"] && (
+                                  <td
+                                    style={{
+                                      border: "1px solid #ddd",
+                                      padding: "12px",
+                                      textAlign: "right",
+                                    }}
+                                  >
+                                    {formatCurrency(row["D' Amazon Café LYP"])}
                                   </td>
                                 )}
                                 <td
@@ -1653,6 +1733,20 @@ function MTDSummary() {
                                 }}
                               >
                                 {formatCurrency(storeTotals["Ojim Café"])}
+                              </td>
+                            )}
+                            {visibleCafes["D' Amazon Café LYP"] && (
+                              <td
+                                style={{
+                                  border: "1px solid #ddd",
+                                  padding: "12px",
+                                  textAlign: "right",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                {formatCurrency(
+                                  storeTotals["D' Amazon Café LYP"],
+                                )}
                               </td>
                             )}
                             <td
@@ -1752,6 +1846,16 @@ function MTDSummary() {
                     <label>
                       <input
                         type="checkbox"
+                        checked={visibleLines1.AmazonLYP}
+                        onChange={() => handleToggle1("AmazonLYP")}
+                      />
+                      D' Amazon Café LYP
+                    </label>
+                  </div>
+                  <div className="col-md-2">
+                    <label>
+                      <input
+                        type="checkbox"
                         checked={visibleLines1.SDS}
                         onChange={() => handleToggle1("SDS")}
                       />
@@ -1804,9 +1908,19 @@ function MTDSummary() {
                       <Line
                         type="monotone"
                         dataKey="Ojim Café_actual"
-                        stroke="#ffc658"
+                        stroke="#d4edda"
                         strokeWidth={3}
                         name="Ojim Café"
+                        connectNulls={false}
+                      />
+                    )}
+                    {visibleLines1.AmazonLYP && (
+                      <Line
+                        type="monotone"
+                        dataKey="D' Amazon Café LYP_actual"
+                        stroke="#e8536f"
+                        strokeWidth={3}
+                        name="D' Amazon Café LYP"
                         connectNulls={false}
                       />
                     )}
@@ -1888,6 +2002,17 @@ function MTDSummary() {
                     <label>
                       <input
                         type="checkbox"
+                        checked={visibleLines.AmazonLYP}
+                        onChange={() => handleToggle("AmazonLYP")}
+                      />
+                      D' Amazon Café LYP
+                    </label>
+                  </div>
+
+                  <div className="col-md-2">
+                    <label>
+                      <input
+                        type="checkbox"
                         checked={visibleLines.SDS}
                         onChange={() => handleToggle("SDS")}
                       />
@@ -1940,9 +2065,19 @@ function MTDSummary() {
                       <Line
                         type="monotone"
                         dataKey="Ojim Café_profit"
-                        stroke="#ffc658"
+                        stroke="#d4edda"
                         strokeWidth={3}
                         name="Ojim Café Profit"
+                        connectNulls={false}
+                      />
+                    )}
+                    {visibleLines.AmazonLYP && (
+                      <Line
+                        type="monotone"
+                        dataKey="D' Amazon Café LYP_profit"
+                        stroke="#e8536f"
+                        strokeWidth={3}
+                        name="D' Amazon Café LYP Profit"
                         connectNulls={false}
                       />
                     )}
@@ -2000,6 +2135,11 @@ function MTDSummary() {
                     dataKey="Ojim Café_actual"
                     fill="#d6dc35ff"
                     name="Ojim Café"
+                  />
+                  <Bar
+                    dataKey="D' Amazon Café LYP_actual"
+                    fill="#e8536f"
+                    name="D' Amazon Café LYP"
                   />
                 </BarChart>
               </ResponsiveContainer>

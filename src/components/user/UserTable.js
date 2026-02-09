@@ -69,8 +69,8 @@ function UserTable({ onRowClick, onCafeChange }) {
       prevData.map((record) =>
         record.id === updatedRecord.id
           ? { ...record, ...updatedRecord }
-          : record
-      )
+          : record,
+      ),
     );
   }, []);
 
@@ -206,6 +206,7 @@ function UserTable({ onRowClick, onCafeChange }) {
                   <option value={"mixue"}>Mixue</option>
                   <option value={"abe"}>Abe-Yus</option>
                   <option value={"amz"}>Amazon</option>
+                  <option value={"amz-lyp"}>Amazon-LYP</option>
                   <option value={"ojim"}>Ojim</option>
                 </select>
               </div>

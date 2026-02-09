@@ -8,6 +8,7 @@ import TableMonthSummary2 from "./TableMonthSummary2";
 import TableMonthSummary3 from "./TableMonthSummary3";
 import TableMonthSummary4 from "./TableMonthSummary4";
 import TableMonthSummary5 from "./TableMonthSummary5";
+import TableMonthSummary6 from "./TableMonthSummary6";
 
 import TableSDS from "./TableSDS";
 import MTDSummary from "./MTDSummary";
@@ -35,6 +36,10 @@ function DailySummryComponent() {
           </Tab>
           <Tab eventKey="amz" title="Amazon">
             <TableMonthSummary3 />
+          </Tab>
+
+          <Tab eventKey="amz-lyp" title="Amazon LYP">
+            <TableMonthSummary6 />
           </Tab>
 
           <Tab eventKey="ojim" title="Ojim">
