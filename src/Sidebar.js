@@ -430,6 +430,36 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
           {isAdmin && (
             <div
+              onClick={() => handleNavigation("/chatapp")}
+              style={{
+                borderBottom: "1px white solid",
+                cursor: "pointer",
+                backgroundColor: isCurrentPage("/chatapp")
+                  ? "rgba(255,255,255,0.2)"
+                  : "rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                margin: "2px 0",
+                fontWeight: isCurrentPage("/chatapp") ? "bold" : "normal",
+                transition: "background-color 0.2s ease",
+              }}
+              className="nav-link text-white py-2"
+              onMouseEnter={(e) => {
+                if (!isCurrentPage("/chatapp")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCurrentPage("/chatapp")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+              }}
+            >
+              {isCurrentPage("/chatapp") && "► "} Predict Stock Ai
+            </div>
+          )}
+
+          {isAdmin && (
+            <div
               onClick={() => handleNavigation("/Salary")}
               style={{
                 borderBottom: "1px white solid",

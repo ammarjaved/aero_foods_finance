@@ -47,6 +47,8 @@ import StockInAmzLyp from "./com_amz_lyp/stock-in/StockIn";
 import StockInOjim from "./ojim/stock-in/StockIn";
 
 import Summary from "./components/summary/Summary";
+import ChatApp from "./components/summary/ChatApp";
+
 import ReCalculate from "./components/summary/ReCalculate";
 import Expenses from "./components/expense/Expense";
 import ExpensesYus from "./com_abe/expense/Expense";
@@ -118,6 +120,7 @@ function App() {
         <Route path="/stockin-ojim" element={<StockInOjim />} />
 
         <Route path="/summary" element={<Summary />} />
+        <Route path="/chatapp" element={<ChatApp />} />
         <Route path="/recalculate" element={<ReCalculate />} />
         <Route path="/payable" element={<Payable />} />
         <Route path="/TimesheetABE" element={<TimesheetABE />} />
