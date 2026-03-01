@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 // ─────────────────────────────────────────────────────────────────────────────
 // Single URL — always points to your PHP bridge file
 // Set REACT_APP_STOCKBOT_API_URL in your .env to override
-var PHP_BRIDGE_URL = process.env.REACT_APP_STOCKBOT_API_URL || "http://121.121.232.54:88/aero-foods/stockbot_api.php";
+var PHP_BRIDGE_URL = process.env.REACT_APP_STOCKBOT_API_URL || "http://localhost/stockbot_api.php"//"http://121.121.232.54:88/aero-foods/stockbot_api.php";
 var SESSION_KEY = "stockbot_session_id";
 
 var QUICK_PROMPTS = [
