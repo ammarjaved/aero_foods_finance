@@ -56,6 +56,7 @@ import ExpensesAmz from "./com_amz/expense/Expense";
 import ExpensesAmzLyp from "./com_amz_lyp/expense/Expense";
 import ExpensesOjim from "./ojim/expense/Expense";
 import ExpensesSDS from "./components/expense_sds/Expense";
+import ExpenseFile from "./components/expense_file/ExpenseFile";
 import Salary from "./components/salary/Salary";
 import User from "./components/user/User";
 import Audit from "./components/audit/Audit";
@@ -136,6 +137,7 @@ function App() {
         <Route path="/Expenses-ojim" element={<ExpensesOjim />} />
 
         <Route path="/ExpensesSDS" element={<ExpensesSDS />} />
+        <Route path="/expense-file" element={<ExpenseFile />} />
         <Route path="/Salary" element={<Salary />} />
         <Route path="/User" element={<User />} />
 

@@ -28,6 +28,7 @@ function MTDSummary() {
   });
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("tables");
+  const [hqExpense, setHqExpense] = useState(0);
 
   // Generate year options (current year and previous 2 years)
   const generateYearOptions = () => {
@@ -273,14 +274,28 @@ function MTDSummary() {
         fetchDataForMonth(month).then((stores) => ({ month, stores })),
       );
 
-      const results = await Promise.all(monthDataPromises);
-      const dataByMonth = {};
+      // Fetch HQ expense total for selected months + year
+      const hqPromises = selectedMonths.map((month) =>
+        fetch(
+          `http://121.121.232.54:88/aero-foods/get_hq_expense.php?month=${month}&year=${selectedYear}`,
+        )
+          .then((r) => r.json())
+          .then((j) => parseFloat(j.total_expense || 0))
+          .catch(() => 0),
+      );
 
+      const [results, ...hqAmounts] = await Promise.all([
+        Promise.all(monthDataPromises),
+        ...hqPromises,
+      ]);
+
+      const dataByMonth = {};
       results.forEach(({ month, stores }) => {
         dataByMonth[month] = stores;
       });
 
       setData(dataByMonth);
+      setHqExpense(hqAmounts.reduce((s, v) => s + v, 0));
     } catch (err) {
       setError("Failed to fetch data");
       console.error("Error fetching all data:", err);
@@ -432,6 +447,9 @@ function MTDSummary() {
       { overall_actual: 0, overall_expense: 0, overall_profit: 0 },
     );
 
+    // Deduct HQ expense from overall profit
+    sdsOverallStats.overall_profit = sdsOverallStats.overall_profit - hqExpense;
+
     if (sdsOverallStats.overall_actual > 0) {
       sdsOverallStats.overall_profit_percentage =
         (sdsOverallStats.overall_profit / sdsOverallStats.overall_actual) * 100;
@@ -439,11 +457,28 @@ function MTDSummary() {
       sdsOverallStats.overall_profit_percentage = 0;
     }
 
+    // Add HQ Expense row (only total_expense populated)
+    combinedData.push({
+      name: "HQ Expense",
+      totals: {
+        total_sales: null,
+        total_actual: null,
+        total_expense: hqExpense,
+        total_cash_box: null,
+      },
+      invst: null,
+      overallStats: null,
+      isHQExpense: true,
+    });
+
     combinedData.push({
       name: "SDS",
-      totals: sdsTotal,
+      totals: {
+        ...sdsTotal,
+        total_expense: sdsTotal.total_expense + hqExpense,
+      },
       invst: totalInvestment,
-      overallStats: sdsOverallStats, // ✅ Add overallStats for SDS
+      overallStats: sdsOverallStats,
       isTotal: true,
     });
 
@@ -1143,6 +1178,29 @@ function MTDSummary() {
                   </thead>
                   <tbody>
                     {combinedTotals.map((store) => {
+                      if (store.isHQExpense) {
+                        return (
+                          <tr key="HQ Expense" style={{ backgroundColor: "#fff8e1" }}>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "left", fontWeight: "500" }}>
+                              HQ Expense
+                            </td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "right", backgroundColor: "#f8f9fa" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "right" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "right" }}>
+                              {formatCurrency(store.totals.total_expense)}
+                            </td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "right" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "center" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "right" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "center" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "right", backgroundColor: "#d1ecf1" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "center", backgroundColor: "#d1ecf1" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "center" }}>—</td>
+                            <td style={{ border: "1px solid #ddd", padding: "12px", textAlign: "center" }}>—</td>
+                          </tr>
+                        );
+                      }
+
                       const costPercentage = calculateCostPercentage(
                         store.totals.total_expense,
                         store.totals.total_actual,

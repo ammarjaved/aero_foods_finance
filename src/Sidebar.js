@@ -223,7 +223,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
         <div
           style={{
-            maxHeight: activeSection === sectionKey ? "400px" : "0px",
+            maxHeight: activeSection === sectionKey ? "800px" : "0px",
             overflow: "hidden",
             transition: "max-height 0.3s ease-in-out",
             backgroundColor: "rgba(0,0,0,0.1)",
@@ -425,6 +425,36 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
               }}
             >
               {isCurrentPage("/summary") && "► "}📊 Summary
+            </div>
+          )}
+
+          {isAdmin && (
+            <div
+              onClick={() => handleNavigation("/expense-file")}
+              style={{
+                borderBottom: "1px white solid",
+                cursor: "pointer",
+                backgroundColor: isCurrentPage("/expense-file")
+                  ? "rgba(255,255,255,0.2)"
+                  : "rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                margin: "2px 0",
+                fontWeight: isCurrentPage("/expense-file") ? "bold" : "normal",
+                transition: "background-color 0.2s ease",
+              }}
+              className="nav-link text-white py-2"
+              onMouseEnter={(e) => {
+                if (!isCurrentPage("/expense-file")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCurrentPage("/expense-file")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+              }}
+            >
+              {isCurrentPage("/expense-file") && "► "} Expense File
             </div>
           )}
 
