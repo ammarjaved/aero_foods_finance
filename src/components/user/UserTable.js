@@ -19,6 +19,8 @@ function UserTable({ onRowClick, onCafeChange }) {
           username: record.username,
           password: record.password,
           is_admin: record.is_admin,
+          employment_type: record.employment_type || "",
+          basic_salary: record.basic_salary || "",
           created_at: record.created_at,
           updated_at: record.updated_at,
         }));
@@ -129,9 +131,10 @@ function UserTable({ onRowClick, onCafeChange }) {
   const columns = [
     { key: "id", label: "ID" },
     { key: "username", label: "Username" },
-    { key: "is_admin", label: "Admin Status" },
+    { key: "employment_type", label: "Emp. Type" },
+    { key: "basic_salary", label: "Basic Salary" },
+    { key: "is_admin", label: "Admin" },
     { key: "created_at", label: "Created At" },
-    { key: "updated_at", label: "Updated At" },
   ];
 
   // Calculate pagination
@@ -253,7 +256,22 @@ function UserTable({ onRowClick, onCafeChange }) {
                     >
                       <td>{record.id}</td>
                       <td className="fw-bold">{record.username}</td>
-
+                      <td>
+                        {record.employment_type === "Monthly" ? (
+                          <span className="badge bg-primary">Monthly</span>
+                        ) : record.employment_type === "Hours" ? (
+                          <span className="badge bg-info text-dark">Hourly</span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {record.employment_type === "Monthly" && record.basic_salary
+                          ? `RM ${parseFloat(record.basic_salary).toFixed(2)}`
+                          : record.employment_type === "Hours"
+                          ? "RM 8.00/hr"
+                          : "—"}
+                      </td>
                       <td>
                         {record.is_admin === "yes" ? (
                           <span className="badge bg-danger">Admin</span>
@@ -262,7 +280,6 @@ function UserTable({ onRowClick, onCafeChange }) {
                         )}
                       </td>
                       <td>{formatDate(record.created_at)}</td>
-                      <td>{formatDate(record.updated_at)}</td>
                     </tr>
                   ))
                 ) : (

@@ -53,8 +53,11 @@ try {
             
             // Loop through each table in the database
                 // Base SQL query - adjust column names based on table structure
-                $sql = "SELECT *
-                        FROM users";
+                $sql = "SELECT u.id, u.username, u.password, u.is_admin,
+                               u.created_at, u.updated_at,
+                               e.employment_type, e.basic_salary
+                        FROM users u
+                        LEFT JOIN employees e ON LOWER(TRIM(e.short_name)) = LOWER(TRIM(u.username))";
                 
                 $conditions = [];
                 $params = [];
@@ -63,7 +66,7 @@ try {
                
                 
                 // Add ORDER BY for consistent results
-                $sql .= " ORDER BY  id";
+                $sql .= " ORDER BY u.id";
                 
                 // Prepare and execute query
                 $stmt = $pdo->prepare($sql);

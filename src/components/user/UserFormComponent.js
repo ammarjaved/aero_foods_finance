@@ -9,6 +9,8 @@ function UserFormComponent() {
     username: "",
     password: "",
     is_admin: "no",
+    employment_type: "Hours",
+    basic_salary: "",
     db: currentCafe,
   };
 
@@ -43,6 +45,10 @@ function UserFormComponent() {
       const submitData = {
         username: formData.username.trim(),
         is_admin: formData.is_admin,
+        employment_type: formData.employment_type,
+        basic_salary: formData.employment_type === "Monthly" && formData.basic_salary !== ""
+          ? parseFloat(formData.basic_salary)
+          : null,
       };
 
       if (formData.password.trim()) {
@@ -107,6 +113,8 @@ function UserFormComponent() {
       username: record.username,
       password: record.password,
       is_admin: record.is_admin,
+      employment_type: record.employment_type || "Hours",
+      basic_salary: record.basic_salary || "",
       db: db,
     });
     setCurrentCafe(db);
@@ -284,7 +292,7 @@ function UserFormComponent() {
               )}
             </div>
 
-            <div className="mb-4">
+            <div className="mb-3">
               <label className="form-label">
                 Admin Status <span className="text-danger">*</span>
               </label>
@@ -302,22 +310,68 @@ function UserFormComponent() {
               </small>
             </div>
 
+            <hr className="my-3" />
+            <h6 className="text-muted mb-3">Salary Information</h6>
+
+            <div className="mb-3">
+              <label className="form-label">
+                Employment Type <span className="text-danger">*</span>
+              </label>
+              <select
+                name="employment_type"
+                value={formData.employment_type}
+                onChange={handleChange}
+                className="form-select"
+              >
+                <option value="Hours">Hourly (RM 8.00/hr)</option>
+                <option value="Monthly">Monthly (Fixed Basic Salary)</option>
+              </select>
+            </div>
+
+            {formData.employment_type === "Monthly" && (
+              <div className="mb-4">
+                <label className="form-label">
+                  Basic Salary (RM) <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text">RM</span>
+                  <input
+                    type="number"
+                    name="basic_salary"
+                    value={formData.basic_salary}
+                    onChange={handleChange}
+                    className="form-control"
+                    placeholder="e.g. 1800.00"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <small className="text-muted">
+                  Daily rate = Basic ÷ 26 &nbsp;|&nbsp; OT = RM 8.00/hr
+                </small>
+              </div>
+            )}
+
             <div className="alert alert-info">
               <strong>
-                <i className="fas fa-info-circle"></i> Account Type:
+                <i className="fas fa-info-circle"></i> Summary:
               </strong>
               <br />
               {formData.is_admin === "yes" ? (
-                <>
-                  <span className="badge bg-danger me-2">Administrator</span>
-                  Full system access with all privileges
-                </>
+                <span className="badge bg-danger me-1">Administrator</span>
               ) : (
-                <>
-                  <span className="badge bg-secondary me-2">Regular User</span>
-                  Standard user access
-                </>
+                <span className="badge bg-secondary me-1">Regular User</span>
               )}
+              {formData.employment_type === "Monthly" ? (
+                <span className="badge bg-primary me-1">Monthly</span>
+              ) : (
+                <span className="badge bg-info text-dark me-1">Hourly</span>
+              )}
+              {formData.employment_type === "Monthly" && formData.basic_salary
+                ? ` · Basic RM ${parseFloat(formData.basic_salary || 0).toFixed(2)} · Daily RM ${(parseFloat(formData.basic_salary || 0) / 26).toFixed(4)}`
+                : formData.employment_type === "hourly"
+                ? " · RM 8.00/hr"
+                : ""}
             </div>
 
             <div className="mt-4 d-flex justify-content-between">

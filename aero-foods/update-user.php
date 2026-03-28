@@ -66,16 +66,19 @@ if($input['db']=='mixue'){
     
     foreach ($input as $record) {
         // Validate required fields
-        $requiredFields = ['username', 'is_admin', 'password'];
-        
-        foreach ($requiredFields as $field) {
-            if (!isset($record[$field])) {
-                throw new Exception("Missing required field: $field");
-            }
+        if (empty($record['username'])) {
+            throw new Exception("Missing required field: username");
+        }
+        if (!isset($record['is_admin'])) {
+            throw new Exception("Missing required field: is_admin");
+        }
+        // password is required only for new users
+        $isUpdate = isset($record['id']) && !empty($record['id']);
+        if (!$isUpdate && empty($record['password'])) {
+            throw new Exception("Password is required for new users");
         }
         
-        // Check if this is an update (has ID) or insert (no ID)
-        $isUpdate = isset($record['id']) && !empty($record['id']);
+        // $isUpdate already set above
         
         if ($isUpdate) {
             // UPDATE operation
@@ -102,31 +105,49 @@ if($input['db']=='mixue'){
                 throw new Exception('No user found with ID: ' . $record['id']);
             }
             
-            $sql = "UPDATE users SET 
-                        username = :username,
-                        is_admin = :is_admin,
-                        password = :password,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = :id";
-            
+            $hasNewPassword = !empty($record['password']);
+            if ($hasNewPassword) {
+                $sql = "UPDATE users SET
+                            username   = :username,
+                            is_admin   = :is_admin,
+                            password   = :password,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = :id";
+            } else {
+                $sql = "UPDATE users SET
+                            username   = :username,
+                            is_admin   = :is_admin,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = :id";
+            }
+
             $stmt = $pdo->prepare($sql);
-            
-            // Bind parameters
-            $stmt->bindParam(':id', $record['id'], PDO::PARAM_INT);
-            $stmt->bindParam(':username', $record['username'], PDO::PARAM_STR);
-            $stmt->bindParam(':is_admin', $record['is_admin'], PDO::PARAM_STR);
-            $stmt->bindParam(':password', $record['password'], PDO::PARAM_STR);
-            
+            $stmt->bindParam(':id',       $record['id'],       PDO::PARAM_INT);
+            $stmt->bindParam(':username', $record['username'],  PDO::PARAM_STR);
+            $stmt->bindParam(':is_admin', $record['is_admin'],  PDO::PARAM_STR);
+            if ($hasNewPassword) {
+                $stmt->bindParam(':password', $record['password'], PDO::PARAM_STR);
+            }
+
             $stmt->execute();
             
             if ($stmt->rowCount() > 0) {
-                // Update employees table - update short_name where it matches old username
-                $updateEmployeeSql = "UPDATE employees SET short_name = :new_username WHERE short_name = :old_username";
+                // Update employees: rename + update employment_type and basic_salary
+                $empType    = isset($record['employment_type']) ? trim($record['employment_type']) : null;
+                $basicSal   = isset($record['basic_salary'])    && $record['basic_salary'] !== '' ? floatval($record['basic_salary']) : null;
+
+                $updateEmployeeSql = "UPDATE employees
+                                      SET short_name       = :new_username,
+                                          employment_type  = COALESCE(:emp_type, employment_type),
+                                          basic_salary     = COALESCE(:basic_sal, basic_salary)
+                                      WHERE LOWER(TRIM(short_name)) = LOWER(TRIM(:old_username))";
                 $updateEmployeeStmt = $pdo->prepare($updateEmployeeSql);
                 $updateEmployeeStmt->bindParam(':new_username', $record['username'], PDO::PARAM_STR);
-                $updateEmployeeStmt->bindParam(':old_username', $oldUsername, PDO::PARAM_STR);
+                $updateEmployeeStmt->bindParam(':old_username', $oldUsername,        PDO::PARAM_STR);
+                $updateEmployeeStmt->bindParam(':emp_type',     $empType,            PDO::PARAM_STR);
+                $updateEmployeeStmt->bindParam(':basic_sal',    $basicSal,           PDO::PARAM_STR);
                 $updateEmployeeStmt->execute();
-                
+
                 $results[] = [
                     'id' => $record['id'],
                     'action' => 'updated',
@@ -166,10 +187,16 @@ if($input['db']=='mixue'){
             $stmt->execute();
             $newId = $stmt->fetchColumn();
             
-            // Insert into employees table with only short_name
-            $insertEmployeeSql = "INSERT INTO employees (short_name) VALUES (:username)";
+            // Insert into employees table with short_name, employment_type, basic_salary
+            $empType  = isset($record['employment_type']) ? trim($record['employment_type']) : 'hourly';
+            $basicSal = isset($record['basic_salary']) && $record['basic_salary'] !== '' ? floatval($record['basic_salary']) : null;
+
+            $insertEmployeeSql = "INSERT INTO employees (short_name, employment_type, basic_salary)
+                                  VALUES (:username, :emp_type, :basic_sal)";
             $insertEmployeeStmt = $pdo->prepare($insertEmployeeSql);
-            $insertEmployeeStmt->bindParam(':username', $record['username'], PDO::PARAM_STR);
+            $insertEmployeeStmt->bindParam(':username',  $record['username'], PDO::PARAM_STR);
+            $insertEmployeeStmt->bindParam(':emp_type',  $empType,            PDO::PARAM_STR);
+            $insertEmployeeStmt->bindParam(':basic_sal', $basicSal,           PDO::PARAM_STR);
             $insertEmployeeStmt->execute();
             
             $results[] = [

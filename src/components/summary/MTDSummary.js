@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import TimesheetSB from "./TimeSheetSB";
 import MonthSalesSummary from "./MonthSalesSummary";
+import SalarySummary from "./SalarySummary";
 
 function MTDSummary() {
   const [data, setData] = useState({});
@@ -954,6 +955,7 @@ function MTDSummary() {
               "tables",
               "sds",
               "timesheet_summary",
+              "salary_summary",
               "monthly_sales_summary",
               "trends",
               "comparison",
@@ -979,7 +981,9 @@ function MTDSummary() {
                   ? "Data Summary"
                   : tab === "timesheet_summary"
                     ? "Time Sheet Summary Brand & Staff"
-                    : tab === "monthly_sales_summary"
+                    : tab === "salary_summary"
+                      ? "Salary Summary"
+                      : tab === "monthly_sales_summary"
                       ? "Monthly Sales Summary"
                       : tab === "sds"
                         ? "Daily Data Summary"
@@ -1830,6 +1834,11 @@ function MTDSummary() {
           {/* time sheet  Tab brand and staff */}
           {activeTab === "timesheet_summary" && (
             <TimesheetSB month={selectedMonths} />
+          )}
+
+          {/* Salary Summary Tab */}
+          {activeTab === "salary_summary" && (
+            <SalarySummary month={selectedMonths} />
           )}
 
           {/* time sheet  Tab brand and staff */}
