@@ -15,6 +15,15 @@ function MonthSalesSummary({ mon, year }) {
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
     { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
     { value: "abe_yus_finance", label: "Abe Yus" },
+    { value: "combined", label: "Combined All Cafe" },
+  ];
+
+  const allCafeDBs = [
+    "ojim_finance",
+    "aero_foods_finance",
+    "amazon_cafe_finance",
+    "amazon_cafe_finance_lyp",
+    "abe_yus_finance",
   ];
   console.log(year);
   // setSelectedMonth = mon;
@@ -33,17 +42,68 @@ function MonthSalesSummary({ mon, year }) {
     { value: "12", label: "December" },
   ];
 
+  const sumFields = (summaries) => {
+    const sumKeys = [
+      "total_sales", "total_recon", "cash_box_amount", "total_shopee",
+      "recon_shopee", "total_grab", "recon_grab", "total_panda", "recon_panda",
+      "total_cash_box_amount", "total_tng", "duit_now", "recon_tng",
+      "dis_hundred_per", "total_hours", "total_wastage", "total_expense",
+      "total_bank_card", "dr1", "dr2", "cr", "visa", "master", "my_debit",
+      "comission",
+    ];
+    const avgKeys = [
+      "avg_month_sales", "avg_trans_count", "avg_trans_val",
+      "avg_labour_hrs", "avg_sales_labour_hrs",
+    ];
+    const result = {};
+    sumKeys.forEach((key) => {
+      result[key] = summaries.reduce((acc, s) => acc + Number(s[key] || 0), 0);
+    });
+    avgKeys.forEach((key) => {
+      const valid = summaries.filter((s) => Number(s[key] || 0) > 0);
+      result[key] = valid.length
+        ? (valid.reduce((acc, s) => acc + Number(s[key]), 0) / valid.length).toFixed(2)
+        : "0.00";
+    });
+    return result;
+  };
+
+  const mergeExpenses = (expenseLists) => {
+    const map = {};
+    expenseLists.flat().forEach(({ expense_type_name, total_amount }) => {
+      map[expense_type_name] = (map[expense_type_name] || 0) + Number(total_amount || 0);
+    });
+    return Object.entries(map).map(([expense_type_name, total_amount]) => ({
+      expense_type_name,
+      total_amount,
+    }));
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     console.log(year);
     try {
-      const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}&year=${year}`,
-      );
-      const result = await response.json();
-      setData(result.summary);
-      setDataExp(result.expense_by_type);
+      if (selectedCafe === "combined") {
+        const responses = await Promise.all(
+          allCafeDBs.map((db) =>
+            fetch(
+              `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${db}&year=${year}`,
+            ).then((r) => r.json()),
+          ),
+        );
+        const summaries = responses.map((r) => r.summary).filter(Boolean);
+        const expenses = responses.map((r) => r.expense_by_type || []);
+        setData(sumFields(summaries));
+        setDataExp(mergeExpenses(expenses));
+      } else {
+        const response = await fetch(
+          `http://121.121.232.54:88/aero-foods/mss.php?month=${selectedMonth}&db=${selectedCafe}&year=${year}`,
+        );
+        const result = await response.json();
+        setData(result.summary);
+        setDataExp(result.expense_by_type);
+      }
     } catch (err) {
       setError("Failed to fetch data. Please try again.");
       console.error("Error fetching data:", err);

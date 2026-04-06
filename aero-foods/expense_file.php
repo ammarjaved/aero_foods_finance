@@ -99,8 +99,22 @@ if ($method === 'GET') {
 
 // ─── HANDLER: fetch rows ───────────────────────────────────────────────────
 function handleFetch(PDO $conn): void {
-    $from = $_GET['from_date'] ?? null;
-    $to   = $_GET['to_date']   ?? null;
+    $from     = $_GET['from_date']  ?? null;
+    $to       = $_GET['to_date']    ?? null;
+    $fileName = $_GET['file_name']  ?? null;
+
+    // Return distinct file list when action=files
+    if (($_GET['action'] ?? '') === 'files') {
+        $stmt = $conn->query(
+            "SELECT file_name, COUNT(*) AS row_count, MIN(transaction_date) AS min_date, MAX(transaction_date) AS max_date
+             FROM tbl_expense_file
+             GROUP BY file_name
+             ORDER BY MAX(id) DESC"
+        );
+        $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['status' => 'success', 'files' => $files]);
+        return;
+    }
 
     $sql    = "SELECT * FROM tbl_expense_file WHERE 1=1";
     $params = [];
@@ -112,6 +126,10 @@ function handleFetch(PDO $conn): void {
     if ($to) {
         $sql      .= " AND transaction_date <= :to_date";
         $params[':to_date'] = $to;
+    }
+    if ($fileName) {
+        $sql      .= " AND file_name = :file_name";
+        $params[':file_name'] = $fileName;
     }
 
     $sql .= " ORDER BY transaction_date DESC, id DESC";

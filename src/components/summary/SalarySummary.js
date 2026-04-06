@@ -456,9 +456,11 @@ const SalarySummary = ({ month = 11 }) => {
   const [error, setError]             = useState(null);
   const [phWarning, setPhWarning]     = useState(null);   // PH table error from PHP
   const [selectedCafe, setSelectedCafe] = useState("aero_foods_finance");
+  const [selectedEmployee, setSelectedEmployee] = useState("all");
   const [modalItem, setModalItem]     = useState(null);
   const [phModalDate, setPhModalDate] = useState(null);   // date string clicked
   const [phMap, setPhMap]             = useState({});     // date -> { holiday_name, description }
+  const [cafeLoadStatus, setCafeLoadStatus] = useState({}); // { label: rowCount } for combined mode
 
   const cafes = [
     { value: "ojim_finance", label: "Ojim Cafe" },
@@ -466,9 +468,19 @@ const SalarySummary = ({ month = 11 }) => {
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
     { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
     { value: "abe_yus_finance", label: "Abe Yus" },
+    { value: "combined", label: "Combined All Cafe" },
+  ];
+
+  const allCafesForCombined = [
+    { value: "ojim_finance",            label: "Ojim" },
+    { value: "aero_foods_finance",      label: "Mixue" },
+    { value: "amazon_cafe_finance",     label: "Amazon" },
+    { value: "amazon_cafe_finance_lyp", label: "Amazon LYP" },
+    { value: "abe_yus_finance",         label: "Abe Yus" },
   ];
 
   useEffect(() => {
+    setSelectedEmployee("all");
     fetchData();
   }, [month, selectedCafe]);
 
@@ -477,24 +489,53 @@ const SalarySummary = ({ month = 11 }) => {
     setError(null);
     setPhWarning(null);
     try {
-      // Fetch salary data
-      const res = await fetch(
-        `http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${selectedCafe}`
-      );
-      const result = await res.json();
-      if (result && result.error) {
-        setError(result.error);
-        setData([]);
-      } else if (Array.isArray(result)) {
-        // Check for sentinel PH error row
-        const sentinel = result.find((r) => r.__ph_error);
-        if (sentinel) setPhWarning(sentinel.__ph_error);
-        setData(result.filter((r) => !r.__ph_error));
+      let merged = [];
+
+      if (selectedCafe === "combined") {
+        const results = await Promise.all(
+          allCafesForCombined.map(({ value, label }) =>
+            fetch(`http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${value}`)
+              .then((r) => r.json())
+              .then((result) => ({ result, label, error: null }))
+              .catch((e) => ({ result: [], label, error: e.message || "Failed" })),
+          ),
+        );
+        const status = {};
+        results.forEach(({ result, label, error: fetchErr }) => {
+          if (fetchErr) {
+            status[label] = { count: 0, error: fetchErr };
+            return;
+          }
+          if (!Array.isArray(result) || result.length === 0) {
+            status[label] = { count: 0, error: !Array.isArray(result) ? "API error" : null };
+            return;
+          }
+          const rows = result.filter((r) => !r.__ph_error);
+          status[label] = { count: rows.length, error: null };
+          rows.forEach((row) => {
+            merged.push({ ...row });
+          });
+        });
+        setCafeLoadStatus(status);
       } else {
-        setData([]);
+        setCafeLoadStatus({});
+        const res = await fetch(
+          `http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${selectedCafe}`
+        );
+        const result = await res.json();
+        if (result && result.error) {
+          setError(result.error);
+          setData([]);
+        } else if (Array.isArray(result)) {
+          const sentinel = result.find((r) => r.__ph_error);
+          if (sentinel) setPhWarning(sentinel.__ph_error);
+          merged = result.filter((r) => !r.__ph_error);
+        }
       }
 
-      // Fetch public holidays from API (expand multi-day ranges into per-date map)
+      setData(merged);
+
+      // Fetch public holidays
       const yearGuess = new Date().getFullYear();
       const phRes = await fetch(
         `http://121.121.232.54:88/aero-foods/public_holiday_api.php?year=${yearGuess}&month=${month}`
@@ -503,7 +544,6 @@ const SalarySummary = ({ month = 11 }) => {
       if (Array.isArray(phList)) {
         const map = {};
         phList.forEach((ph) => {
-          // Expand each holiday range into individual dates
           const start = new Date(ph.date_start);
           const end   = new Date(ph.date_end);
           for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -545,8 +585,16 @@ const SalarySummary = ({ month = 11 }) => {
         const key    = `${item.month_date}_${item.name}`;
         const salary = parseFloat(item.salary) || 0;
         const hrs    = parseFloat(item.hours) || 0;
-        tableData[key] = salary;
-        rawMap[key]    = item;
+        tableData[key] = (tableData[key] || 0) + salary;
+        if (rawMap[key]) {
+          rawMap[key] = {
+            ...rawMap[key],
+            salary: (parseFloat(rawMap[key].salary) || 0) + salary,
+            hours:  (parseFloat(rawMap[key].hours)  || 0) + hrs,
+          };
+        } else {
+          rawMap[key] = { ...item };
+        }
         if (item.is_public_holiday) {
           phData[item.month_date] = item.holiday_name || true;
           hrsTotal.otPH += hrs;
@@ -570,6 +618,23 @@ const SalarySummary = ({ month = 11 }) => {
   const grandTotal = Object.values(totals.byEmployee).reduce(
     (sum, val) => sum + (parseFloat(val) || 0), 0
   );
+
+  const displayEmployees = selectedEmployee === "all" ? employees : employees.filter(e => e === selectedEmployee);
+
+  const filteredHrsTotal = selectedEmployee === "all" ? hrsTotal : (() => {
+    const f = { nh: 0, ot: 0, otPH: 0 };
+    data.forEach(item => {
+      if (item.name !== selectedEmployee) return;
+      const hrs = parseFloat(item.hours) || 0;
+      if (item.is_public_holiday) { f.otPH += hrs; }
+      else { f.nh += Math.min(hrs, 8); f.ot += Math.max(0, hrs - 8); }
+    });
+    return f;
+  })();
+
+  const filteredGrandTotal = selectedEmployee === "all"
+    ? grandTotal
+    : totals.byEmployee[selectedEmployee] || 0;
 
   const formatCurrency = (value) => {
     if (!value && value !== 0) return "";
@@ -652,25 +717,56 @@ const SalarySummary = ({ month = 11 }) => {
           </div>
         </div>
 
+        {/* Employee Filter */}
+        {!loading && !error && employees.length > 0 && (
+          <div className="card mb-3">
+            <div className="card-body py-2">
+              <div className="d-flex align-items-center gap-3 flex-wrap">
+                <label className="fw-semibold mb-0" style={{ fontSize: 14, whiteSpace: "nowrap" }}>
+                  Filter by Employee:
+                </label>
+                <select
+                  className="form-select form-select-sm"
+                  style={{ maxWidth: 220 }}
+                  value={selectedEmployee}
+                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                >
+                  <option value="all">All Employees</option>
+                  {employees.map(emp => (
+                    <option key={emp} value={emp}>{emp}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hours Summary */}
         {!loading && !error && data.length > 0 && (
           <div className="card mb-3 border-primary">
             <div className="card-body py-2">
               <h6 className="card-title mb-2 fw-semibold text-primary">
-                Hours Summary — {getMonthDisplay()} ({cafes.find(c => c.value === selectedCafe)?.label})
+                Hours Summary — {getMonthDisplay()} ({selectedCafe === "combined" ? "All Cafes" : cafes.find(c => c.value === selectedCafe)?.label})
+                {selectedEmployee !== "all" && (
+                  <span className="ms-2 badge bg-primary" style={{ fontSize: 12 }}>{selectedEmployee}</span>
+                )}
               </h6>
               <div className="d-flex flex-wrap gap-4">
                 <div className="text-center px-3 py-1 rounded" style={{ backgroundColor: "#d1ecf1", minWidth: 110 }}>
-                  <div className="fw-bold fs-5 text-info">{hrsTotal.nh.toFixed(1)}</div>
+                  <div className="fw-bold fs-5 text-info">{filteredHrsTotal.nh.toFixed(1)}</div>
                   <div className="small text-muted">Total NH (Normal Hrs)</div>
                 </div>
                 <div className="text-center px-3 py-1 rounded" style={{ backgroundColor: "#ffeeba", minWidth: 110 }}>
-                  <div className="fw-bold fs-5 text-warning">{hrsTotal.ot.toFixed(1)}</div>
+                  <div className="fw-bold fs-5 text-warning">{filteredHrsTotal.ot.toFixed(1)}</div>
                   <div className="small text-muted">Total OT (Overtime)</div>
                 </div>
                 <div className="text-center px-3 py-1 rounded" style={{ backgroundColor: "#f8d7da", minWidth: 120 }}>
-                  <div className="fw-bold fs-5 text-danger">{hrsTotal.otPH.toFixed(1)}</div>
+                  <div className="fw-bold fs-5 text-danger">{filteredHrsTotal.otPH.toFixed(1)}</div>
                   <div className="small text-muted">Total OT PH (Public Holiday)</div>
+                </div>
+                <div className="text-center px-3 py-1 rounded" style={{ backgroundColor: "#d4edda", minWidth: 130 }}>
+                  <div className="fw-bold fs-5 text-success">RM {filteredGrandTotal.toFixed(2)}</div>
+                  <div className="small text-muted">Total Salary Paid</div>
                 </div>
               </div>
             </div>
@@ -730,7 +826,7 @@ const SalarySummary = ({ month = 11 }) => {
                 <thead className="table-success">
                   <tr>
                     <th className="text-start fw-semibold">Date</th>
-                    {employees.map((emp) => (
+                    {displayEmployees.map((emp) => (
                       <th key={emp} className="text-center fw-semibold">{emp}</th>
                     ))}
                     <th className="text-center fw-semibold bg-success bg-opacity-25">Daily Total</th>
@@ -764,7 +860,7 @@ const SalarySummary = ({ month = 11 }) => {
                             <span style={{ fontSize: 10, color: "#adb5bd", marginLeft: 6 }}>+PH</span>
                           )}
                         </td>
-                        {employees.map((emp) => {
+                        {displayEmployees.map((emp) => {
                           const key    = `${date}_${emp}`;
                           const salary = tableData[key];
                           const raw    = rawMap[key];
@@ -782,9 +878,9 @@ const SalarySummary = ({ month = 11 }) => {
                                 if (raw) e.currentTarget.style.backgroundColor = isHoliday ? "#fff3cd" : "";
                               }}
                             >
-                              {salary > 0 ? (
+                              {raw ? (
                                 <span>
-                                  {formatCurrency(salary)}
+                                  {salary > 0 ? formatCurrency(salary) : <span style={{ color: "#adb5bd", fontSize: 12 }}>RM 0.00</span>}
                                   {raw?.hours ? (
                                     <span style={{ fontSize: 11, color: "#6c757d", display: "block" }}>
                                       {parseFloat(raw.hours)} hrs
@@ -796,19 +892,21 @@ const SalarySummary = ({ month = 11 }) => {
                           );
                         })}
                         <td className="text-end fw-semibold bg-light">
-                          {totals.byDate[date] ? formatCurrency(totals.byDate[date]) : "RM 0.00"}
+                          {formatCurrency(
+                            displayEmployees.reduce((sum, emp) => sum + (tableData[`${date}_${emp}`] || 0), 0)
+                          )}
                         </td>
                       </tr>
                     );
                   })}
                   <tr className="table-success fw-bold">
                     <td>Total Salary</td>
-                    {employees.map((emp) => (
+                    {displayEmployees.map((emp) => (
                       <td key={emp} className="text-end">
                         {totals.byEmployee[emp] ? formatCurrency(totals.byEmployee[emp]) : "RM 0.00"}
                       </td>
                     ))}
-                    <td className="text-end">{formatCurrency(grandTotal)}</td>
+                    <td className="text-end">{formatCurrency(filteredGrandTotal)}</td>
                   </tr>
                 </tbody>
               </table>

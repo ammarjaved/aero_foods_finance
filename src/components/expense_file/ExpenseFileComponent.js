@@ -30,6 +30,8 @@ function ExpenseFileComponent() {
   const [toDate,         setToDate]         = useState("");
   const [filterDebit, setFilterDebit] = useState("");
   const [descFilter,     setDescFilter]     = useState("");
+  const [filterCompany,  setFilterCompany]  = useState("");
+  const [filterExpType,  setFilterExpType]  = useState("");
 
   // ── Table state ───────────────────────────────────────────────────────────
   const [allRows,         setAllRows]        = useState([]);
@@ -66,6 +68,9 @@ function ExpenseFileComponent() {
     if (filterDebit === "has"   &&  !r.debit) return false;
     if (filterDebit === "empty" && !!r.debit) return false;
     if (descFilter && !r.description?.toLowerCase().includes(descFilter.toLowerCase())) return false;
+    if (filterCompany === "__unassigned__" && r.company) return false;
+    else if (filterCompany && filterCompany !== "__unassigned__" && (r.company || "") !== filterCompany) return false;
+    if (filterExpType && (r.expense_type_name || "") !== filterExpType) return false;
     return true;
   });
 
@@ -169,7 +174,7 @@ function ExpenseFileComponent() {
   }, []);
 
   // Reset to page 1 when filters change
-  useEffect(() => { setCurrentPage(1); }, [filterDebit, descFilter]);
+  useEffect(() => { setCurrentPage(1); }, [filterDebit, descFilter, filterCompany, filterExpType]);
 
   const handleApplyFilter = () => fetchData(fromDate, toDate, activeFileName);
   const handleClearFilter = () => {
@@ -186,11 +191,6 @@ function ExpenseFileComponent() {
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-
-    if (fileList.some((f) => f.file_name === selectedFile.name)) {
-      setUploadMsg({ type: "error", text: `"${selectedFile.name}" has already been uploaded. Please rename the file or use a different file.` });
-      return;
-    }
 
     setUploading(true);
     setUploadMsg(null);
@@ -302,15 +302,43 @@ function ExpenseFileComponent() {
         return;
       }
 
+      // Always fetch existing rows for this file and deduplicate before uploading
+      let rowsToUpload = parsedRows;
+      try {
+        const existingRes  = await fetch(`${API_URL}?file_name=${encodeURIComponent(selectedFile.name)}`);
+        const existingJson = await existingRes.json();
+
+        if (existingJson.status === "success" && existingJson.data.length > 0) {
+          const norm = (v) =>
+            v === null || v === undefined || v === "" ? "null" : parseFloat(v).toFixed(2);
+          const makeKey = (r) =>
+            `${r.transaction_date}|${String(r.description ?? "").trim()}|${norm(r.debit)}|${norm(r.credit)}|${norm(r.balance)}`;
+
+          const existingKeys = new Set(existingJson.data.map(makeKey));
+          rowsToUpload = parsedRows.filter((r) => !existingKeys.has(makeKey(r)));
+
+          if (rowsToUpload.length === 0) {
+            setUploadMsg({ type: "info", text: "No new records found — all rows already exist in this file." });
+            setUploading(false);
+            return;
+          }
+        }
+      } catch (_) {
+        // If dedup fetch fails, proceed with all parsed rows
+      }
+
       const res  = await fetch(API_URL, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ action: "upload", file_name: selectedFile.name, rows: parsedRows }),
+        body:    JSON.stringify({ action: "upload", file_name: selectedFile.name, rows: rowsToUpload }),
       });
       const json = await res.json();
 
       if (json.status === "success") {
-        setUploadMsg({ type: "success", text: json.message });
+        setUploadMsg({
+          type: "success",
+          text: `${rowsToUpload.length} record(s) saved to "${selectedFile.name}".`,
+        });
         setSelectedFile(null);
         document.getElementById("fileInput").value = "";
         fetchFileList();
@@ -524,7 +552,7 @@ function ExpenseFileComponent() {
             </div>
           </div>
           {uploadMsg && (
-            <div className={`alert mt-3 mb-0 alert-${uploadMsg.type === "success" ? "success" : "danger"}`}>
+            <div className={`alert mt-3 mb-0 alert-${uploadMsg.type === "success" ? "success" : uploadMsg.type === "info" ? "info" : "danger"}`}>
               {uploadMsg.text}
             </div>
           )}
@@ -656,7 +684,7 @@ function ExpenseFileComponent() {
             </div>
           </div>
 
-          {/* Row 2: Description search + Debit filter */}
+          {/* Row 2: Description search + Debit filter + Company filter */}
           <div className="row g-2 align-items-center">
             <div className="col-md-4">
               <input
@@ -679,11 +707,38 @@ function ExpenseFileComponent() {
                 <option value="empty">Debit empty</option>
               </select>
             </div>
-            {(descFilter || filterDebit) && (
+            <div className="col-auto">
+              <select
+                className="form-select form-select-sm"
+                style={{ minWidth: 150 }}
+                value={filterCompany}
+                onChange={(e) => { setFilterCompany(e.target.value); setCurrentPage(1); }}
+              >
+                <option value="">All companies</option>
+                {COMPANIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+                <option value="__unassigned__">— Unassigned —</option>
+              </select>
+            </div>
+            <div className="col-auto">
+              <select
+                className="form-select form-select-sm"
+                style={{ minWidth: 150 }}
+                value={filterExpType}
+                onChange={(e) => setFilterExpType(e.target.value)}
+              >
+                <option value="">All expense types</option>
+                {EXPENSE_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            {(descFilter || filterDebit || filterCompany || filterExpType) && (
               <div className="col-auto">
                 <button
                   className="btn btn-outline-secondary btn-sm"
-                  onClick={() => { setDescFilter(""); setFilterDebit(""); }}
+                  onClick={() => { setDescFilter(""); setFilterDebit(""); setFilterCompany(""); setFilterExpType(""); }}
                 >
                   <i className="bi bi-x me-1"></i>Clear filters
                 </button>
