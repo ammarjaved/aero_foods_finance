@@ -152,9 +152,9 @@ function handleUpload(PDO $conn, array $data): void {
     }
 
     $sql = "INSERT INTO tbl_expense_file
-                (transaction_date, description, debit, credit, balance, file_name)
+                (transaction_date, description, debit, credit, file_name)
             VALUES
-                (:transaction_date, :description, :debit, :credit, :balance, :file_name)";
+                (:transaction_date, :description, :debit, :credit, :file_name)";
     $stmt    = $conn->prepare($sql);
     $saved   = 0;
     $skipped = 0;
@@ -172,7 +172,6 @@ function handleUpload(PDO $conn, array $data): void {
                 ':description'      => $row['description'] ?? '',
                 ':debit'            => $row['debit']  !== '' && $row['debit']  !== null ? $row['debit']  : null,
                 ':credit'           => $row['credit'] !== '' && $row['credit'] !== null ? $row['credit'] : null,
-                ':balance'          => $row['balance'] !== '' && $row['balance'] !== null ? $row['balance'] : null,
                 ':file_name'        => $fileName,
             ]);
             $saved++;
@@ -208,7 +207,7 @@ function handleDeleteRows(PDO $conn, array $data): void {
 }
 
 // ─── CORE: update a single expense row ────────────────────────────────────
-function doUpdateRow(PDO $conn, int $id, string $company, string $vendor, string $expType, string $username): array {
+function doUpdateRow(PDO $conn, int $id, string $company, string $db, string $vendor, string $expType, string $username): array {
     // Fetch the row
     $fetchStmt = $conn->prepare("SELECT * FROM tbl_expense_file WHERE id = :id");
     $fetchStmt->execute([':id' => $id]);
@@ -228,18 +227,19 @@ function doUpdateRow(PDO $conn, int $id, string $company, string $vendor, string
         return ['ok' => true, 'msg' => 'Updated (no debit to record)'];
     }
 
-    $targetDb     = getCompanyDb($company);
-    $companyLabel = getCompanyLabel($company);
+    $targetDb     = $db;
+    $companyLabel = $company;
     $txDate       = $row['transaction_date'];
     $desc         = $row['description'];
     $dayOfWeek    = date('w', strtotime($txDate));
     $tag          = '[ef:' . $id . ']';
 
     try {
+        // Clean daily_expenditure across all cafe DBs
         $allDbs = ['aero_foods_finance','amazon_cafe_finance','amazon_cafe_finance_lyp','abe_yus_finance','ojim_finance'];
-        foreach ($allDbs as $db) {
+        foreach ($allDbs as $cafeDb) {
             try {
-                $chkConn = new PDO("pgsql:host=192.168.1.34;port=5432;dbname=$db", "postgres", "Admin123");
+                $chkConn = new PDO("pgsql:host=192.168.1.34;port=5432;dbname=$cafeDb", "postgres", "Admin123");
                 $chkConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $chkConn->prepare("DELETE FROM daily_expenditure WHERE remarks LIKE :tag")
                         ->execute([':tag' => '%' . $tag . '%']);
@@ -248,31 +248,71 @@ function doUpdateRow(PDO $conn, int $id, string $company, string $vendor, string
             }
         }
 
-        $targetConn = new PDO(
-            "pgsql:host=192.168.1.34;port=5432;dbname=$targetDb",
-            "postgres",
-            "Admin123"
-        );
-        $targetConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // Also clean sds_expenditure in aero_foods_finance
+        try {
+            $sdsClean = new PDO("pgsql:host=192.168.1.34;port=5432;dbname=aero_foods_finance", "postgres", "Admin123");
+            $sdsClean->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $sdsClean->prepare("DELETE FROM sds_expenditure WHERE remarks LIKE :tag")
+                     ->execute([':tag' => '%' . $tag . '%']);
+        } catch (PDOException $e) {
+            // ignore
+        }
 
-        $targetConn->prepare(
-            "INSERT INTO daily_expenditure
-                 (month_date, day, expense_type_name, vendor, amount, remarks, company, created_by, updated_by)
-             VALUES
-                 (:month_date, :day, :expense_type_name, :vendor, :amount, :remarks, :company, :created_by, :updated_by)"
-        )->execute([
-            ':month_date'        => $txDate,
-            ':day'               => (int)$dayOfWeek,
-            ':expense_type_name' => $expType,
-            ':vendor'            => $vendor !== '' ? mb_substr($vendor, 0, 100) : mb_substr($desc, 0, 100),
-            ':amount'            => $debit,
-            ':remarks'           => $tag . ' Bank import: ' . mb_substr($desc, 0, 180),
-            ':company'           => $companyLabel,
-            ':created_by'        => $username,
-            ':updated_by'        => $username,
-        ]);
+        if ($targetDb === 'sds_hq') {
+            // SDS HQ → save into sds_expenditure in aero_foods_finance
+            $targetConn = new PDO(
+                "pgsql:host=192.168.1.34;port=5432;dbname=aero_foods_finance",
+                "postgres",
+                "Admin123"
+            );
+            $targetConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        return ['ok' => true, 'msg' => "Saved to $targetDb"];
+            $targetConn->prepare(
+                "INSERT INTO sds_expenditure
+                     (month_date, day, expense_type_name, vendor, amount, remarks, company, created_by, updated_by)
+                 VALUES
+                     (:month_date, :day, :expense_type_name, :vendor, :amount, :remarks, :company, :created_by, :updated_by)"
+            )->execute([
+                ':month_date'        => $txDate,
+                ':day'               => (int)$dayOfWeek,
+                ':expense_type_name' => $expType,
+                ':vendor'            => $vendor !== '' ? mb_substr($vendor, 0, 100) : mb_substr($desc, 0, 100),
+                ':amount'            => $debit,
+                ':remarks'           => $tag . ' Bank import: ' . mb_substr($desc, 0, 180),
+                ':company'           => $companyLabel,
+                ':created_by'        => $username,
+                ':updated_by'        => $username,
+            ]);
+
+            return ['ok' => true, 'msg' => 'Saved to sds_expenditure'];
+        } else {
+            // All other companies → save into daily_expenditure in their own DB
+            $targetConn = new PDO(
+                "pgsql:host=192.168.1.34;port=5432;dbname=$targetDb",
+                "postgres",
+                "Admin123"
+            );
+            $targetConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $targetConn->prepare(
+                "INSERT INTO daily_expenditure
+                     (month_date, day, expense_type_name, vendor, amount, remarks, company, created_by, updated_by)
+                 VALUES
+                     (:month_date, :day, :expense_type_name, :vendor, :amount, :remarks, :company, :created_by, :updated_by)"
+            )->execute([
+                ':month_date'        => $txDate,
+                ':day'               => (int)$dayOfWeek,
+                ':expense_type_name' => $expType,
+                ':vendor'            => $vendor !== '' ? mb_substr($vendor, 0, 100) : mb_substr($desc, 0, 100),
+                ':amount'            => $debit,
+                ':remarks'           => $tag . ' Bank import: ' . mb_substr($desc, 0, 180),
+                ':company'           => $companyLabel,
+                ':created_by'        => $username,
+                ':updated_by'        => $username,
+            ]);
+
+            return ['ok' => true, 'msg' => "Saved to $targetDb"];
+        }
     } catch (PDOException $e) {
         return ['ok' => false, 'msg' => "id $id expense insert failed: " . $e->getMessage()];
     }
@@ -280,11 +320,12 @@ function doUpdateRow(PDO $conn, int $id, string $company, string $vendor, string
 
 // ─── HANDLER: update company (single row) ─────────────────────────────────
 function handleUpdateCompany(PDO $conn, array $data): void {
-    $id      = (int)($data['id']              ?? 0);
-    $company = $data['company']               ?? '';
-    $vendor  = $data['vendor']                ?? '';
-    $expType = $data['expense_type_name']     ?? 'Others';
-    $username = $data['username']             ?? 'system';
+    $id       = (int)($data['id']              ?? 0);
+    $company  = $data['company']               ?? '';
+    $db       = $data['db']                    ?? '';
+    $vendor   = $data['vendor']                ?? '';
+    $expType  = $data['expense_type_name']     ?? 'Others';
+    $username = $data['username']              ?? 'system';
 
     if (!$id || !$company) {
         http_response_code(400);
@@ -292,7 +333,7 @@ function handleUpdateCompany(PDO $conn, array $data): void {
         return;
     }
 
-    $result = doUpdateRow($conn, $id, $company, $vendor, $expType, $username);
+    $result = doUpdateRow($conn, $id, $company, $db, $vendor, $expType, $username);
 
     if ($result['ok']) {
         echo json_encode(['status' => 'success', 'message' => $result['msg']]);
@@ -305,6 +346,7 @@ function handleUpdateCompany(PDO $conn, array $data): void {
 function handleBulkUpdate(PDO $conn, array $data): void {
     $ids      = array_map('intval', $data['ids']             ?? []);
     $company  = $data['company']                             ?? '';
+    $db       = $data['db']                                  ?? '';
     $vendor   = $data['vendor']                              ?? '';
     $expType  = $data['expense_type_name']                   ?? 'Others';
     $username = $data['username']                            ?? 'system';
@@ -318,7 +360,7 @@ function handleBulkUpdate(PDO $conn, array $data): void {
     $ok = 0; $fail = 0; $errMsgs = [];
 
     foreach ($ids as $id) {
-        $result = doUpdateRow($conn, $id, $company, $vendor, $expType, $username);
+        $result = doUpdateRow($conn, $id, $company, $db, $vendor, $expType, $username);
         if ($result['ok']) {
             $ok++;
         } else {

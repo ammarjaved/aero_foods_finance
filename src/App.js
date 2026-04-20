@@ -51,6 +51,7 @@ import ChatApp from "./components/summary/ChatApp";
 
 import ReCalculate from "./components/summary/ReCalculate";
 import AllTNG from "./components/all-tng/AllTNG";
+import AllBankCard from "./components/all-bank-card/AllBankCard";
 import Expenses from "./components/expense/Expense";
 import ExpensesYus from "./com_abe/expense/Expense";
 import ExpensesAmz from "./com_amz/expense/Expense";
@@ -125,6 +126,7 @@ function App() {
         <Route path="/chatapp" element={<ChatApp />} />
         <Route path="/recalculate" element={<ReCalculate />} />
         <Route path="/all-tng" element={<AllTNG />} />
+        <Route path="/all-bank-card" element={<AllBankCard />} />
         <Route path="/payable" element={<Payable />} />
         <Route path="/TimesheetABE" element={<TimesheetABE />} />
         <Route path="/TimesheetAmazon" element={<TimesheetAmazon />} />

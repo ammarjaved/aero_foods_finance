@@ -400,6 +400,36 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
           {isAdmin && (
             <div
+              onClick={() => handleNavigation("/all-bank-card")}
+              style={{
+                borderBottom: "1px white solid",
+                cursor: "pointer",
+                backgroundColor: isCurrentPage("/all-bank-card")
+                  ? "rgba(255,255,255,0.2)"
+                  : "rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                margin: "2px 0",
+                fontWeight: isCurrentPage("/all-bank-card") ? "bold" : "normal",
+                transition: "background-color 0.2s ease",
+              }}
+              className="nav-link text-white py-2"
+              onMouseEnter={(e) => {
+                if (!isCurrentPage("/all-bank-card")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCurrentPage("/all-bank-card")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+              }}
+            >
+              {isCurrentPage("/all-bank-card") && "► "} All-Bank-Card
+            </div>
+          )}
+
+          {isAdmin && (
+            <div
               onClick={() => handleNavigation("/payable")}
               style={{
                 borderBottom: "1px white solid",

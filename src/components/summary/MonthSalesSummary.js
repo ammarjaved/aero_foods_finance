@@ -480,24 +480,8 @@ function MonthSalesSummary({ mon, year }) {
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Total TNG</td>
-                      <td class="text-end">{formatCurrency(data.total_tng)}</td>
-                    </tr>
-                    <tr>
                       <td>Duit Now</td>
                       <td class="text-end">{formatCurrency(data.duit_now)}</td>
-                    </tr>
-                    <tr class="table-primary">
-                      <td>
-                        <strong>Total TNG + DuitNow</strong>
-                      </td>
-                      <td class="text-end">
-                        <strong>
-                          {formatCurrency(
-                            Number(data.duit_now) + Number(data.total_tng),
-                          )}
-                        </strong>
-                      </td>
                     </tr>
                     <tr>
                       <td>Recon TNG</td>
@@ -510,8 +494,7 @@ function MonthSalesSummary({ mon, year }) {
                       <td class="text-end">
                         <strong>
                           {(
-                            Number(data.recon_tng) -
-                            (Number(data.total_tng) + Number(data.duit_now))
+                            Number(data.recon_tng) - Number(data.duit_now)
                           ).toFixed(2)}
                         </strong>
                       </td>
@@ -523,11 +506,8 @@ function MonthSalesSummary({ mon, year }) {
                       <td class="text-end">
                         <strong>
                           {(
-                            ((Number(data.recon_tng) -
-                              (Number(data.total_tng) +
-                                Number(data.duit_now))) /
-                              (Number(data.duit_now) +
-                                Number(data.total_tng))) *
+                            ((Number(data.recon_tng) - Number(data.duit_now)) /
+                              Number(data.duit_now)) *
                             100
                           ).toFixed(2)}
                           %
@@ -619,6 +599,19 @@ function MonthSalesSummary({ mon, year }) {
                         </strong>{" "}
                       </td>
                     </tr>
+                    <tr class="table-danger">
+                      <td>
+                        <strong>% Expenditure / Total Recon</strong>
+                      </td>
+                      <td class="text-end">
+                        <strong>
+                          {Number(data.total_recon) > 0
+                            ? ((Number(data.total_expense || 0) / Number(data.total_recon)) * 100).toFixed(2)
+                            : "0.00"}
+                          %
+                        </strong>
+                      </td>
+                    </tr>
                     {dataExp.map((item, index) => (
                       <tr class="table-info" key={index}>
                         <td>
@@ -644,24 +637,34 @@ function MonthSalesSummary({ mon, year }) {
 
                 <div className="table-responsive">
                   <table className="table table-bordered">
-                    {/* <thead>
+                    <thead className="table-light">
                       <tr>
                         <th>Description</th>
-                        <th className="text-end">Amount (RM)</th>
+                        <th className="text-end">Bank Card (RM)</th>
+                        <th className="text-end">Online Order (RM)</th>
+                        <th className="text-end">Total (RM)</th>
                         <th>Recon Type</th>
-                        <th className="text-end">Recon Amount (RM)</th>
+                        <th className="text-end">Recon (RM)</th>
                         <th></th>
                         <th className="text-end">Diff (RM)</th>
-                        <th className="text-end">Variance %</th>
+                        <th className="text-end">%</th>
                       </tr>
-                    </thead> */}
+                    </thead>
                     <tbody>
                       <tr>
                         <td rowSpan="4" className="align-middle fw-semibold">
-                          Bank Card
+                          Bank Card + Online Order
                         </td>
                         <td rowSpan="4" className="text-end align-middle">
                           {formatCurrency(data.total_bank_card)}
+                        </td>
+                        <td rowSpan="4" className="text-end align-middle">
+                          {formatCurrency(data.total_tng)}
+                        </td>
+                        <td rowSpan="4" className="text-end align-middle fw-semibold">
+                          {formatCurrency(
+                            Number(data.total_bank_card) + Number(data.total_tng),
+                          )}
                         </td>
                         <td>Recon DR1</td>
                         <td className="text-end">{formatCurrency(data.dr1)}</td>
@@ -674,7 +677,8 @@ function MonthSalesSummary({ mon, year }) {
                             Number(data.dr1) +
                               Number(data.dr2) +
                               Number(data.cr) -
-                              Number(data.total_bank_card),
+                              Number(data.total_bank_card) -
+                              Number(data.total_tng),
                           )}
                         </td>
                         <td
@@ -685,15 +689,17 @@ function MonthSalesSummary({ mon, year }) {
                             ((Number(data.dr1) +
                               Number(data.dr2) +
                               Number(data.cr) -
-                              Number(data.total_bank_card)) /
-                              Number(data.total_bank_card)) *
+                              Number(data.total_bank_card) -
+                              Number(data.total_tng)) /
+                              (Number(data.total_bank_card) +
+                                Number(data.total_tng))) *
                             100
                           ).toFixed(2)}
                           %
                         </td>
                       </tr>
                       <tr>
-                        <td>Recon DR 2</td>
+                        <td>Recon DR2</td>
                         <td className="text-end">{formatCurrency(data.dr2)}</td>
                       </tr>
                       <tr>
@@ -701,7 +707,7 @@ function MonthSalesSummary({ mon, year }) {
                         <td className="text-end">{formatCurrency(data.cr)}</td>
                       </tr>
                       <tr>
-                        <td className="fw-semibold">Recon Terminal</td>
+                        <td className="fw-semibold">Total Recon</td>
                         <td className="text-end fw-semibold">
                           {formatCurrency(
                             Number(data.dr1) +

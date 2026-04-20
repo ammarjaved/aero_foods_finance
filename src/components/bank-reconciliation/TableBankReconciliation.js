@@ -12,16 +12,17 @@ function TableBankReconciliation({ onRowClick }) {
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
-  const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [selectedMonth, setSelectedMonth] = useState(
+    parseInt(localStorage.getItem("recon_month")) || monthNumber
+  );
   const year = date.getFullYear();
   const [selectedYear, setSelectedYear] = useState(year);
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
-    // Note: localStorage is not available in Claude artifacts
-    // localStorage.setItem("month", monthValue);
+    localStorage.setItem("recon_month", monthValue);
     setSelectedMonth(monthValue);
-    fetchData(monthValue, selectedYear); // Call your fetchData function with the selected month value
+    fetchData(monthValue, selectedYear);
   };
 
   const handleYearChange = (e) => {

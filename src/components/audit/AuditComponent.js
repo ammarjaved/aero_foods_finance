@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import ViewAuditComponent from "./ViewAuditComponent";
 
+const generateAuditCode = () => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const random = Array.from({ length: 6 }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join("");
+  return `AUD-${yyyy}${mm}${dd}-${random}`;
+};
+
 const AuditComponent = () => {
   const [audits, setAudits] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -11,15 +23,22 @@ const AuditComponent = () => {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editingAuditDate, setEditingAuditDate] = useState(null);
+  const [auditCode, setAuditCode] = useState(generateAuditCode);
+  const [auditorName, setAuditorName] = useState("");
+  const [employees, setEmployees] = useState([]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        "http://121.121.232.54:88/aero-foods/GetAuditData.php"
-      );
-      const fetchedData = await response.json();
+      const [auditRes, empRes] = await Promise.all([
+        fetch("http://121.121.232.54:88/aero-foods/GetAuditData.php"),
+        fetch("http://121.121.232.54:88/aero-foods/get_active_employees.php"),
+      ]);
+      const fetchedData = await auditRes.json();
+      const empData = await empRes.json();
+
       setAuditItems(fetchedData);
+      setEmployees(empData.results || []);
 
       // Initialize current audit data after fetching
       const initData = {};
@@ -45,6 +64,8 @@ const AuditComponent = () => {
   const handleEditAudit = (audit) => {
     setEditMode(true);
     setEditingAuditDate(audit.date);
+    setAuditCode(audit.audit_code || generateAuditCode());
+    setAuditorName(audit.auditor_name || "");
     setViewMode("create");
 
     // Convert audit items to currentAuditData format
@@ -166,6 +187,8 @@ const AuditComponent = () => {
         body: JSON.stringify({
           audit_date: auditDate,
           audit_data: auditDataToSave,
+          audit_code: auditCode,
+          auditor_name: auditorName,
         }),
       });
 
@@ -182,6 +205,8 @@ const AuditComponent = () => {
       // Reset form after successful save
       setEditMode(false);
       setEditingAuditDate(null);
+      setAuditCode(generateAuditCode());
+      setAuditorName("");
       const initData = {};
       auditItems.forEach((item) => {
         initData[item.id] = {
@@ -202,6 +227,8 @@ const AuditComponent = () => {
   const cancelEdit = () => {
     setEditMode(false);
     setEditingAuditDate(null);
+    setAuditCode(generateAuditCode());
+    setAuditorName("");
     const initData = {};
     auditItems.forEach((item) => {
       initData[item.id] = {
@@ -391,7 +418,7 @@ const AuditComponent = () => {
               <div className="card-body">
                 {viewMode === "create" && (
                   <div>
-                    <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
                       <h2 className="h4 mb-0">
                         {editMode
                           ? `Edit Audit - ${editingAuditDate}`
@@ -411,6 +438,62 @@ const AuditComponent = () => {
                           <i className="fas fa-save me-1"></i>
                           {editMode ? "Update Audit" : "Save Audit"}
                         </button>
+                      </div>
+                    </div>
+
+                    {/* Audit Code & Auditor */}
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold small">
+                          Audit Code
+                        </label>
+                        <div className="input-group input-group-sm">
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={auditCode}
+                            readOnly
+                          />
+                          {!editMode && (
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary"
+                              onClick={() => setAuditCode(generateAuditCode())}
+                              title="Regenerate"
+                            >
+                              <i className="fas fa-sync-alt"></i>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold small">
+                          Auditor Name
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            value={auditorName}
+                            readOnly
+                          />
+                        ) : (
+                          <select
+                            className="form-select form-select-sm"
+                            value={auditorName}
+                            onChange={(e) => setAuditorName(e.target.value)}
+                          >
+                            <option value="">-- Select Auditor --</option>
+                            {employees.map((emp, index) => (
+                              <option
+                                key={emp.employee_id || emp.id || index}
+                                value={emp.short_name || emp.employee_name || emp.name}
+                              >
+                                {emp.short_name || emp.employee_name || emp.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     </div>
 

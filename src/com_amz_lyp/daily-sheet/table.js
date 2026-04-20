@@ -169,7 +169,7 @@ function Table({ onRowClick }) {
     },
     {
       key: "touch_n_go",
-      label: "Touch n Go/Online",
+      label: "Online Order",
       headerStyle: { backgroundColor: "#196F3D" },
       cellStyle: { backgroundColor: "#196F3D" },
     },

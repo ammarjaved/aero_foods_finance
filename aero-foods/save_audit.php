@@ -50,9 +50,11 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 // Extract audit metadata
-$auditId   = $input['audit_id']   ?? null;
-$auditDate = $input['audit_date'] ?? date('Y-m-d');
-$auditData = $input['audit_data'] ?? [];
+$auditId      = $input['audit_id']      ?? null;
+$auditDate    = $input['audit_date']    ?? date('Y-m-d');
+$auditData    = $input['audit_data']    ?? [];
+$auditCode    = $input['audit_code']    ?? '';
+$auditorName  = $input['auditor_name']  ?? '';
 
 if (empty($auditData) || !is_array($auditData)) {
     http_response_code(400);
@@ -136,15 +138,17 @@ try {
             // Insert into audit table
             $stmt = $pdo->prepare("
                 INSERT INTO audit (
-                    audit_type_id, 
-                    audit_items_id, 
-                    audit_status_id, 
-                    audit_date, 
-                    audit_points, 
-                    audit_image_1, 
-                    audit_image_2, 
-                    audit_image_3
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    audit_type_id,
+                    audit_items_id,
+                    audit_status_id,
+                    audit_date,
+                    audit_points,
+                    audit_image_1,
+                    audit_image_2,
+                    audit_image_3,
+                    audit_code,
+                    auditor_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $stmt->execute([
@@ -155,7 +159,9 @@ try {
                 $itemData['point'] ?? 0,
                 $imagePaths[0],
                 $imagePaths[1],
-                $imagePaths[2]
+                $imagePaths[2],
+                $auditCode,
+                $auditorName
             ]);
 
             $savedRows++;

@@ -283,13 +283,10 @@ function BankReconciliationComponent() {
       }
 
       // variance_1
-      if (["tng", "touch_n_go", "duit_now"].includes(name)) {
+      if (["tng", "duit_now"].includes(name)) {
         const variance_1 =
-          parseFloat(updatedFormData.tng || 0).toFixed(2) -
-          parseFloat(
-            parseFloat(updatedFormData.touch_n_go || 0) +
-              parseFloat(updatedFormData.duit_now || 0),
-          ).toFixed(2);
+          parseFloat(updatedFormData.tng || 0) -
+          parseFloat(updatedFormData.duit_now || 0);
 
         updatedFormData.variance_1 = parseFloat(variance_1).toFixed(2);
       }
@@ -306,14 +303,13 @@ function BankReconciliationComponent() {
       }
 
       // variance_2
-      if (["dr_1", "dr_2", "cr", "visa", "visa_master"].includes(name)) {
+      if (["dr_1", "dr_2", "cr", "visa", "visa_master", "touch_n_go"].includes(name)) {
         const variance_2 =
-          parseFloat(
-            parseFloat(updatedFormData.dr_1 || 0) +
-              parseFloat(updatedFormData.dr_2 || 0) +
-              parseFloat(updatedFormData.cr || 0),
-          ).toFixed(2) -
-          parseFloat(updatedFormData.visa_master || 0).toFixed(2);
+          parseFloat(updatedFormData.dr_1 || 0) +
+          parseFloat(updatedFormData.dr_2 || 0) +
+          parseFloat(updatedFormData.cr || 0) -
+          (parseFloat(updatedFormData.visa_master || 0) +
+            parseFloat(updatedFormData.touch_n_go || 0));
 
         updatedFormData.variance_2 = parseFloat(variance_2).toFixed(2);
       }
@@ -577,6 +573,15 @@ function BankReconciliationComponent() {
       ...formData, // Start with the default empty values
       ...record, // Override with record values
     };
+
+    // Recalculate variances with current formulas so stale DB values are not shown
+    updatedRecord.variance_1 = parseFloat(
+      parseFloat(updatedRecord.tng || 0) - parseFloat(updatedRecord.duit_now || 0)
+    ).toFixed(2);
+    updatedRecord.variance_2 = parseFloat(
+      (parseFloat(updatedRecord.dr_1 || 0) + parseFloat(updatedRecord.dr_2 || 0) + parseFloat(updatedRecord.cr || 0)) -
+      (parseFloat(updatedRecord.visa_master || 0) + parseFloat(updatedRecord.touch_n_go || 0))
+    ).toFixed(2);
 
     let c_month = 0;
     if (localStorage.getItem("month")) {

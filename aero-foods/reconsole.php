@@ -4,6 +4,11 @@
  * Updates calculated columns based on the formulas provided
  */
 
+// Suppress PHP error output so warnings/notices never corrupt the JSON response
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(0);
+
 // Enable CORS for React frontend
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -47,15 +52,15 @@ class DailySheetCalculator {
             }
             
             // Calculate Daily Sheet Items
-            $sales_walk_in = $record['cash'] + $record['touch_n_go'] + 
-                           $record['duit_now'] + $record['voucher'] + 
-                           $record['visa_master'];
-            
-            $sales_delivery = $record['shopee'] + $record['grab'] + $record['panda'];
-            
+            $sales_walk_in = floatval($record['cash']) + floatval($record['touch_n_go']) +
+                           floatval($record['duit_now']) + floatval($record['voucher']) +
+                           floatval($record['visa_master']);
+
+            $sales_delivery = floatval($record['shopee']) + floatval($record['grab']) + floatval($record['panda']);
+
             $total_sales = $sales_delivery + $sales_walk_in;
-            
-            $variance = $record['cash_box_amount'] - $record['cash'];
+
+            $variance = floatval($record['cash_box_amount']) - floatval($record['cash']);
             
             // Calculate labour_hours_used from log_sheet
             $logStmt = $this->pdo->prepare("
@@ -212,20 +217,20 @@ class DailySheetCalculator {
             }
             
             // Calculate Bank Reconciliation Items
-            $total_terminal = $record['visa'] + $record['master'] + $record['my_debit'];
-            $commission = ($record['dr_1'] + $record['dr_2'] + $record['cr']) - 
-                         ($record['visa'] + $record['master'] + $record['my_debit']);
-            $variance_1 = $record['tng'] - ($record['touch_n_go'] + $record['duit_now']);
-            $total_bank_card = $record['dr_1'] + $record['dr_2'] + $record['cr'];
-            $variance_2 = ($record['dr_1'] + $record['dr_2'] + $record['cr']) - 
-                         $record['visa_master'];
-            $total_delivery = $record['shopee_1'] + $record['grab_1'] + $record['panda_1'];
-            $variance_3 = ($record['shopee_1'] + $record['grab_1'] + $record['panda_1']) - 
-                         $record['sales_delivery'];
-            $actual_total = $record['cash_box_amount'] + $record['tng'] + 
-                          $record['dr_1'] + $record['dr_2'] + $record['cr'] + 
-                          $record['shopee_1'] + $record['grab_1'] + $record['panda_1'];
-            $total_variance = $actual_total - $record['total_sales'];
+            $total_terminal = floatval($record['visa']) + floatval($record['master']) + floatval($record['my_debit']);
+            $commission = (floatval($record['dr_1']) + floatval($record['dr_2']) + floatval($record['cr'])) -
+                         (floatval($record['visa']) + floatval($record['master']) + floatval($record['my_debit']));
+            $variance_1 = floatval($record['tng']) - floatval($record['duit_now']);
+            $total_bank_card = floatval($record['dr_1']) + floatval($record['dr_2']) + floatval($record['cr']);
+            $variance_2 = (floatval($record['dr_1']) + floatval($record['dr_2']) + floatval($record['cr'])) -
+                         (floatval($record['visa_master']) + floatval($record['touch_n_go']));
+            $total_delivery = floatval($record['shopee_1']) + floatval($record['grab_1']) + floatval($record['panda_1']);
+            $variance_3 = (floatval($record['shopee_1']) + floatval($record['grab_1']) + floatval($record['panda_1'])) -
+                         floatval($record['sales_delivery']);
+            $actual_total = floatval($record['cash_box_amount']) + floatval($record['tng']) +
+                          floatval($record['dr_1']) + floatval($record['dr_2']) + floatval($record['cr']) +
+                          floatval($record['shopee_1']) + floatval($record['grab_1']) + floatval($record['panda_1']);
+            $total_variance = $actual_total - floatval($record['total_sales']);
             
             // Update the record
             $updateStmt = $this->pdo->prepare("

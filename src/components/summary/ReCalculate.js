@@ -2,45 +2,50 @@ import React, { useState } from "react";
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import Navbar from "../../Navbar";
 import Sidebar from "../../Sidebar";
+
+const ALL_DATABASES = [
+  { value: "aero_foods_finance",       label: "Mixue Finance" },
+  { value: "amazon_cafe_finance",      label: "Amazon Cafe Finance" },
+  { value: "amazon_cafe_finance_lyp",  label: "Amazon Cafe Finance LYP" },
+  { value: "abe_yus_finance",          label: "Abe Yus Finance" },
+  { value: "ojim_finance",             label: "Ojim Finance" },
+];
+
+const DATABASES = [
+  { value: "all", label: "All Databases" },
+  ...ALL_DATABASES,
+];
+
+const MONTHS = [
+  { value: 1,  label: "January" },
+  { value: 2,  label: "February" },
+  { value: 3,  label: "March" },
+  { value: 4,  label: "April" },
+  { value: 5,  label: "May" },
+  { value: 6,  label: "June" },
+  { value: 7,  label: "July" },
+  { value: 8,  label: "August" },
+  { value: 9,  label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+
 const ReCalculate = () => {
   const [formData, setFormData] = useState({
     year: new Date().getFullYear(),
     month: "",
-    database: "aero_foods_finance",
+    database: "all",
     user: "admin",
   });
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(null);           // single DB result
+  const [allResults, setAllResults] = useState([]);     // multi DB results
+  const [currentDb, setCurrentDb] = useState("");       // which DB is running now
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const databases = [
-    { value: "aero_foods_finance", label: "Mixue Finance" },
-    { value: "amazon_cafe_finance", label: "Amazon Cafe Finance" },
-    { value: "amazon_cafe_finance_lyp", label: "Amazon Cafe Finance LYP" },
-    { value: "abe_yus_finance", label: "Abe Yus Finance" },
-    { value: "ojim_finance", label: "Ojim Finance" },
-  ];
-
-  const months = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
-  ];
-
-  const years = Array.from(
-    { length: 10 },
-    (_, i) => new Date().getFullYear() - 5 + i,
-  );
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,35 +60,136 @@ const ReCalculate = () => {
     }));
   };
 
+  const buildUrl = (db) => {
+    let url = `http://121.121.232.54:88/aero-foods/reconsole.php?year=${formData.year}&db=${db}&user=${formData.user}`;
+    if (formData.month !== "") url += `&month=${formData.month}`;
+    return url;
+  };
+
+  const runSingle = async (db) => {
+    const response = await fetch(buildUrl(db));
+    return await response.json();
+  };
+
   const handleUpdate = async () => {
     setLoading(true);
     setResult(null);
+    setAllResults([]);
 
-    try {
-      let url = `http://121.121.232.54:88/aero-foods/reconsole.php?year=${formData.year}&db=${formData.database}&user=${formData.user}`;
-
-      // Only add month parameter if a month is selected
-      if (formData.month !== "") {
-        url += `&month=${formData.month}`;
+    if (formData.database === "all") {
+      // Run all databases one by one
+      const results = [];
+      for (const db of ALL_DATABASES) {
+        setCurrentDb(db.label);
+        try {
+          const data = await runSingle(db.value);
+          results.push({ db: db.label, ...data });
+        } catch (error) {
+          results.push({
+            db: db.label,
+            success: false,
+            message: "Failed to connect: " + error.message,
+          });
+        }
+        setAllResults([...results]);
       }
-
-      const response = await fetch(url);
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      setResult({
-        success: false,
-        message: "Failed to connect to server: " + error.message,
-      });
-    } finally {
-      setLoading(false);
+      setCurrentDb("");
+    } else {
+      // Single database
+      try {
+        const data = await runSingle(formData.database);
+        setResult(data);
+      } catch (error) {
+        setResult({
+          success: false,
+          message: "Failed to connect to server: " + error.message,
+        });
+      }
     }
+
+    setLoading(false);
   };
 
-  const getStatusIcon = (success) => {
-    if (success) return <CheckCircle size={20} className="text-success" />;
-    return <XCircle size={20} className="text-danger" />;
-  };
+  const getStatusIcon = (success) =>
+    success
+      ? <CheckCircle size={20} className="text-success" />
+      : <XCircle size={20} className="text-danger" />;
+
+  const monthLabel = (m) => MONTHS.find((x) => x.value === m)?.label;
+
+  // ── Single DB result card (reused below) ──────────────────────────────────
+  const SingleResult = ({ r, compact = false }) => (
+    <div className={`alert ${r.success ? "alert-success" : "alert-danger"} shadow-sm mb-2`}>
+      <div className="d-flex align-items-start gap-3">
+        <div className="mt-1">
+          {r.success
+            ? <CheckCircle size={compact ? 18 : 24} className="text-success" />
+            : <AlertCircle size={compact ? 18 : 24} className="text-danger" />}
+        </div>
+        <div className="flex-grow-1">
+          {compact && (
+            <h6 className="mb-1 fw-bold">{r.db}</h6>
+          )}
+          {!compact && (
+            <h5 className="alert-heading mb-2">
+              {r.success ? "Update Successful" : "Update Failed"}
+            </h5>
+          )}
+
+          {r.database && (
+            <p className="mb-2 small">
+              <strong>Database:</strong> {r.database}
+              <br />
+              <strong>Period:</strong>{" "}
+              {r.month ? `${monthLabel(r.month)} ${r.year}` : `All months in ${r.year}`}
+            </p>
+          )}
+
+          {r.daily_sheet && (
+            <div className="card mb-2">
+              <div className="card-body py-2 px-3">
+                <div className="d-flex align-items-center gap-2 mb-1">
+                  {getStatusIcon(r.daily_sheet.success)}
+                  <strong className="small">Daily Sheet</strong>
+                </div>
+                <p className="mb-0 small text-muted ms-4">
+                  {r.daily_sheet.message}
+                  {r.daily_sheet.count > 0 && (
+                    <span className="ms-2">
+                      ({r.daily_sheet.count}/{r.daily_sheet.total} records)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {r.bank_reconciliation && (
+            <div className="card">
+              <div className="card-body py-2 px-3">
+                <div className="d-flex align-items-center gap-2 mb-1">
+                  {getStatusIcon(r.bank_reconciliation.success)}
+                  <strong className="small">Bank Reconciliation</strong>
+                </div>
+                <p className="mb-0 small text-muted ms-4">
+                  {r.bank_reconciliation.message}
+                  {r.bank_reconciliation.count > 0 && (
+                    <span className="ms-2">
+                      ({r.bank_reconciliation.count}/{r.bank_reconciliation.total} records)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {r.message && !r.daily_sheet && (
+            <p className="mb-0 small">{r.message}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
@@ -105,6 +211,7 @@ const ReCalculate = () => {
           <div className="container py-4">
             <div className="row justify-content-center">
               <div className="col-lg-8 col-md-10">
+
                 {/* Main Card */}
                 <div className="card shadow-sm mb-4">
                   <div className="card-body p-4">
@@ -124,7 +231,7 @@ const ReCalculate = () => {
                         onChange={handleChange}
                         className="form-select"
                       >
-                        {databases.map((db) => (
+                        {DATABASES.map((db) => (
                           <option key={db.value} value={db.value}>
                             {db.label}
                           </option>
@@ -132,7 +239,7 @@ const ReCalculate = () => {
                       </select>
                     </div>
 
-                    {/* Year and Month Selection */}
+                    {/* Year and Month */}
                     <div className="row mb-3">
                       <div className="col-md-6 mb-3 mb-md-0">
                         <label className="form-label fw-semibold">Year</label>
@@ -143,17 +250,13 @@ const ReCalculate = () => {
                           className="form-select"
                         >
                           {years.map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
+                            <option key={year} value={year}>{year}</option>
                           ))}
                         </select>
                       </div>
-
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">
-                          Month{" "}
-                          <span className="text-muted small">(Optional)</span>
+                          Month <span className="text-muted small">(Optional)</span>
                         </label>
                         <select
                           name="month"
@@ -162,28 +265,11 @@ const ReCalculate = () => {
                           className="form-select"
                         >
                           <option value="">All Months</option>
-                          {months.map((month) => (
-                            <option key={month.value} value={month.value}>
-                              {month.label}
-                            </option>
+                          {MONTHS.map((m) => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
                           ))}
                         </select>
                       </div>
-                    </div>
-
-                    {/* User Input */}
-                    <div className="mb-4" style={{ display: "none" }}>
-                      <label className="form-label fw-semibold">
-                        Updated By (Username)
-                      </label>
-                      <input
-                        type="text"
-                        name="user"
-                        value={formData.user}
-                        onChange={handleChange}
-                        className="form-control"
-                        placeholder="Enter your username"
-                      />
                     </div>
 
                     {/* Update Button */}
@@ -196,130 +282,76 @@ const ReCalculate = () => {
                     >
                       {loading ? (
                         <>
-                          <RefreshCw
-                            size={20}
-                            className="spinner-border spinner-border-sm"
-                          />
-                          <span>Updating...</span>
+                          <RefreshCw size={20} className="spinner-border spinner-border-sm" />
+                          <span>
+                            {formData.database === "all" && currentDb
+                              ? `Updating ${currentDb}…`
+                              : "Updating…"}
+                          </span>
                         </>
                       ) : (
                         <>
                           <RefreshCw size={20} />
-                          <span>Update Records</span>
+                          <span>
+                            {formData.database === "all"
+                              ? "Update All Databases"
+                              : "Update Records"}
+                          </span>
                         </>
                       )}
                     </button>
+
+                    {/* Progress bar when running all */}
+                    {loading && formData.database === "all" && (
+                      <div className="mt-3">
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>{currentDb || "Starting…"}</span>
+                          <span>{allResults.length} / {ALL_DATABASES.length}</span>
+                        </div>
+                        <div className="progress" style={{ height: "6px" }}>
+                          <div
+                            className="progress-bar bg-primary"
+                            style={{
+                              width: `${(allResults.length / ALL_DATABASES.length) * 100}%`,
+                              transition: "width 0.3s ease",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Results Display */}
-                {result && (
-                  <div
-                    className={`alert ${
-                      result.success ? "alert-success" : "alert-danger"
-                    } shadow-sm`}
-                  >
-                    <div className="d-flex align-items-start gap-3">
-                      <div className="mt-1">
-                        {result.success ? (
-                          <CheckCircle size={24} className="text-success" />
-                        ) : (
-                          <AlertCircle size={24} className="text-danger" />
-                        )}
-                      </div>
-                      <div className="flex-grow-1">
-                        <h5 className="alert-heading mb-2">
-                          {result.success
-                            ? "Update Successful"
-                            : "Update Failed"}
-                        </h5>
-
-                        {result.database && (
-                          <p className="mb-3 small">
-                            <strong>Database:</strong> {result.database}
-                            <br />
-                            <strong>Period:</strong>{" "}
-                            {result.month
-                              ? `${
-                                  months.find((m) => m.value === result.month)
-                                    ?.label
-                                } ${result.year}`
-                              : `All months in ${result.year}`}
-                          </p>
-                        )}
-
-                        {result.daily_sheet && (
-                          <div className="card mb-2">
-                            <div className="card-body py-2 px-3">
-                              <div className="d-flex align-items-center gap-2 mb-1">
-                                {getStatusIcon(result.daily_sheet.success)}
-                                <strong className="small">Daily Sheet</strong>
-                              </div>
-                              <p className="mb-0 small text-muted ms-4">
-                                {result.daily_sheet.message}
-                                {result.daily_sheet.count > 0 && (
-                                  <span className="ms-2">
-                                    ({result.daily_sheet.count}/
-                                    {result.daily_sheet.total} records)
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {result.bank_reconciliation && (
-                          <div className="card">
-                            <div className="card-body py-2 px-3">
-                              <div className="d-flex align-items-center gap-2 mb-1">
-                                {getStatusIcon(
-                                  result.bank_reconciliation.success,
-                                )}
-                                <strong className="small">
-                                  Bank Reconciliation
-                                </strong>
-                              </div>
-                              <p className="mb-0 small text-muted ms-4">
-                                {result.bank_reconciliation.message}
-                                {result.bank_reconciliation.count > 0 && (
-                                  <span className="ms-2">
-                                    ({result.bank_reconciliation.count}/
-                                    {result.bank_reconciliation.total} records)
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {result.message && !result.daily_sheet && (
-                          <p className="mb-0 small">{result.message}</p>
-                        )}
-                      </div>
-                    </div>
+                {/* ── All-DB results ── */}
+                {allResults.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="fw-semibold mb-3">
+                      Results ({allResults.length}/{ALL_DATABASES.length})
+                    </h5>
+                    {allResults.map((r, i) => (
+                      <SingleResult key={i} r={r} compact={true} />
+                    ))}
                   </div>
                 )}
+
+                {/* ── Single DB result ── */}
+                {result && <SingleResult r={result} compact={false} />}
 
                 {/* Info Card */}
                 <div className="card border-primary">
                   <div className="card-body">
-                    <h6 className="card-title text-primary mb-3">
-                      How it works:
-                    </h6>
+                    <h6 className="card-title text-primary mb-3">How it works:</h6>
                     <ul className="mb-0 small">
-                      <li>Select the database you want to update</li>
+                      <li>Select <strong>All Databases</strong> to update every cafe at once</li>
+                      <li>Or pick a specific database to update only that one</li>
                       <li>Choose the year for the records</li>
-                      <li>
-                        Optionally select a specific month, or leave blank to
-                        update all months
-                      </li>
+                      <li>Optionally select a specific month, or leave blank to update all months</li>
                       <li>Click "Update Records" to recalculate all values</li>
-                      <li>
-                        Both daily sheet and bank reconciliation will be updated
-                      </li>
+                      <li>Both daily sheet and bank reconciliation will be updated</li>
                     </ul>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>

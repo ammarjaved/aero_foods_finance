@@ -17,9 +17,13 @@ const ViewAuditComponent = ({ onEditAudit }) => {
       const groupedAudits = fetchedData.reduce((acc, item) => {
         const date = item.audit_date;
         if (!acc[date]) {
-          acc[date] = [];
+          acc[date] = {
+            items: [],
+            audit_code: item.audit_code || "",
+            auditor_name: item.auditor_name || "",
+          };
         }
-        acc[date].push({
+        acc[date].items.push({
           id: item.audit_items_id,
           type: item.audit_type_code,
           name: item.audit_type_name,
@@ -39,7 +43,9 @@ const ViewAuditComponent = ({ onEditAudit }) => {
 
       const auditArray = Object.keys(groupedAudits).map((date) => ({
         date,
-        items: groupedAudits[date],
+        items: groupedAudits[date].items,
+        audit_code: groupedAudits[date].audit_code,
+        auditor_name: groupedAudits[date].auditor_name,
         id: date.replace(/-/g, ""),
       }));
 
@@ -280,13 +286,29 @@ const ViewAuditComponent = ({ onEditAudit }) => {
                     <div key={audit.id} className="col-md-6 col-lg-4">
                       <div className="card">
                         <div className="card-body">
+                          {(audit.audit_code || audit.auditor_name) && (
+                            <div className="mb-2 pb-2 border-bottom">
+                              {audit.audit_code && (
+                                <div className="small fw-semibold text-primary">
+                                  <i className="fas fa-hashtag me-1"></i>
+                                  {audit.audit_code}
+                                </div>
+                              )}
+                              {audit.auditor_name && (
+                                <div className="small text-muted">
+                                  <i className="fas fa-user me-1"></i>
+                                  {audit.auditor_name}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           <div className="d-flex justify-content-between align-items-start mb-2">
                             <div>
                               <h6 className="card-title">
                                 Audit - {audit.date}
                                 {getPassFailBadge(score.status)}
                               </h6>
-                              <small className="text-muted">
+                              <small className="text-muted d-block">
                                 {audit.items.length} items
                               </small>
                             </div>
@@ -353,6 +375,22 @@ const ViewAuditComponent = ({ onEditAudit }) => {
                   <div key={audit.id} className="col-md-6 col-lg-4">
                     <div className="card">
                       <div className="card-body">
+                        {(audit.audit_code || audit.auditor_name) && (
+                          <div className="mb-2 pb-2 border-bottom">
+                            {audit.audit_code && (
+                              <div className="small fw-semibold text-primary">
+                                <i className="fas fa-hashtag me-1"></i>
+                                {audit.audit_code}
+                              </div>
+                            )}
+                            {audit.auditor_name && (
+                              <div className="small text-muted">
+                                <i className="fas fa-user me-1"></i>
+                                {audit.auditor_name}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <div>
                             <h6 className="card-title">
@@ -413,6 +451,22 @@ const ViewAuditComponent = ({ onEditAudit }) => {
           <div className="mt-4 border-top pt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
+                {(selectedAudit.audit_code || selectedAudit.auditor_name) && (
+                  <div className="mb-2">
+                    {selectedAudit.audit_code && (
+                      <span className="badge bg-primary me-2">
+                        <i className="fas fa-hashtag me-1"></i>
+                        {selectedAudit.audit_code}
+                      </span>
+                    )}
+                    {selectedAudit.auditor_name && (
+                      <span className="badge bg-secondary">
+                        <i className="fas fa-user me-1"></i>
+                        {selectedAudit.auditor_name}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <h4>
                   Audit Details - {selectedAudit.date}
                   {getPassFailBadge(calculateScore(selectedAudit.items).status)}

@@ -28,7 +28,7 @@ class AuditQueryHandler {
      * Execute the audit query and return array of objects
      */
     public function getAuditData() {
-        $sql = "select d.*,b.*,c.audit_status_name,a.audit_points as marks_obtain,audit_image_1,audit_image_2,audit_image_3,audit_date from audit a,audit_items b, audit_status c ,audit_type d
+        $sql = "select d.*,b.*,c.audit_status_name,a.audit_points as marks_obtain,audit_image_1,audit_image_2,audit_image_3,audit_date,a.audit_code,a.auditor_name from audit a,audit_items b, audit_status c ,audit_type d
 where a.audit_items_id=b.audit_items_id and a.audit_status_id=c.audit_status_id and a.audit_type_id=d.audit_type_id
         ";
         

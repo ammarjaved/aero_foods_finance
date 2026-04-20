@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 import "bootstrap/dist/css/bootstrap.min.css";
+import MBBCsvUploadComponent from "./MBBCsvUploadComponent";
 
 const API_URL = "http://121.121.232.54:88/aero-foods/expense_file.php";
 
 const COMPANIES = [
-  { value: "aero_foods_finance",      label: "Mixue" },
-  { value: "amazon_cafe_finance",     label: "Amazon" },
-  { value: "amazon_cafe_finance_lyp", label: "Amazon LYP" },
-  { value: "abe_yus_finance",         label: "Abe Yus" },
-  { value: "ojim_finance",            label: "Ojim" },
-  { value: "sds_hq",                  label: "SDS HQ" },
+  { value: "Mixue",       label: "Mixue",       db: "aero_foods_finance" },
+  { value: "Amazon",      label: "Amazon",      db: "amazon_cafe_finance" },
+  { value: "Amazon LYP",  label: "Amazon LYP",  db: "amazon_cafe_finance_lyp" },
+  { value: "Abe Yus",     label: "Abe Yus",     db: "abe_yus_finance" },
+  { value: "Ojim",        label: "Ojim",        db: "ojim_finance" },
+  { value: "SDS HQ",      label: "SDS HQ",      db: "sds_hq" },
 ];
 
-const COMPANY_LABEL = Object.fromEntries(COMPANIES.map((c) => [c.value, c.label]));
+const COMPANY_LABEL    = Object.fromEntries(COMPANIES.map((c) => [c.value, c.label]));
+const COMPANY_DB       = Object.fromEntries(COMPANIES.map((c) => [c.value, c.db]));
+const DB_TO_LABEL      = Object.fromEntries(COMPANIES.map((c) => [c.db,    c.label]));
 
 const EXPENSE_TYPES = ["Rental", "Utilities", "Stock", "Logistik", "Claim", "Salary", "SDS HQ", "Others"];
 
@@ -216,7 +219,6 @@ function ExpenseFileComponent() {
         description: headers.findIndex((h) => h.includes("description") || h.includes("desc") || h.includes("particular") || h.includes("details") || h.includes("narration")),
         debit:       headers.findIndex((h) => h.includes("debit") || h.includes("withdrawal") || h.includes("withdraw")),
         credit:      headers.findIndex((h) => h.includes("credit") || h.includes("deposit")),
-        balance:     headers.findIndex((h) => h.includes("balance")),
       };
 
       // Strip currency symbols & commas — handles "RM20,000.00" → 20000
@@ -292,7 +294,6 @@ function ExpenseFileComponent() {
           description:      colIdx.description >= 0 ? String(r[colIdx.description] ?? "") : "",
           debit:            colIdx.debit   >= 0 ? parseNum(r[colIdx.debit])   : null,
           credit:           colIdx.credit  >= 0 ? parseNum(r[colIdx.credit])  : null,
-          balance:          colIdx.balance >= 0 ? parseNum(r[colIdx.balance]) : null,
         });
       }
 
@@ -312,7 +313,7 @@ function ExpenseFileComponent() {
           const norm = (v) =>
             v === null || v === undefined || v === "" ? "null" : parseFloat(v).toFixed(2);
           const makeKey = (r) =>
-            `${r.transaction_date}|${String(r.description ?? "").trim()}|${norm(r.debit)}|${norm(r.credit)}|${norm(r.balance)}`;
+            `${r.transaction_date}|${String(r.description ?? "").trim()}|${norm(r.debit)}|${norm(r.credit)}`;
 
           const existingKeys = new Set(existingJson.data.map(makeKey));
           rowsToUpload = parsedRows.filter((r) => !existingKeys.has(makeKey(r)));
@@ -378,6 +379,7 @@ function ExpenseFileComponent() {
           action:            "update_company",
           id:                row.id,
           company:           editCompany,
+          db:                COMPANY_DB[editCompany] || "",
           vendor:            editVendor,
           expense_type_name: editExpenseType || "Others",
           username:          localStorage.getItem("user") || "system",
@@ -450,6 +452,7 @@ function ExpenseFileComponent() {
           action:            "bulk_update",
           ids:               [...selectedIds],
           company:           bulkCompany,
+          db:                COMPANY_DB[bulkCompany] || "",
           vendor:            bulkVendor,
           expense_type_name: bulkExpenseType || "Others",
           username:          localStorage.getItem("user") || "system",
@@ -558,6 +561,9 @@ function ExpenseFileComponent() {
           )}
         </div>
       </div>
+
+      {/* ── MBB CSV Upload ──────────────────────────────────────────────── */}
+      <MBBCsvUploadComponent onUploadSuccess={fetchFileList} />
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
       <div className="card shadow-sm mb-4">
@@ -861,7 +867,6 @@ function ExpenseFileComponent() {
                   <th>Description</th>
                   <th style={{ width: 110, textAlign: "right" }}>Debit</th>
                   <th style={{ width: 110, textAlign: "right" }}>Credit</th>
-                  <th style={{ width: 120, textAlign: "right" }}>Balance</th>
                   <th style={{ width: 150 }}>Vendor</th>
                   <th style={{ width: 160 }}>Company</th>
                   <th style={{ width: 130 }}>Expense Type</th>
@@ -871,7 +876,7 @@ function ExpenseFileComponent() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={11} className="text-center py-4">
+                    <td colSpan={10} className="text-center py-4">
                       <span className="spinner-border text-primary" />
                     </td>
                   </tr>
@@ -915,9 +920,6 @@ function ExpenseFileComponent() {
                         <td className="small fw-semibold" style={{ textAlign: "right", color: row.credit ? "#27ae60" : "inherit" }}>
                           {fmt(row.credit)}
                         </td>
-                        <td className="small" style={{ textAlign: "right" }}>
-                          {fmt(row.balance)}
-                        </td>
 
                         {/* Vendor */}
                         <td>
@@ -953,7 +955,7 @@ function ExpenseFileComponent() {
                               className={`badge ${row.company ? "bg-info text-dark" : "bg-light text-muted border"}`}
                               style={{ fontSize: "0.72rem" }}
                             >
-                              {COMPANY_LABEL[row.company] || row.company || "—"}
+                              {COMPANY_LABEL[row.company] || DB_TO_LABEL[row.company] || row.company || "—"}
                             </span>
                           )}
                         </td>
@@ -1023,7 +1025,7 @@ function ExpenseFileComponent() {
                     </td>
                     <td className="small" style={{ textAlign: "right", color: "#c0392b" }}>{fmt(totalDebit)}</td>
                     <td className="small" style={{ textAlign: "right", color: "#27ae60" }}>{fmt(totalCredit)}</td>
-                    <td colSpan={5}></td>
+                    <td colSpan={4}></td>
                   </tr>
                 </tfoot>
               )}
