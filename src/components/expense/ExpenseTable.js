@@ -15,6 +15,7 @@ function ExpenseTable({ onRowClick }) {
   const [selectedMonth, setSelectedMonth] = useState(monthNumber);
   const year = date.getFullYear();
   const [selectedYear, setSelectedYear] = useState(year);
+  const [selectedType, setSelectedType] = useState("");
 
   const handleMonthChange = (e) => {
     const monthValue = e.target.value;
@@ -145,7 +146,7 @@ function ExpenseTable({ onRowClick }) {
 
   useEffect(() => {
     applyFilters();
-  }, [data, filterValues]);
+  }, [data, filterValues, selectedType]);
 
   const fetchData = (month, year) => {
     setLoading(true);
@@ -279,6 +280,12 @@ function ExpenseTable({ onRowClick }) {
       }
     });
 
+    if (selectedType) {
+      filtered = filtered.filter(
+        (record) => record.expense_type_name === selectedType
+      );
+    }
+
     setFilteredData(filtered);
     setCurrentPage(1);
   };
@@ -292,6 +299,7 @@ function ExpenseTable({ onRowClick }) {
 
   const clearFilters = () => {
     setFilterValues({});
+    setSelectedType("");
   };
 
   const toggleFilterPanel = () => {
@@ -467,6 +475,26 @@ function ExpenseTable({ onRowClick }) {
                         <option value="2026">2026</option>
                       </select>
                       <label htmlFor="yearSelect">Year</label>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="typeSelect"
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                      >
+                        <option value="">All Types</option>
+                        <option value="Rental">Rental</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Stock">Stock</option>
+                        <option value="Logistik">Logistik</option>
+                        <option value="Claim">Claim</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Others">Others</option>
+                      </select>
+                      <label htmlFor="typeSelect">Type</label>
                     </div>
                   </div>
                 </div>

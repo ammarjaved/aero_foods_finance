@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const TimesheetSB = ({ month = 11 }) => {
+const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,14 +16,14 @@ const TimesheetSB = ({ month = 11 }) => {
 
   useEffect(() => {
     fetchData();
-  }, [month, selectedCafe]);
+  }, [month, selectedCafe, year]);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/timesheet_sb.php?month=${month}&db=${selectedCafe}`,
+        `http://121.121.232.54:88/aero-foods/timesheet_sb.php?month=${month}&db=${selectedCafe}&year=${year}`,
       );
       const result = await response.json();
       setData(Array.isArray(result) ? result : []);
@@ -163,7 +163,7 @@ const TimesheetSB = ({ month = 11 }) => {
     <div className="container-fluid py-4 bg-light min-vh-100">
       <div className="mb-4">
         <h2 className="h2 fw-bold mb-3">
-          Timesheet - {getMonthDisplay()} 2025
+          Timesheet - {getMonthDisplay()} {year}
         </h2>
 
         {/* Cafe Selection Radio Buttons */}

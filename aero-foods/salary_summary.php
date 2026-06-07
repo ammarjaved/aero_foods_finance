@@ -7,8 +7,9 @@ $port = "5432";
 $user = "postgres";
 $pass = "Admin123";
 
-$db = isset($_GET['db']) ? $_GET['db'] : 'aero_foods_finance';
-$m  = isset($_GET['month']) ? $_GET['month'] : date('n');
+$db   = isset($_GET['db'])   ? $_GET['db']            : 'aero_foods_finance';
+$m    = isset($_GET['month']) ? $_GET['month']          : date('n');
+$year = isset($_GET['year']) ? intval($_GET['year'])    : date('Y');
 
 try {
     // Connect to brand DB (log_sheet lives here)
@@ -19,10 +20,11 @@ try {
     $mainConn = new PDO("pgsql:host=$host;port=$port;dbname=aero_foods_finance", $user, $pass);
     $mainConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Fetch log_sheet entries for requested months
+    // Fetch log_sheet entries for requested months and year
     $logQuery = "SELECT name, month_date, total_hr
                  FROM public.log_sheet
                  WHERE EXTRACT(MONTH FROM month_date) IN ($m)
+                   AND EXTRACT(YEAR FROM month_date) = $year
                  ORDER BY month_date";
     $logStmt = $brandConn->prepare($logQuery);
     $logStmt->execute();
@@ -32,9 +34,6 @@ try {
         echo json_encode([]);
         exit;
     }
-
-    // Derive year from first log row
-    $year = date('Y', strtotime($logData[0]['month_date']));
 
     // Fetch employees (select all columns — avoids hard-coding column names)
     $empQuery = "SELECT * FROM public.employees WHERE is_active = 'yes'";

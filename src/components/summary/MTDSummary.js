@@ -17,6 +17,7 @@ import {
 import TimesheetSB from "./TimeSheetSB";
 import MonthSalesSummary from "./MonthSalesSummary";
 import SalarySummary from "./SalarySummary";
+import StockPurchaseEstimator from "./StockPurchaseEstimator";
 
 function MTDSummary() {
   const [data, setData] = useState({});
@@ -954,6 +955,7 @@ function MTDSummary() {
             {[
               "tables",
               "sds",
+              "stock_estimator",
               "timesheet_summary",
               "salary_summary",
               "monthly_sales_summary",
@@ -987,6 +989,8 @@ function MTDSummary() {
                       ? "Monthly Sales Summary"
                       : tab === "sds"
                         ? "Daily Data Summary"
+                        : tab === "stock_estimator"
+                        ? "Stock Purchase Estimator"
                         : tab === "trends"
                           ? "Trends"
                           : tab === "comparison"
@@ -1831,14 +1835,21 @@ function MTDSummary() {
               </div>
             </div>
           )}
+          {/* Stock Purchase Estimator Tab */}
+          {activeTab === "stock_estimator" && (
+            <div style={{ padding: "16px" }}>
+              <StockPurchaseEstimator month={selectedMonths} year={selectedYear} />
+            </div>
+          )}
+
           {/* time sheet  Tab brand and staff */}
           {activeTab === "timesheet_summary" && (
-            <TimesheetSB month={selectedMonths} />
+            <TimesheetSB month={selectedMonths} year={selectedYear} />
           )}
 
           {/* Salary Summary Tab */}
           {activeTab === "salary_summary" && (
-            <SalarySummary month={selectedMonths} />
+            <SalarySummary month={selectedMonths} year={selectedYear} />
           )}
 
           {/* time sheet  Tab brand and staff */}

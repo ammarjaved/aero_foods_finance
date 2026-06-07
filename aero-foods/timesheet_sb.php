@@ -15,8 +15,9 @@ $pass = "Admin123";
 $conn = new PDO("pgsql:host=$host;dbname=$db", $user, $pass);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $m=$_GET['month'];
+$year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 // Fetch data from permit_records table
-$query = "SELECT name,month_date,total_hr FROM public.log_sheet  WHERE EXTRACT(MONTH FROM month_date) in ($m)";
+$query = "SELECT name,month_date,total_hr FROM public.log_sheet WHERE EXTRACT(MONTH FROM month_date) IN ($m) AND EXTRACT(YEAR FROM month_date) = $year";
 
 $stmt = $conn->prepare($query);
 $stmt->execute();

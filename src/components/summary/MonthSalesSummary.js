@@ -613,16 +613,31 @@ function MonthSalesSummary({ mon, year }) {
                       </td>
                     </tr>
                     {dataExp.map((item, index) => (
-                      <tr class="table-info" key={index}>
-                        <td>
-                          <strong>{item.expense_type_name}</strong>
-                        </td>
-                        <td class="text-end">
-                          <strong>
-                            {Number(item.total_amount || 0).toFixed(2)}
-                          </strong>{" "}
-                        </td>
-                      </tr>
+                      <React.Fragment key={index}>
+                        <tr class="table-info">
+                          <td>
+                            <strong>{item.expense_type_name}</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>
+                              {Number(item.total_amount || 0).toFixed(2)}
+                            </strong>{" "}
+                          </td>
+                        </tr>
+                        <tr class="table-danger">
+                          <td>
+                            <strong>% {item.expense_type_name} / Total Recon</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong>
+                              {Number(data.total_recon) > 0
+                                ? ((Number(item.total_amount || 0) / Number(data.total_recon)) * 100).toFixed(2)
+                                : "0.00"}
+                              %
+                            </strong>
+                          </td>
+                        </tr>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>

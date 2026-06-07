@@ -450,7 +450,7 @@ const PublicHolidayModal = ({ date, existingHoliday, onClose, onSaved }) => {
 /* ─────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────── */
-const SalarySummary = ({ month = 11 }) => {
+const SalarySummary = ({ month = 11, year = new Date().getFullYear() }) => {
   const [data, setData]               = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
@@ -482,7 +482,7 @@ const SalarySummary = ({ month = 11 }) => {
   useEffect(() => {
     setSelectedEmployee("all");
     fetchData();
-  }, [month, selectedCafe]);
+  }, [month, selectedCafe, year]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -494,7 +494,7 @@ const SalarySummary = ({ month = 11 }) => {
       if (selectedCafe === "combined") {
         const results = await Promise.all(
           allCafesForCombined.map(({ value, label }) =>
-            fetch(`http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${value}`)
+            fetch(`http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${value}&year=${year}`)
               .then((r) => r.json())
               .then((result) => ({ result, label, error: null }))
               .catch((e) => ({ result: [], label, error: e.message || "Failed" })),
@@ -520,7 +520,7 @@ const SalarySummary = ({ month = 11 }) => {
       } else {
         setCafeLoadStatus({});
         const res = await fetch(
-          `http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${selectedCafe}`
+          `http://121.121.232.54:88/aero-foods/salary_summary.php?month=${month}&db=${selectedCafe}&year=${year}`
         );
         const result = await res.json();
         if (result && result.error) {
@@ -536,9 +536,8 @@ const SalarySummary = ({ month = 11 }) => {
       setData(merged);
 
       // Fetch public holidays
-      const yearGuess = new Date().getFullYear();
       const phRes = await fetch(
-        `http://121.121.232.54:88/aero-foods/public_holiday_api.php?year=${yearGuess}&month=${month}`
+        `http://121.121.232.54:88/aero-foods/public_holiday_api.php?year=${year}&month=${month}`
       );
       const phList = await phRes.json();
       if (Array.isArray(phList)) {
@@ -687,7 +686,7 @@ const SalarySummary = ({ month = 11 }) => {
 
       <div className="mb-4">
         <h2 className="h2 fw-bold mb-3">
-          Salary Summary - {getMonthDisplay()} 2025
+          Salary Summary - {getMonthDisplay()} {year}
         </h2>
 
         {/* Brand Selection */}
