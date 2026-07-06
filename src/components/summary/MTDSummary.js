@@ -18,6 +18,7 @@ import TimesheetSB from "./TimeSheetSB";
 import MonthSalesSummary from "./MonthSalesSummary";
 import SalarySummary from "./SalarySummary";
 import StockPurchaseEstimator from "./StockPurchaseEstimator";
+import MonthlySalary from "./MonthlySalary";
 
 function MTDSummary() {
   const [data, setData] = useState({});
@@ -44,6 +45,7 @@ function MTDSummary() {
     Amazon: true,
     Ojim: true,
     AmazonLYP: true,
+    MixueSogo: true,
     SDS: true,
   });
   const handleYearChange = (newYear) => {
@@ -63,6 +65,7 @@ function MTDSummary() {
     Amazon: true,
     Ojim: true,
     AmazonLYP: true,
+    MixueSogo: true,
     SDS: true,
   });
 
@@ -96,6 +99,7 @@ function MTDSummary() {
     "D' Amazon Café": true,
     "Ojim Café": true,
     "D' Amazon Café LYP": true,
+    "Mixue Sogo": true,
   });
 
   // Add this handler function
@@ -165,12 +169,27 @@ function MTDSummary() {
         amazonResult,
         OjimResult,
         amazonLYPResult,
+        mixueSogoResult,
       ] = await Promise.all([
         fetchDataForStore(month, "mon-sum-mixiue.php"),
         fetchDataForStore(month, "mon-sum-mixiue2.php"),
         fetchDataForStore(month, "mon-sum-mixiue3.php"),
         fetchDataForStore(month, "mon-sum-mixiue5.php"),
         fetchDataForStore(month, "mon-sum-mixiue6.php"),
+        fetch(`http://121.121.232.54:88/mixue-sogo/mon-sum-mixiue7.php?month=${month}&year=${selectedYear}`)
+          .then((r) => r.json())
+          .then((d) => ({
+            data: (Array.isArray(d) ? d : d.monthly_data || []).map((item) => ({
+              ...item,
+              total_sales: parseFloat(item.total_sales || 0),
+              total_actual: parseFloat(item.total_actual || 0),
+              total_variance: parseFloat(item.total_variance || 0),
+              cash_box: parseFloat(item.cash_box || 0),
+              total_expense: item.total_expense ? parseFloat(item.total_expense) : null,
+            })),
+            overallStats: d.overall_stats || null,
+          }))
+          .catch(() => ({ data: [], overallStats: null })),
       ]);
 
       const stores = [
@@ -203,6 +222,12 @@ function MTDSummary() {
           data: amazonLYPResult.data,
           totals: calculateTotals(amazonLYPResult.data),
           overallStats: amazonLYPResult.overallStats,
+        },
+        {
+          name: "Mixue Sogo",
+          data: mixueSogoResult.data,
+          totals: calculateTotals(mixueSogoResult.data),
+          overallStats: mixueSogoResult.overallStats,
         },
       ];
 
@@ -371,8 +396,9 @@ function MTDSummary() {
       "D' Amazon Café",
       "Ojim Café",
       "D' Amazon Café LYP",
+      "Mixue Sogo",
     ];
-    const invest = [280, 40, 80, 60, 105];
+    const invest = [280, 40, 80, 60, 105, 0];
     const combinedData = [];
 
     storeNames.forEach((storeName, index) => {
@@ -495,6 +521,7 @@ function MTDSummary() {
       "D' Amazon Café": "#ffc658",
       Ojim: "#d4edda",
       "D' Amazon Café LYP": "#e8536f",
+      "Mixue Sogo": "#c084fc",
       SDS: "#ff7300",
     };
 
@@ -549,7 +576,9 @@ function MTDSummary() {
                   ? "#d4edda"
                   : store.name === "D' Amazon Café LYP"
                     ? "#e8536f"
-                    : "#ffc658",
+                    : store.name === "Mixue Sogo"
+                      ? "#c084fc"
+                      : "#ffc658",
       }));
   };
 
@@ -577,7 +606,9 @@ function MTDSummary() {
                   ? "#d4edda"
                   : store.name === "D' Amazon Café LYP"
                     ? "#e8536f"
-                    : "#ffc658",
+                    : store.name === "Mixue Sogo"
+                      ? "#c084fc"
+                      : "#ffc658",
       }));
   };
 
@@ -959,6 +990,7 @@ function MTDSummary() {
               "timesheet_summary",
               "salary_summary",
               "monthly_sales_summary",
+              "monthly_salary",
               "trends",
               "comparison",
               "distribution",
@@ -987,6 +1019,8 @@ function MTDSummary() {
                       ? "Salary Summary"
                       : tab === "monthly_sales_summary"
                       ? "Monthly Sales Summary"
+                      : tab === "monthly_salary"
+                        ? "Monthly Salary"
                       : tab === "sds"
                         ? "Daily Data Summary"
                         : tab === "stock_estimator"
@@ -1497,6 +1531,21 @@ function MTDSummary() {
                     />
                     <span>D' Amazon Café LYP</span>
                   </label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleCafes["Mixue Sogo"]}
+                      onChange={() => handleCafeToggle("Mixue Sogo")}
+                    />
+                    <span>Mixue Sogo</span>
+                  </label>
                 </div>
               </div>
 
@@ -1585,6 +1634,19 @@ function MTDSummary() {
                           D' Amazon Café LYP
                         </th>
                       )}
+                      {visibleCafes["Mixue Sogo"] && (
+                        <th
+                          style={{
+                            border: "1px solid #ddd",
+                            padding: "12px",
+                            textAlign: "center",
+                            fontWeight: "bold",
+                            backgroundColor: "#f3e8ff",
+                          }}
+                        >
+                          Mixue Sogo
+                        </th>
+                      )}
                       <th
                         style={{
                           border: "1px solid #ddd",
@@ -1608,6 +1670,7 @@ function MTDSummary() {
                         "D' Amazon Café": 0,
                         "Ojim Café": 0,
                         "D' Amazon Café LYP": 0,
+                        "Mixue Sogo": 0,
                       };
 
                       selectedMonths.forEach((month) => {
@@ -1625,6 +1688,7 @@ function MTDSummary() {
                                     "D' Amazon Café": 0,
                                     "Ojim Café": 0,
                                     "D' Amazon Café LYP": 0,
+                                    "Mixue Sogo": 0,
                                   });
                                 }
                                 const dateEntry = dateMap.get(dateKey);
@@ -1728,6 +1792,17 @@ function MTDSummary() {
                                     {formatCurrency(row["D' Amazon Café LYP"])}
                                   </td>
                                 )}
+                                {visibleCafes["Mixue Sogo"] && (
+                                  <td
+                                    style={{
+                                      border: "1px solid #ddd",
+                                      padding: "12px",
+                                      textAlign: "right",
+                                    }}
+                                  >
+                                    {formatCurrency(row["Mixue Sogo"])}
+                                  </td>
+                                )}
                                 <td
                                   style={{
                                     border: "1px solid #ddd",
@@ -1815,6 +1890,18 @@ function MTDSummary() {
                                 )}
                               </td>
                             )}
+                            {visibleCafes["Mixue Sogo"] && (
+                              <td
+                                style={{
+                                  border: "1px solid #ddd",
+                                  padding: "12px",
+                                  textAlign: "right",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                {formatCurrency(storeTotals["Mixue Sogo"])}
+                              </td>
+                            )}
                             <td
                               style={{
                                 border: "1px solid #ddd",
@@ -1855,6 +1942,11 @@ function MTDSummary() {
           {/* time sheet  Tab brand and staff */}
           {activeTab === "monthly_sales_summary" && (
             <MonthSalesSummary mon={selectedMonths} year={selectedYear} />
+          )}
+
+          {/* Monthly Salary Tab */}
+          {activeTab === "monthly_salary" && (
+            <MonthlySalary month={selectedMonths} year={selectedYear} />
           )}
 
           {/* Trends Tab */}
@@ -1934,6 +2026,16 @@ function MTDSummary() {
                     <label>
                       <input
                         type="checkbox"
+                        checked={visibleLines1.MixueSogo}
+                        onChange={() => handleToggle1("MixueSogo")}
+                      />
+                      Mixue Sogo
+                    </label>
+                  </div>
+                  <div className="col-md-2">
+                    <label>
+                      <input
+                        type="checkbox"
                         checked={visibleLines1.SDS}
                         onChange={() => handleToggle1("SDS")}
                       />
@@ -1999,6 +2101,16 @@ function MTDSummary() {
                         stroke="#e8536f"
                         strokeWidth={3}
                         name="D' Amazon Café LYP"
+                        connectNulls={false}
+                      />
+                    )}
+                    {visibleLines1.MixueSogo && (
+                      <Line
+                        type="monotone"
+                        dataKey="Mixue Sogo_actual"
+                        stroke="#c084fc"
+                        strokeWidth={3}
+                        name="Mixue Sogo"
                         connectNulls={false}
                       />
                     )}
@@ -2091,6 +2203,17 @@ function MTDSummary() {
                     <label>
                       <input
                         type="checkbox"
+                        checked={visibleLines.MixueSogo}
+                        onChange={() => handleToggle("MixueSogo")}
+                      />
+                      Mixue Sogo
+                    </label>
+                  </div>
+
+                  <div className="col-md-2">
+                    <label>
+                      <input
+                        type="checkbox"
                         checked={visibleLines.SDS}
                         onChange={() => handleToggle("SDS")}
                       />
@@ -2156,6 +2279,16 @@ function MTDSummary() {
                         stroke="#e8536f"
                         strokeWidth={3}
                         name="D' Amazon Café LYP Profit"
+                        connectNulls={false}
+                      />
+                    )}
+                    {visibleLines.MixueSogo && (
+                      <Line
+                        type="monotone"
+                        dataKey="Mixue Sogo_profit"
+                        stroke="#c084fc"
+                        strokeWidth={3}
+                        name="Mixue Sogo Profit"
                         connectNulls={false}
                       />
                     )}

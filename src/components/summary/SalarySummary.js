@@ -464,6 +464,7 @@ const SalarySummary = ({ month = 11, year = new Date().getFullYear() }) => {
 
   const cafes = [
     { value: "ojim_finance", label: "Ojim Cafe" },
+    { value: "mixue_sogo", label: "Mixue Sogo" },
     { value: "aero_foods_finance", label: "Mixue" },
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
     { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
@@ -473,6 +474,7 @@ const SalarySummary = ({ month = 11, year = new Date().getFullYear() }) => {
 
   const allCafesForCombined = [
     { value: "ojim_finance",            label: "Ojim" },
+    { value: "mixue_sogo",              label: "Mixue Sogo" },
     { value: "aero_foods_finance",      label: "Mixue" },
     { value: "amazon_cafe_finance",     label: "Amazon" },
     { value: "amazon_cafe_finance_lyp", label: "Amazon LYP" },

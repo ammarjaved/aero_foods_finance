@@ -9,6 +9,7 @@ const ALL_DATABASES = [
   { value: "amazon_cafe_finance_lyp",  label: "Amazon Cafe Finance LYP" },
   { value: "abe_yus_finance",          label: "Abe Yus Finance" },
   { value: "ojim_finance",             label: "Ojim Finance" },
+  { value: "mixue_sogo",               label: "Mixue Sogo Finance" },
 ];
 
 const DATABASES = [

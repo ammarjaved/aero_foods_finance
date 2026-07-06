@@ -243,7 +243,7 @@ function UserFormComponent() {
                 value={formData.db}
                 onChange={handleChange}
                 className="form-select"
-                disabled={true}
+                disabled={isEditing}
               >
                 <option value="">Select a cafe</option>
                 <option value="mixue">Mixue</option>
@@ -251,6 +251,7 @@ function UserFormComponent() {
                 <option value="amz">Amazon</option>
                 <option value={"amz-lyp"}>Amazon-LYP</option>
                 <option value="ojim">Ojim</option>
+                <option value="mixue-sogo">Mixue Sogo</option>
               </select>
               <small className="text-muted">
                 {isEditing

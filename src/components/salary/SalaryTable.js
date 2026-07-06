@@ -29,6 +29,7 @@ function SalaryTable({ onRowClick }) {
       "dac",
       "dac_lyp",
       "ojim",
+      "mixue_sogo",
       "sds_hq",
     ];
     return companyFields.reduce((total, field) => {
@@ -53,6 +54,7 @@ function SalaryTable({ onRowClick }) {
       "dac",
       "dac_lyp",
       "ojim",
+      "mixue_sogo",
       "sds_hq",
     ];
     return companyFields.reduce((grandTotal, field) => {
@@ -255,6 +257,11 @@ function SalaryTable({ onRowClick }) {
     {
       key: "ojim",
       label: "Ojim",
+      isAmount: true,
+    },
+    {
+      key: "mixue_sogo",
+      label: "Mixue Sogo",
       isAmount: true,
     },
     {

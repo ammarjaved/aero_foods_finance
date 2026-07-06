@@ -23,6 +23,7 @@ $db2 = 'abe_yus_finance';
 $db3 = 'amazon_cafe_finance';
 $db4 = 'ojim_finance';
 $db5 = 'amazon_cafe_finance_lyp';
+$db6 = 'mixue_sogo';
 
 if($_GET['db']=='mixue'){
     $databases=$db1;
@@ -34,6 +35,8 @@ if($_GET['db']=='mixue'){
     $databases=$db4;
 }else if($_GET['db']=='amz-lyp'){
     $databases=$db5;
+}else if($_GET['db']=='mixue-sogo'){
+    $databases=$db6;
 }
 
 

@@ -9,6 +9,7 @@ const OUTLETS = [
   { label: "Amazon Cafe LYP", url: "http://121.121.232.54:88/amazon-cafe-lyp/fetch_bank_reconciliation_sheet.php" },
   { label: "Abe Yus", url: "http://121.121.232.54:88/abe-yus/fetch_bank_reconciliation_sheet.php" },
   { label: "Ojim Cafe", url: "http://121.121.232.54:88/ojim-cafe/fetch_bank_reconciliation_sheet.php" },
+  { label: "Mixue Sogo", url: "http://121.121.232.54:88/mixue-sogo/fetch_bank_reconciliation_sheet.php" },
 ];
 
 const MONTHS = [

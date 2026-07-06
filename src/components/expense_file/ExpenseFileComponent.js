@@ -11,6 +11,7 @@ const COMPANIES = [
   { value: "Amazon LYP",  label: "Amazon LYP",  db: "amazon_cafe_finance_lyp" },
   { value: "Abe Yus",     label: "Abe Yus",     db: "abe_yus_finance" },
   { value: "Ojim",        label: "Ojim",        db: "ojim_finance" },
+  { value: "Mixue Sogo",  label: "Mixue Sogo",  db: "mixue_sogo" },
   { value: "SDS HQ",      label: "SDS HQ",      db: "sds_hq" },
 ];
 

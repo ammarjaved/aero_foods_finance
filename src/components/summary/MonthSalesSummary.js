@@ -11,6 +11,7 @@ function MonthSalesSummary({ mon, year }) {
 
   const cafes = [
     { value: "ojim_finance", label: "Ojim Cafe" },
+    { value: "mixue_sogo", label: "Mixue Sogo" },
     { value: "aero_foods_finance", label: "Mixue" },
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
     { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
@@ -20,6 +21,7 @@ function MonthSalesSummary({ mon, year }) {
 
   const allCafeDBs = [
     "ojim_finance",
+    "mixue_sogo",
     "aero_foods_finance",
     "amazon_cafe_finance",
     "amazon_cafe_finance_lyp",

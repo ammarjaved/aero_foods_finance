@@ -211,6 +211,7 @@ function UserTable({ onRowClick, onCafeChange }) {
                   <option value={"amz"}>Amazon</option>
                   <option value={"amz-lyp"}>Amazon-LYP</option>
                   <option value={"ojim"}>Ojim</option>
+                  <option value={"mixue-sogo"}>Mixue Sogo</option>
                 </select>
               </div>
 

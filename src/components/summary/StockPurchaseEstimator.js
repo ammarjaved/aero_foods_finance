@@ -8,6 +8,7 @@ const CAFES = [
   { value: "amazon_cafe_finance_lyp",  label: "D' Amazon Cafe LYP" },
   { value: "abe_yus_finance",          label: "Aby Yus" },
   { value: "ojim_finance",             label: "Ojim Cafe" },
+  { value: "mixue_sogo",               label: "Mixue Sogo" },
 ];
 
 function StockPurchaseEstimator({ month, year }) {

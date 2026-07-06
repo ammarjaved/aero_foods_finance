@@ -32,6 +32,7 @@ $db2 = 'abe_yus_finance';
 $db3 = 'amazon_cafe_finance';
 $db4 = 'ojim_finance';
 $db5 = 'amazon_cafe_finance_lyp';
+$db6 = 'mixue_sogo';
 
 if($input['db']=='mixue'){
     $dbname=$db1;
@@ -43,6 +44,8 @@ if($input['db']=='mixue'){
     $dbname=$db4;
 }else if($input['db']=='amz-lyp'){
     $dbname=$db5;
+}else if($input['db']=='mixue-sogo'){
+    $dbname=$db6;
 }
 
 

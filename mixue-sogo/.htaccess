@@ -1,0 +1,22 @@
+# ─── Upload & timeout limits ───
+php_value upload_max_filesize 20M
+php_value post_max_size 50M
+php_value max_execution_time 120
+php_value max_input_time 120
+php_value memory_limit 256M
+php_value max_file_uploads 20
+
+# ─── Keep connections alive under load ───
+<IfModule mod_reqtimeout.c>
+  RequestReadTimeout header=30 body=120
+</IfModule>
+
+# ─── Rewrite rules ───
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /aero-foods/
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /mixue-sogo/index.html [L]
+</IfModule>

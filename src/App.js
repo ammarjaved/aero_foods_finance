@@ -5,6 +5,7 @@ import DashboardYus from "./com_abe/daily-sheet/Dashboard";
 import DashboardAmz from "./com_amz/daily-sheet/Dashboard";
 import DashboardAmzLyp from "./com_amz_lyp/daily-sheet/Dashboard";
 import DashboardOjim from "./ojim/daily-sheet/Dashboard";
+import DashboardMixueSogo from "./com_mixue_sogo/daily-sheet/Dashboard";
 
 import Landing from "./Landing";
 import LandingYus from "./com_abe/Landing";
@@ -17,6 +18,7 @@ import TimesheetAmazon from "./com_amz/time-sheet-amz/TimesheetAmazon";
 import TimesheetAmazonLyp from "./com_amz_lyp/time-sheet-amz/TimesheetAmazon";
 
 import TimesheetOjim from "./ojim/time-sheet-ojim/TimesheetOjim";
+import TimesheetMixueSogo from "./com_mixue_sogo/time-sheet-mixue-sogo/TimesheetMixueSogo";
 
 import DailyWastage from "./components/wastage/DailyWastage";
 import DailyWastageYus from "./com_abe/wastage/DailyWastage";
@@ -24,6 +26,7 @@ import DailyWastageAmz from "./com_amz/wastage/DailyWastage";
 import DailyWastageAmzLyp from "./com_amz_lyp/wastage/DailyWastage";
 
 import DailyWastageOjim from "./ojim/wastage/DailyWastage";
+import DailyWastageMixueSogo from "./com_mixue_sogo/wastage/DailyWastage";
 
 import DailyBankReconciliation from "./components/bank-reconciliation/DailyBankReconciliation";
 import DailyBankReconciliationYus from "./com_abe/bank-reconciliation/DailyBankReconciliation";
@@ -31,6 +34,7 @@ import DailyBankReconciliationAmz from "./com_amz/bank-reconciliation/DailyBankR
 import DailyBankReconciliationAmzLyp from "./com_amz_lyp/bank-reconciliation/DailyBankReconciliation";
 
 import DailyBankReconciliationOjim from "./ojim/bank-reconciliation/DailyBankReconciliation";
+import DailyBankReconciliationMixueSogo from "./com_mixue_sogo/bank-reconciliation/DailyBankReconciliation";
 
 import MonthlyMaterials from "./components/materials/MonthlyMaterials";
 import MonthlyMaterialsYus from "./com_abe/materials/MonthlyMaterials";
@@ -38,6 +42,7 @@ import MonthlyMaterialsAmz from "./com_amz/materials/MonthlyMaterials";
 import MonthlyMaterialsAmzLyp from "./com_amz_lyp/materials/MonthlyMaterials";
 
 import MonthlyMaterialsOjim from "./ojim/materials/MonthlyMaterials";
+import MonthlyMaterialsMixueSogo from "./com_mixue_sogo/materials/MonthlyMaterials";
 
 import StockIn from "./components/stock-in/StockIn";
 import StockInYus from "./com_abe/stock-in/StockIn";
@@ -45,6 +50,7 @@ import StockInAmz from "./com_amz/stock-in/StockIn";
 import StockInAmzLyp from "./com_amz_lyp/stock-in/StockIn";
 
 import StockInOjim from "./ojim/stock-in/StockIn";
+import StockInMixueSogo from "./com_mixue_sogo/stock-in/StockIn";
 
 import Summary from "./components/summary/Summary";
 import ChatApp from "./components/summary/ChatApp";
@@ -57,12 +63,15 @@ import ExpensesYus from "./com_abe/expense/Expense";
 import ExpensesAmz from "./com_amz/expense/Expense";
 import ExpensesAmzLyp from "./com_amz_lyp/expense/Expense";
 import ExpensesOjim from "./ojim/expense/Expense";
+import ExpensesMixueSogo from "./com_mixue_sogo/expense/Expense";
 import ExpensesSDS from "./components/expense_sds/Expense";
 import ExpenseFile from "./components/expense_file/ExpenseFile";
 import Salary from "./components/salary/Salary";
 import User from "./components/user/User";
+import Payroll from "./components/payroll/Payroll";
 import Audit from "./components/audit/Audit";
 import LandingOjim from "./ojim/Landing";
+import LandingMixueSogo from "./com_mixue_sogo/Landing";
 import TimeAnalysis from "./components/timeshete-analysis/TimeAnalysis";
 import Payable from "./components/payable/Payable";
 function App() {
@@ -76,12 +85,14 @@ function App() {
         <Route path="/landing-amz" element={<LandingAmz />} />
         <Route path="/landing-amz-lyp" element={<LandingAmzLyp />} />
         <Route path="/landing-ojim" element={<LandingOjim />} />
+        <Route path="/landing-mixue-sogo" element={<LandingMixueSogo />} />
 
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard-yus" element={<DashboardYus />} />
         <Route path="/dashboard-amz" element={<DashboardAmz />} />
         <Route path="/dashboard-amz-lyp" element={<DashboardAmzLyp />} />
         <Route path="/dashboard-ojim" element={<DashboardOjim />} />
+        <Route path="/dashboard-mixue-sogo" element={<DashboardMixueSogo />} />
 
         <Route path="/timesheet" element={<Timesheet />} />
         <Route path="/wastage" element={<DailyWastage />} />
@@ -89,6 +100,7 @@ function App() {
         <Route path="/wastage-amz" element={<DailyWastageAmz />} />
         <Route path="/wastage-amz-lyp" element={<DailyWastageAmzLyp />} />
         <Route path="/wastage-ojim" element={<DailyWastageOjim />} />
+        <Route path="/wastage-mixue-sogo" element={<DailyWastageMixueSogo />} />
 
         <Route path="/reconciliation" element={<DailyBankReconciliation />} />
         <Route
@@ -109,18 +121,24 @@ function App() {
           path="/reconciliation-ojim"
           element={<DailyBankReconciliationOjim />}
         />
+        <Route
+          path="/reconciliation-mixue-sogo"
+          element={<DailyBankReconciliationMixueSogo />}
+        />
 
         <Route path="/materials" element={<MonthlyMaterials />} />
         <Route path="/materials-yus" element={<MonthlyMaterialsYus />} />
         <Route path="/materials-amz" element={<MonthlyMaterialsAmz />} />
         <Route path="/materials-amz-lyp" element={<MonthlyMaterialsAmzLyp />} />
         <Route path="/materials-ojim" element={<MonthlyMaterialsOjim />} />
+        <Route path="/materials-mixue-sogo" element={<MonthlyMaterialsMixueSogo />} />
 
         <Route path="/stockin" element={<StockIn />} />
         <Route path="/stockin-yus" element={<StockInYus />} />
         <Route path="/stockin-amz" element={<StockInAmz />} />
         <Route path="/stockin-amz-lyp" element={<StockInAmzLyp />} />
         <Route path="/stockin-ojim" element={<StockInOjim />} />
+        <Route path="/stockin-mixue-sogo" element={<StockInMixueSogo />} />
 
         <Route path="/summary" element={<Summary />} />
         <Route path="/chatapp" element={<ChatApp />} />
@@ -132,6 +150,7 @@ function App() {
         <Route path="/TimesheetAmazon" element={<TimesheetAmazon />} />
         <Route path="/TimesheetAmazonLyp" element={<TimesheetAmazonLyp />} />
         <Route path="/TimesheetOjim" element={<TimesheetOjim />} />
+        <Route path="/TimesheetMixueSogo" element={<TimesheetMixueSogo />} />
         <Route path="/EmpTimeSheet" element={<TimeAnalysis />} />
         <Route path="/Expenses" element={<Expenses />} />
         <Route path="/Expenses-yus" element={<ExpensesYus />} />
@@ -139,11 +158,13 @@ function App() {
         <Route path="/Expenses-amz-lyp" element={<ExpensesAmzLyp />} />
 
         <Route path="/Expenses-ojim" element={<ExpensesOjim />} />
+        <Route path="/Expenses-mixue-sogo" element={<ExpensesMixueSogo />} />
 
         <Route path="/ExpensesSDS" element={<ExpensesSDS />} />
         <Route path="/expense-file" element={<ExpenseFile />} />
         <Route path="/Salary" element={<Salary />} />
         <Route path="/User" element={<User />} />
+        <Route path="/payroll" element={<Payroll />} />
 
         <Route path="/Audit" element={<Audit />} />
 

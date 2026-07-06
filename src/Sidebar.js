@@ -122,6 +122,17 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "https://ws.sogo.com.my/TenantSales.asp", label: "SOGO Link" },
   ];
 
+  const menuItems_mixue_sogo = [
+    { href: "/landing-mixue-sogo", label: "Home" },
+    { href: "/TimesheetMixueSogo", label: "Time Sheet" },
+    { href: "/dashboard-mixue-sogo", label: "Daily Sheet" },
+    { href: "/wastage-mixue-sogo", label: "Daily Wastage" },
+    { href: "/reconciliation-mixue-sogo", label: "Bank Reconciliation" },
+    { href: "/materials-mixue-sogo", label: "Materials" },
+    { href: "/stockin-mixue-sogo", label: "Stock In" },
+    { href: "/Expenses-mixue-sogo", label: "Expenditure" },
+  ];
+
   // Function to check if current page matches the menu item
   const isCurrentPage = (href) => {
     return location.pathname === href;
@@ -181,6 +192,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     if (sectionKey === "amazon") items = menuItems_amz;
     if (sectionKey === "amazon-lyp") items = menuItems_amz_lyp;
     if (sectionKey === "ojim") items = menuItems_ojim;
+    if (sectionKey === "mixue-sogo") items = menuItems_mixue_sogo;
 
     const hasActivePage = items.some((item) => isCurrentPage(item.href));
 
@@ -255,6 +267,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
               {renderMenuItems(menuItems_ojim)}
             </div>
           )}
+          {sectionKey === "mixue-sogo" && (
+            <div className="nav flex-column" style={{ padding: "5px 0" }}>
+              {renderMenuItems(menuItems_mixue_sogo)}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -298,6 +315,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           {renderCollapsibleSection("amazon", "Amazon")}
           {renderCollapsibleSection("amazon-lyp", "Amazon LYP")}
           {renderCollapsibleSection("ojim", "Ojim")}
+          {renderCollapsibleSection("mixue-sogo", "Mixue Sogo")}
         </div>
 
         {/* Common Items - Always Visible */}
@@ -605,6 +623,36 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
               }}
             >
               {isCurrentPage("/User") && "► "} User Management
+            </div>
+          )}
+
+          {isAdmin && (
+            <div
+              onClick={() => handleNavigation("/payroll")}
+              style={{
+                borderBottom: "1px white solid",
+                cursor: "pointer",
+                backgroundColor: isCurrentPage("/payroll")
+                  ? "rgba(255,255,255,0.2)"
+                  : "rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                margin: "2px 0",
+                fontWeight: isCurrentPage("/payroll") ? "bold" : "normal",
+                transition: "background-color 0.2s ease",
+              }}
+              className="nav-link text-white py-2"
+              onMouseEnter={(e) => {
+                if (!isCurrentPage("/payroll")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCurrentPage("/payroll")) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+              }}
+            >
+              {isCurrentPage("/payroll") && "► "} Payroll Management
             </div>
           )}
 

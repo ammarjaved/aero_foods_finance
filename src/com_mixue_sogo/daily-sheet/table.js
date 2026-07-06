@@ -1,0 +1,706 @@
+﻿import React, { useEffect, useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+
+function Table({ onRowClick }) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(31);
+  const [filterValues, setFilterValues] = useState({});
+  const [filteredData, setFilteredData] = useState([]);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
+  const date = new Date();
+  const monthIndex = date.getMonth();
+  const monthNumber = monthIndex + 1;
+  const year = date.getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  const [selectedYear, setSelectedYear] = useState(year);
+
+  const handleMonthChange = (e) => {
+    const monthValue = e.target.value;
+    localStorage.setItem("month", monthValue);
+    setSelectedMonth(monthValue);
+    fetchData(monthValue, selectedYear);
+  };
+
+  const handleYearChange = (e) => {
+    const yearValue = e.target.value;
+    localStorage.setItem("year", yearValue);
+    setSelectedYear(yearValue);
+    fetchData(selectedMonth, yearValue);
+  };
+
+  useEffect(() => {
+    const monthvalue = localStorage.getItem("month");
+    const yearvalue = localStorage.getItem("year");
+
+    if (monthvalue) {
+      fetchData(monthvalue, yearvalue);
+      setSelectedMonth(monthvalue);
+      setSelectedYear(yearvalue);
+    } else {
+      fetchData(selectedMonth, selectedYear);
+    }
+
+    window.addEventListener("newRecordAdded", handleNewRecord);
+    window.addEventListener("recordUpdated", handleRecordUpdate);
+
+    return () => {
+      window.removeEventListener("newRecordAdded", handleNewRecord);
+      window.removeEventListener("recordUpdated", handleRecordUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [data, filterValues]);
+
+  const fetchData = (month, year) => {
+    setLoading(true);
+    fetch(
+      "http://121.121.232.54:88/mixue-sogo/fetchData.php?month=" +
+        month +
+        "&year=" +
+        year
+    )
+      .then((response) => response.json())
+      .then((fetchedData) => {
+        setData(fetchedData);
+        setFilteredData(fetchedData);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
+  };
+
+  const handleNewRecord = (event) => {
+    const newRecord = event.detail;
+    setData((prevData) => [newRecord, ...prevData]);
+  };
+
+  const handleRecordUpdate = (event) => {
+    const updatedRecord = event.detail;
+    setData((prevData) =>
+      prevData.map((record) =>
+        record.id === updatedRecord.id ? updatedRecord : record
+      )
+    );
+  };
+
+  const applyFilters = () => {
+    let filtered = [...data];
+
+    Object.entries(filterValues).forEach(([key, value]) => {
+      if (value && value.trim() !== "") {
+        filtered = filtered.filter(
+          (record) =>
+            record[key] &&
+            record[key].toString().toLowerCase().includes(value.toLowerCase())
+        );
+      }
+    });
+
+    setFilteredData(filtered);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilterValues({});
+  };
+
+  const toggleFilterPanel = () => {
+    setIsFilterPanelOpen(!isFilterPanelOpen);
+  };
+
+  // Calculate totals for numeric columns
+  const calculateTotals = () => {
+    const totals = {};
+    const numericColumns = [
+      "cash",
+      "touch_n_go",
+      "visa",
+      "master",
+      "my_debit",
+      "duit_now",
+      "voucher",
+      "visa_master",
+      "sales_walk_in",
+      "shopee",
+      "grab",
+      "panda",
+      "sales_delivery",
+      "total_sales",
+      "transaction_count",
+      "avg_transaction_value",
+      "discount",
+      "labour_hours_used",
+      "sales_per_labour_hours",
+      "actual_bank_amount",
+      "cash_box_amount",
+      "variance",
+    ];
+
+    numericColumns.forEach((col) => {
+      totals[col] = currentRecords.reduce((sum, record) => {
+        return sum + (parseFloat(record[col]) || 0);
+      }, 0);
+    });
+
+    return totals;
+  };
+
+  const columns = [
+    { key: "month_date", label: "Month Date" },
+    { key: "day", label: "Day" },
+    {
+      key: "cash",
+      label: "Cash",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "touch_n_go",
+      label: "Online Order",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "visa",
+      label: "Visa",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
+    },
+    {
+      key: "master",
+      label: "Master",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
+    },
+    {
+      key: "my_debit",
+      label: "My Debit",
+      headerStyle: { backgroundColor: "#de1414ff" },
+      cellStyle: { backgroundColor: "#de1414ff" },
+    },
+    {
+      key: "duit_now",
+      label: "DuitNow",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "voucher",
+      label: "Voucher",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "visa_master",
+      label: "Bank Card",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "sales_walk_in",
+      label: "Walk-in Sales",
+      headerStyle: { backgroundColor: "#196F3D" },
+      cellStyle: { backgroundColor: "#196F3D" },
+    },
+    {
+      key: "shopee",
+      label: "Shopee",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "grab",
+      label: "Grab",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "panda",
+      label: "Foodpanda",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "sales_delivery",
+      label: "Delivery Sales",
+      headerStyle: { backgroundColor: "#2E86C1" },
+      cellStyle: { backgroundColor: "#2E86C1" },
+    },
+    {
+      key: "total_sales",
+      label: "Total Sales",
+      headerStyle: { backgroundColor: "#B7950B" },
+      cellStyle: { backgroundColor: "#B7950B" },
+    },
+    {
+      key: "month_date_sales",
+      label: "Month To Date Sales",
+      headerStyle: { backgroundColor: "#B7950B" },
+      cellStyle: { backgroundColor: "#B7950B" },
+    },
+    { key: "transaction_count", label: "Transaction Count" },
+    { key: "avg_transaction_value", label: "Avg Transaction" },
+    { key: "discount", label: "100% Discount" },
+    {
+      key: "labour_hours_used",
+      label: "Labour Hours",
+      headerStyle: { backgroundColor: "#8E44AD" },
+      cellStyle: { backgroundColor: "#8E44AD" },
+    },
+    {
+      key: "sales_per_labour_hours",
+      label: "Sales/Labour Hour",
+      headerStyle: { backgroundColor: "#8E44AD" },
+      cellStyle: { backgroundColor: "#8E44AD" },
+    },
+    {
+      key: "actual_bank_amount",
+      label: "Actual Bank Amount",
+      headerStyle: { backgroundColor: "#C0392B" },
+      cellStyle: { backgroundColor: "#C0392B" },
+    },
+    {
+      key: "cash_box_amount",
+      label: "Cash Box Amount",
+      headerStyle: { backgroundColor: "#C0392B" },
+      cellStyle: { backgroundColor: "#C0392B" },
+    },
+    {
+      key: "variance",
+      label: "Variance",
+      headerStyle: { backgroundColor: "#fff" },
+      cellStyle: { backgroundColor: "#fff" },
+    },
+    { key: "bank_in_date", label: "Bank-in Date" },
+    { key: "recipt_ref_no", label: "Receipt Ref No." },
+    { key: "remarks", label: "Remarks" },
+  ];
+
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
+
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = filteredData.slice(
+    indexOfFirstRecord,
+    indexOfLastRecord
+  );
+  const totalPages = Math.ceil(filteredData.length / recordsPerPage);
+  const totals = calculateTotals();
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const hasActiveFilters = Object.values(filterValues).some(
+    (value) => value && value.trim() !== ""
+  );
+
+  return (
+    <div className="container-fluid mt-2">
+      {loading ? (
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Filter section */}
+          <div className="card mb-3">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center">
+                <button
+                  className="btn btn-sm btn-link p-0 me-2"
+                  onClick={toggleFilterPanel}
+                  aria-expanded={isFilterPanelOpen}
+                  aria-controls="filterPanel"
+                >
+                  <i
+                    className={`bi ${
+                      isFilterPanelOpen ? "bi-chevron-down" : "bi-chevron-right"
+                    }`}
+                  ></i>
+                </button>
+                <h5 className="mb-0">
+                  Filters{" "}
+                  {hasActiveFilters && (
+                    <span className="badge bg-primary ms-2">Active</span>
+                  )}
+                </h5>
+              </div>
+              <div>
+                {hasActiveFilters && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={clearFilters}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+            {isFilterPanelOpen && (
+              <div className="card-body" id="filterPanel">
+                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2">
+                  {filterableColumns.map((column) => (
+                    <div className="col" key={`filter-${column.key}`}>
+                      <div className="form-floating">
+                        <input
+                          type="date"
+                          className="form-control"
+                          id={`filter-${column.key}`}
+                          placeholder={column.label}
+                          value={filterValues[column.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(column.key, e.target.value)
+                          }
+                        />
+                        <label htmlFor={`filter-${column.key}`}>
+                          {column.label}
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="monthSelect"
+                        value={selectedMonth}
+                        onChange={handleMonthChange}
+                      >
+                        <option value="">Select month</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                      </select>
+                      <label htmlFor="monthSelect">Month</label>
+                    </div>
+                  </div>
+
+                  <div className="col">
+                    <div className="form-floating">
+                      <select
+                        className="form-select"
+                        id="yearSelect"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <label htmlFor="yearSelect">Year</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination controls - top */}
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              Showing {indexOfFirstRecord + 1} to{" "}
+              {Math.min(indexOfLastRecord, filteredData.length)} of{" "}
+              {filteredData.length} records
+            </div>
+            <div className="d-flex align-items-center">
+              <label className="me-2">Records per page:</label>
+              <select
+                className="form-select form-select-sm"
+                value={recordsPerPage}
+                onChange={(e) => setRecordsPerPage(Number(e.target.value))}
+                style={{ width: "auto" }}
+              >
+                <option value={31}>31</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="table-responsive">
+            <table className="table table-striped table-hover table-bordered">
+              <thead>
+                <tr>
+                  {columns.map((column) => (
+                    <th key={column.key} style={column.headerStyle || {}}>
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {currentRecords.length > 0 ? (
+                  <>
+                    {currentRecords.map((record) => (
+                      <tr
+                        key={record.id}
+                        onClick={() => onRowClick(record)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {columns.map((column) => {
+                          if (column.key === "month_date") {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {record[column.key]}
+                              </td>
+                            );
+                          } else if (column.key === "day") {
+                            const dayNum = parseInt(record[column.key]);
+                            const dayIndex = dayNum === 7 ? 0 : dayNum - 1;
+
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {days[dayIndex] || "Invalid"}
+                              </td>
+                            );
+                          } else if (
+                            column.key === "sales_walk_in" ||
+                            column.key === "total_sales" ||
+                            column.key === "sales_delivery" ||
+                            column.key === "month_date_sales" ||
+                            column.key === "avg_transaction_value" ||
+                            column.key === "transaction_count" ||
+                            column.key === "labour_hours_used" ||
+                            column.key === "sales_per_labour_hours"
+                          ) {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {parseFloat(record[column.key])
+                                  .toFixed(2)
+                                  .toString()}
+                              </td>
+                            );
+                          } else if (column.key === "variance") {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={{
+                                  ...(column.cellStyle || {}),
+                                  color:
+                                    parseFloat(record[column.key]).toFixed(2) >
+                                    0
+                                      ? "green"
+                                      : "red",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                {parseFloat(record[column.key])
+                                  .toFixed(2)
+                                  .toString()}
+                              </td>
+                            );
+                          } else {
+                            return (
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                style={column.cellStyle || {}}
+                              >
+                                {record[column.key]}
+                              </td>
+                            );
+                          }
+                        })}
+                      </tr>
+                    ))}
+
+                    {/* Total Row */}
+                    <tr
+                      style={{ fontWeight: "bold", backgroundColor: "#f0f0f0" }}
+                    >
+                      {columns.map((column) => {
+                        if (column.key === "month_date") {
+                          return (
+                            <td
+                              key={`total-${column.key}`}
+                              style={{ fontWeight: "bold" }}
+                            >
+                              TOTAL
+                            </td>
+                          );
+                        } else if (column.key === "day") {
+                          return <td key={`total-${column.key}`}></td>;
+                        } else if (
+                          column.key === "cash" ||
+                          column.key === "touch_n_go" ||
+                          column.key === "visa" ||
+                          column.key === "master" ||
+                          column.key === "my_debit" ||
+                          column.key === "duit_now" ||
+                          column.key === "voucher" ||
+                          column.key === "visa_master" ||
+                          column.key === "sales_walk_in" ||
+                          column.key === "shopee" ||
+                          column.key === "grab" ||
+                          column.key === "panda" ||
+                          column.key === "sales_delivery" ||
+                          column.key === "total_sales" ||
+                          column.key === "transaction_count" ||
+                          column.key === "avg_transaction_value" ||
+                          column.key === "discount" ||
+                          column.key === "labour_hours_used" ||
+                          column.key === "sales_per_labour_hours" ||
+                          column.key === "actual_bank_amount" ||
+                          column.key === "cash_box_amount"
+                        ) {
+                          return (
+                            <td
+                              key={`total-${column.key}`}
+                              style={column.cellStyle || {}}
+                            >
+                              {totals[column.key].toFixed(2)}
+                            </td>
+                          );
+                        } else if (column.key === "variance") {
+                          return (
+                            <td
+                              key={`total-${column.key}`}
+                              style={{
+                                color: totals[column.key] > 0 ? "green" : "red",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {totals[column.key].toFixed(2)}
+                            </td>
+                          );
+                        } else {
+                          return <td key={`total-${column.key}`}></td>;
+                        }
+                      })}
+                    </tr>
+                  </>
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length} className="text-center">
+                      No records found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination controls - bottom */}
+          <nav aria-label="Page navigation">
+            <ul className="pagination justify-content-center">
+              <li
+                className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  style={{ backgroundColor: "#F8D7DA" }}
+                  onClick={goToPreviousPage}
+                >
+                  Previous
+                </button>
+              </li>
+
+              {Array.from({ length: totalPages }).map((_, index) => {
+                const pageNumber = index + 1;
+
+                if (
+                  pageNumber === 1 ||
+                  pageNumber === totalPages ||
+                  (pageNumber >= currentPage - 1 &&
+                    pageNumber <= currentPage + 1)
+                ) {
+                  return (
+                    <li
+                      key={pageNumber}
+                      className={`page-item ${
+                        currentPage === pageNumber ? "active" : ""
+                      }`}
+                    >
+                      <button
+                        style={{ backgroundColor: "#E80000" }}
+                        className="page-link"
+                        onClick={() => paginate(pageNumber)}
+                      >
+                        {pageNumber}
+                      </button>
+                    </li>
+                  );
+                } else if (
+                  (pageNumber === 2 && currentPage > 3) ||
+                  (pageNumber === totalPages - 1 &&
+                    currentPage < totalPages - 2)
+                ) {
+                  return (
+                    <li key={pageNumber} className="page-item disabled">
+                      <span className="page-link">...</span>
+                    </li>
+                  );
+                }
+
+                return null;
+              })}
+
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
+                <button
+                  style={{ backgroundColor: "#F8D7DA" }}
+                  className="page-link"
+                  onClick={goToNextPage}
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default Table;

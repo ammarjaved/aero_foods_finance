@@ -12,6 +12,7 @@ function SalaryFormComponent() {
     dac: "",
     dac_lyp: "",
     ojim: "",
+    mixue_sogo: "",
     sds_hq: "",
   };
 
@@ -73,6 +74,7 @@ function SalaryFormComponent() {
             "dac",
             "dac_lyp",
             "ojim",
+            "mixue_sogo",
             "sds_hq",
           ];
           if (floatKeys.includes(key)) {
@@ -429,6 +431,21 @@ function SalaryFormComponent() {
 
           <div className="col-md-6">
             <div className="form-group">
+              <label className="form-label">Mixue Sogo Amount</label>
+              <input
+                type="number"
+                name="mixue_sogo"
+                step="0.01"
+                value={formData.mixue_sogo}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="form-group">
               <label className="form-label">SDS HQ Amount</label>
               <input
                 type="number"
@@ -454,6 +471,7 @@ function SalaryFormComponent() {
                 (parseFloat(formData.dac) || 0) +
                 (parseFloat(formData.dac_lyp) || 0) +
                 (parseFloat(formData.ojim) || 0) +
+                (parseFloat(formData.mixue_sogo) || 0) +
                 (parseFloat(formData.sds_hq) || 0)
               ).toLocaleString("en-US", {
                 minimumFractionDigits: 2,

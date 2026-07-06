@@ -290,6 +290,7 @@ function PayableForm() {
                   <option value="Amazon LYP">Amazon LYP</option>
                   <option value="Abe Yus">Abe Yus</option>
                   <option value="Ojim">Ojim</option>
+                  <option value="Mixue Sogo">Mixue Sogo</option>
                   <option value="SDS HQ">SDS HQ</option>
                 </select>
               </div>
