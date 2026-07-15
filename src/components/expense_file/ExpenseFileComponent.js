@@ -19,7 +19,7 @@ const COMPANY_LABEL    = Object.fromEntries(COMPANIES.map((c) => [c.value, c.lab
 const COMPANY_DB       = Object.fromEntries(COMPANIES.map((c) => [c.value, c.db]));
 const DB_TO_LABEL      = Object.fromEntries(COMPANIES.map((c) => [c.db,    c.label]));
 
-const EXPENSE_TYPES = ["Rental", "Utilities", "Stock", "Logistik", "Claim", "Salary", "SDS HQ", "Others"];
+const EXPENSE_TYPES = ["Rental", "Utilities", "Stock", "Logistik", "Claim", "Salary", "SDS HQ", "Advance", "Others"];
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200, "All"];
 

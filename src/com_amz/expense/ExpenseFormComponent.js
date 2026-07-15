@@ -14,6 +14,7 @@ const EXPENSE_TYPES = [
   "Logistik",
   "Claim",
   "Salary",
+  "Advance",
   "Others",
 ];
 

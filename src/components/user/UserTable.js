@@ -19,6 +19,7 @@ function UserTable({ onRowClick, onCafeChange }) {
           username: record.username,
           password: record.password,
           is_admin: record.is_admin,
+          is_active: record.is_active || "",
           employment_type: record.employment_type || "",
           basic_salary: record.basic_salary || "",
           created_at: record.created_at,
@@ -134,6 +135,7 @@ function UserTable({ onRowClick, onCafeChange }) {
     { key: "employment_type", label: "Emp. Type" },
     { key: "basic_salary", label: "Basic Salary" },
     { key: "is_admin", label: "Admin" },
+    { key: "is_active", label: "Active" },
     { key: "created_at", label: "Created At" },
   ];
 
@@ -167,6 +169,8 @@ function UserTable({ onRowClick, onCafeChange }) {
   // Count admin users
   const adminCount = data.filter((user) => user.is_admin === "yes").length;
   const regularCount = data.length - adminCount;
+  const activeCount = data.filter((user) => user.is_active === "yes").length;
+  const inactiveCount = data.filter((user) => user.is_active === "no").length;
 
   return (
     <div className="container-fluid mt-2">
@@ -280,6 +284,15 @@ function UserTable({ onRowClick, onCafeChange }) {
                           <span className="badge bg-secondary">User</span>
                         )}
                       </td>
+                      <td>
+                        {record.is_active === "yes" ? (
+                          <span className="badge bg-success">Active</span>
+                        ) : record.is_active === "no" ? (
+                          <span className="badge bg-dark">Inactive</span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
                       <td>{formatDate(record.created_at)}</td>
                     </tr>
                   ))
@@ -304,19 +317,27 @@ function UserTable({ onRowClick, onCafeChange }) {
             <div className="card mt-3">
               <div className="card-body">
                 <div className="row">
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <h6>Total Users: {data.length}</h6>
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <h6>
                       <span className="badge bg-danger me-2">Admin</span>
                       {adminCount} users
                     </h6>
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <h6>
                       <span className="badge bg-secondary me-2">Regular</span>
                       {regularCount} users
+                    </h6>
+                  </div>
+                  <div className="col-md-3">
+                    <h6>
+                      <span className="badge bg-success me-2">Active</span>
+                      {activeCount} &nbsp;
+                      <span className="badge bg-dark me-2">Inactive</span>
+                      {inactiveCount}
                     </h6>
                   </div>
                 </div>

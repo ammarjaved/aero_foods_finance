@@ -131,6 +131,10 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/materials-mixue-sogo", label: "Materials" },
     { href: "/stockin-mixue-sogo", label: "Stock In" },
     { href: "/Expenses-mixue-sogo", label: "Expenditure" },
+    {
+      href: "https://ws.sogo.com.my/Login.asp?Msg1=Invalid+user+name+or+pass+code%21",
+      label: "SOGO Login",
+    },
   ];
 
   // Function to check if current page matches the menu item

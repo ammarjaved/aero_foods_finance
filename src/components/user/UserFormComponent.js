@@ -9,6 +9,7 @@ function UserFormComponent() {
     username: "",
     password: "",
     is_admin: "no",
+    is_active: "yes",
     employment_type: "Hours",
     basic_salary: "",
     db: currentCafe,
@@ -45,6 +46,7 @@ function UserFormComponent() {
       const submitData = {
         username: formData.username.trim(),
         is_admin: formData.is_admin,
+        is_active: formData.is_active,
         employment_type: formData.employment_type,
         basic_salary: formData.employment_type === "Monthly" && formData.basic_salary !== ""
           ? parseFloat(formData.basic_salary)
@@ -113,6 +115,7 @@ function UserFormComponent() {
       username: record.username,
       password: record.password,
       is_admin: record.is_admin,
+      is_active: record.is_active || "yes",
       employment_type: record.employment_type || "Hours",
       basic_salary: record.basic_salary || "",
       db: db,
@@ -311,6 +314,24 @@ function UserFormComponent() {
               </small>
             </div>
 
+            <div className="mb-3">
+              <label className="form-label">
+                Active <span className="text-danger">*</span>
+              </label>
+              <select
+                name="is_active"
+                value={formData.is_active}
+                onChange={handleChange}
+                className="form-select"
+              >
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+              <small className="text-muted">
+                Inactive employees are excluded from timesheets and payroll
+              </small>
+            </div>
+
             <hr className="my-3" />
             <h6 className="text-muted mb-3">Salary Information</h6>
 
@@ -362,6 +383,11 @@ function UserFormComponent() {
                 <span className="badge bg-danger me-1">Administrator</span>
               ) : (
                 <span className="badge bg-secondary me-1">Regular User</span>
+              )}
+              {formData.is_active === "yes" ? (
+                <span className="badge bg-success me-1">Active</span>
+              ) : (
+                <span className="badge bg-dark me-1">Inactive</span>
               )}
               {formData.employment_type === "Monthly" ? (
                 <span className="badge bg-primary me-1">Monthly</span>

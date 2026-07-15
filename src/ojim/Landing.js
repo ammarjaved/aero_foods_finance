@@ -81,12 +81,13 @@ function LandingOjim() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    const parsed =
+      name === "month" || name === "year"
+        ? parseInt(value, 10)
+        : parseFloat(value);
     setFormData({
       ...formData,
-      [name]:
-        name === "month" || name === "year"
-          ? parseInt(value)
-          : parseFloat(value),
+      [name]: Number.isNaN(parsed) ? 0 : parsed,
     });
   };
 

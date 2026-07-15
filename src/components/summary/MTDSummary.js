@@ -398,7 +398,7 @@ function MTDSummary() {
       "D' Amazon Café LYP",
       "Mixue Sogo",
     ];
-    const invest = [280, 40, 80, 60, 105, 0];
+    const invest = [280, 40, 80, 60, 105, 280];
     const combinedData = [];
 
     storeNames.forEach((storeName, index) => {

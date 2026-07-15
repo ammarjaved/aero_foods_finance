@@ -58,7 +58,7 @@ try {
                 // Base SQL query - adjust column names based on table structure
                 $sql = "SELECT u.id, u.username, u.password, u.is_admin,
                                u.created_at, u.updated_at,
-                               e.employment_type, e.basic_salary
+                               e.employment_type, e.basic_salary, e.is_active
                         FROM users u
                         LEFT JOIN employees e ON LOWER(TRIM(e.short_name)) = LOWER(TRIM(u.username))";
                 

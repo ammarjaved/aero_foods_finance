@@ -88,7 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['error' => 'Invalid JSON data']);
             exit;
         }
-        
+
+        // Target columns are NOT NULL; treat blank or missing input as zero
+        $num = function ($value) {
+            return is_numeric($value) ? $value : 0;
+        };
+
         // Check if target record already exists for this month/year
         $checkStmt = $pdo->prepare("SELECT id FROM targets WHERE month = ? AND year = ?");
         $checkStmt->execute([$data['month'], $data['year']]);
@@ -99,17 +104,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("
                 UPDATE targets 
                 SET sales_target = ?, growth_target = ?, labor_target = ?, 
-                    cogs_target = ?, atv_target = ?,mtd=?, updated_at = NOW(), 
+                    cogs_target = ?, atv_target = ?, updated_at = NOW(),
                     updated_by = ?
                 WHERE id = ?
             ");
             $stmt->execute([
-                $data['sales_target'],
-                $data['growth_target'],
-                $data['labor_target'],
-                $data['cogs_target'],
-                $data['atv_target'],
-                // $data['mtd'],
+                $num($data['sales_target'] ?? null),
+                $num($data['growth_target'] ?? null),
+                $num($data['labor_target'] ?? null),
+                $num($data['cogs_target'] ?? null),
+                $num($data['atv_target'] ?? null),
                 $data['user'] ?? 'system',
                 $existing['id']
             ]);
@@ -120,18 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("
                 INSERT INTO targets 
                 (month, year, sales_target, growth_target, labor_target, 
-                cogs_target, atv_target,mtd, created_by, updated_by)
-                VALUES (?, ?, ?, ?, ?, ?,?, ?, ?, ?)
+                cogs_target, atv_target, created_by, updated_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $data['month'],
                 $data['year'],
-                $data['sales_target'],
-                $data['growth_target'],
-                $data['labor_target'],
-                $data['cogs_target'],
-                $data['atv_target'],
-                // $data['mtd'],
+                $num($data['sales_target'] ?? null),
+                $num($data['growth_target'] ?? null),
+                $num($data['labor_target'] ?? null),
+                $num($data['cogs_target'] ?? null),
+                $num($data['atv_target'] ?? null),
                 $data['user'] ?? 'system',
                 $data['user'] ?? 'system'
             ]);

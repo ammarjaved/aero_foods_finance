@@ -35,7 +35,7 @@ try {
         exit;
     }
 
-    // Fetch employees (select all columns — avoids hard-coding column names)
+    // Fetch employees (select all columns - avoids hard-coding column names)
     $empQuery = "SELECT * FROM public.employees WHERE is_active = 'yes'";
     $empStmt  = $mainConn->prepare($empQuery);
     $empStmt->execute();
@@ -121,6 +121,11 @@ try {
 
         foreach ($logs as $log) {
             $hrs     = floatval($log['total_hr']);
+            // Overtime = hours beyond 8, but only counts when it reaches a full
+            // hour. Anything under 1 hour of overtime is ignored (not paid).
+            $otHrs   = ($hrs > 8) ? ($hrs - 8) : 0;
+            if ($otHrs < 1) { $otHrs = 0; }
+            $regHrs  = min($hrs, 8);   // regular (non-OT) hours, capped at 8
             $dateRaw = $log['month_date'];
             $date    = date('Y-m-d', strtotime($dateRaw));
             $isPH      = isset($publicHolidays[$date]);
@@ -136,34 +141,36 @@ try {
                     // ---------- standard monthly day ----------
                     if ($isPH) {
                         // Public holiday: double basic, OT at RM8 flat
-                        if ($hrs <= 8) {
-                            $salary = $dailyRate * ($hrs / 8) * 2;
+                        if ($otHrs == 0) {
+                            $salary = $dailyRate * ($regHrs / 8) * 2;
                         } else {
-                            $salary = ($dailyRate * 2) + (($hrs - 8) * 8);
+                            $salary = ($dailyRate * 2) + ($otHrs * 8);
                         }
                     } else {
-                        if ($hrs <= 8) {
-                            $salary = $dailyRate * ($hrs / 8);
+                        if ($otHrs == 0) {
+                            $salary = $dailyRate * ($regHrs / 8);
                         } else {
-                            $salary = $dailyRate + (($hrs - 8) * 8);
+                            $salary = $dailyRate + ($otHrs * 8);
                         }
                     }
                 } else {
                     // ---------- extra day beyond 26 ----------
-                    $salary = $hrs * 8;
+                    // whole day paid at RM8/hr; ignored if under 1 hour worked
+                    $salary = ($hrs < 1 ? 0 : $hrs) * 8;
                 }
 
             } else {
                 // ---------- hourly employee ----------
                 if ($isPH) {
-                    // Public holiday: first 8 hrs × RM16, remaining × RM8
-                    if ($hrs <= 8) {
-                        $salary = $hrs * 16;
+                    // Public holiday: first 8 hrs x RM16, remaining x RM8
+                    if ($otHrs == 0) {
+                        $salary = $regHrs * 16;
                     } else {
-                        $salary = (8 * 16) + (($hrs - 8) * 8);
+                        $salary = (8 * 16) + ($otHrs * 8);
                     }
                 } else {
-                    $salary = $hrs * 8;
+                    // regular hours at RM8/hr plus any qualifying overtime
+                    $salary = ($regHrs + $otHrs) * 8;
                 }
             }
 

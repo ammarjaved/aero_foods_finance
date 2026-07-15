@@ -123,6 +123,7 @@ try {
                 $otDetails = [];
                 $phPay     = 0;
                 $phDetails = [];
+                $basePay   = 0; // hourly staff: regular worked pay (first 8 hrs/day @ RM8)
                 foreach ($rows as $r) {
                     $hrs        = floatval($r['total_hr']);
                     $date       = date('Y-m-d', strtotime($r['month_date']));
@@ -145,10 +146,19 @@ try {
                         }
                     } else {
                         $dayOtHours = max(0, $hrs - 8);
+                        // regular worked pay: first 8 hrs/day at RM8 flat
+                        // (this is what the day-by-day salary_summary.php counts;
+                        //  hourly staff have no fixed basic, so it lives here)
+                        $basePay += min($hrs, 8) * 8;
                         if ($isPH) {
                             // RM16/hr instead of RM8 for the first 8 hrs
                             $dayPhPay = min($hrs, 8) * 8;
                         }
+                    }
+                    // Overtime counts only when it reaches a full hour; anything
+                    // under 1 hour is ignored (not paid or counted as overtime).
+                    if ($dayOtHours < 1) {
+                        $dayOtHours = 0;
                     }
                     $dayOtPay = $dayOtHours * 8;
                     $otHours += $dayOtHours;
@@ -179,13 +189,25 @@ try {
                     'details'    => $otDetails,
                     'ph_pay'     => $phPay,
                     'ph_details' => $phDetails,
+                    'base_pay'   => $basePay,
                 ];
             }
         } catch (Exception $e) {
-            // log_sheet unavailable in this DB — report zero overtime
+            // log_sheet unavailable in this DB - report zero overtime
             $otMap = [];
         }
     }
+
+    // One-time deductions store pay_month as a 3-letter abbreviation (e.g. "JUN"),
+    // matching the MONTHS list in the payroll form. $payMonth arrives here as a
+    // number, so build every accepted representation (abbrev / plain / padded)
+    // to match regardless of how the row was saved.
+    $monthAbbrevs   = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                           'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    $payMonthNum    = intval($payMonth);
+    $payMonthAbbr   = ($payMonthNum >= 1 && $payMonthNum <= 12) ? $monthAbbrevs[$payMonthNum] : '';
+    $payMonthPlain  = (string) $payMonthNum;
+    $payMonthPadded = sprintf('%02d', $payMonthNum);
 
     $summary = [];
 
@@ -238,13 +260,18 @@ try {
                           WHERE LOWER(TRIM(employee_name)) = LOWER(TRIM(:employee_name))
                             AND (
                                 is_recurring = TRUE
-                                OR (pay_month = :pay_month AND pay_year = :pay_year)
+                                OR (
+                                    UPPER(TRIM(pay_month)) IN (:pay_month_abbr, :pay_month_plain, :pay_month_padded)
+                                    AND TRIM(pay_year::text) = TRIM(:pay_year)
+                                )
                             )
                           ORDER BY deduction_type";
             $deductStmt = $conn->prepare($deductSql);
-            $deductStmt->bindParam(':employee_name', $empName, PDO::PARAM_STR);
-            $deductStmt->bindParam(':pay_month', $payMonth, PDO::PARAM_STR);
-            $deductStmt->bindParam(':pay_year', $payYear, PDO::PARAM_STR);
+            $deductStmt->bindParam(':employee_name',   $empName,        PDO::PARAM_STR);
+            $deductStmt->bindParam(':pay_month_abbr',  $payMonthAbbr,   PDO::PARAM_STR);
+            $deductStmt->bindParam(':pay_month_plain', $payMonthPlain,  PDO::PARAM_STR);
+            $deductStmt->bindParam(':pay_month_padded',$payMonthPadded, PDO::PARAM_STR);
+            $deductStmt->bindParam(':pay_year',        $payYear,        PDO::PARAM_STR);
         } else {
             $deductSql = "SELECT id, deduction_type, amount, is_recurring, is_auto_calculated,
                                  pay_month, pay_year, installment_no, total_installments
@@ -267,12 +294,21 @@ try {
         $ot      = isset($otMap[$empNorm])
                      ? $otMap[$empNorm]
                      : ['pay' => 0, 'hours' => 0, 'details' => [],
-                        'ph_pay' => 0, 'ph_details' => []];
+                        'ph_pay' => 0, 'ph_details' => [], 'base_pay' => 0];
+
+        // Monthly staff keep their fixed stored basic. Hourly staff have no
+        // stored basic, so their basic is the regular worked pay computed above
+        // (first 8 hrs/day at RM8), making the Monthly Salary take-home match
+        // the day-by-day salary summary instead of showing zero.
+        $empTypeNorm = strtolower(trim($emp['employment_type']));
+        $basicOut    = ($empTypeNorm === 'monthly')
+                         ? floatval($emp['basic_salary'])
+                         : round($ot['base_pay'], 2);
 
         $summary[] = [
             'employee_name'    => $empName,
             'employment_type'  => $emp['employment_type'],
-            'basic_salary'     => floatval($emp['basic_salary']),
+            'basic_salary'     => $basicOut,
             'overtime_hours'   => round($ot['hours'], 2),
             'overtime_pay'     => round($ot['pay'], 2),
             'overtime_details' => $ot['details'],

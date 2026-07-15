@@ -8,12 +8,16 @@ function deriveDailyRate(salary, hrs, isPH, isExtraDay) {
   salary = parseFloat(salary);
   hrs    = parseFloat(hrs);
   if (isNaN(salary) || isNaN(hrs) || hrs <= 0 || isExtraDay) return null;
+  // Overtime under 1 hour is ignored (matches the payroll backend).
+  let otHrs = hrs > 8 ? hrs - 8 : 0;
+  if (otHrs < 1) otHrs = 0;
+  const regHrs = Math.min(hrs, 8);
   if (isPH) {
-    if (hrs <= 8) return (salary * 8) / (hrs * 2);
-    return (salary - (hrs - 8) * 8) / 2;
+    if (otHrs === 0) return (salary * 8) / (regHrs * 2);
+    return (salary - otHrs * 8) / 2;
   } else {
-    if (hrs <= 8) return (salary * 8) / hrs;
-    return salary - (hrs - 8) * 8;
+    if (otHrs === 0) return (salary * 8) / regHrs;
+    return salary - otHrs * 8;
   }
 }
 
@@ -28,6 +32,11 @@ function buildBreakdown(item) {
   const isExtra   = !!item.is_extra_day;
   const type      = (item.employment_type || "").toLowerCase();
   const dayNum    = item.day_number != null && item.day_number !== "" ? item.day_number : "—";
+
+  // Overtime = hours beyond 8, ignored when under 1 hour (matches backend).
+  let otHrs = hrs > 8 ? hrs - 8 : 0;
+  if (otHrs < 1) otHrs = 0;
+  const regHrs = Math.min(hrs, 8);
 
   const fmtRM  = (v) => (isNaN(v) ? "N/A" : `RM ${parseFloat(v).toFixed(2)}`);
   const fmt4   = (v) => (isNaN(v) ? "N/A" : `RM ${parseFloat(v).toFixed(4)}`);
@@ -46,8 +55,9 @@ function buildBreakdown(item) {
     lines.push({ label: "Employment Type",        value: "Monthly" });
     lines.push({ label: "Basic Salary",            value: fmtRM(basic) });
     lines.push({ label: "Daily Rate (Basic ÷ 26)", value: fmt4(dailyRate) });
-    lines.push({ label: "OT Rate",                 value: "RM 8.00 / hr (flat)" });
+    lines.push({ label: "OT Rate",                 value: "RM 8.00 / hr (flat, min 1 hr)" });
     lines.push({ label: "Hours Worked",            value: `${hrs} hrs` });
+    lines.push({ label: "Overtime Hours",          value: `${otHrs} hrs` });
     lines.push({ label: "Day No. This Month",      value: dayNum });
     lines.push({ label: "Public Holiday",          value: isPH ? "Yes" : "No" });
     lines.push({ label: "Extra Day (>26)",         value: isExtra ? "Yes" : "No" });
@@ -57,29 +67,27 @@ function buildBreakdown(item) {
       lines.push({ label: "Rule",        value: "Extra day beyond 26 → RM8/hr flat" });
       lines.push({ label: "Calculation", value: `${hrs} hrs × RM8 = ${fmtRM(salary)}` });
     } else if (isPH) {
-      if (hrs <= 8) {
-        lines.push({ label: "Rule", value: "Public holiday (≤8 hrs) → double basic pay" });
+      if (otHrs === 0) {
+        lines.push({ label: "Rule", value: "Public holiday (no qualifying OT) → double basic pay" });
         lines.push({ label: "Calculation",
-          value: `Daily Rate × (${hrs}/8) × 2 = ${fmt4(dailyRate)} × ${(hrs/8).toFixed(4)} × 2 = ${fmtRM(salary)}` });
+          value: `Daily Rate × (${regHrs}/8) × 2 = ${fmt4(dailyRate)} × ${(regHrs/8).toFixed(4)} × 2 = ${fmtRM(salary)}` });
       } else {
-        const otHrs    = hrs - 8;
         const basePart = !isNaN(dailyRate) ? dailyRate * 2 : NaN;
         const otPart   = otHrs * 8;
-        lines.push({ label: "Rule",               value: "Public holiday (>8 hrs) → double basic + OT × RM8" });
+        lines.push({ label: "Rule",               value: "Public holiday (with OT ≥1 hr) → double basic + OT × RM8" });
         lines.push({ label: "Base Pay (doubled)", value: `Daily Rate × 2 = ${fmtRM(basePart)}` });
         lines.push({ label: "Overtime Hours",     value: `${otHrs} hrs` });
         lines.push({ label: "OT Pay",             value: `${otHrs} × RM8 = ${fmtRM(otPart)}` });
         lines.push({ label: "Calculation",        value: `${fmtRM(basePart)} + ${fmtRM(otPart)} = ${fmtRM(salary)}` });
       }
     } else {
-      if (hrs <= 8) {
-        lines.push({ label: "Rule", value: "Normal day (≤8 hrs) → proportional daily rate" });
+      if (otHrs === 0) {
+        lines.push({ label: "Rule", value: "Normal day (no qualifying OT) → proportional daily rate" });
         lines.push({ label: "Calculation",
-          value: `Daily Rate × (${hrs}/8) = ${fmt4(dailyRate)} × ${(hrs/8).toFixed(4)} = ${fmtRM(salary)}` });
+          value: `Daily Rate × (${regHrs}/8) = ${fmt4(dailyRate)} × ${(regHrs/8).toFixed(4)} = ${fmtRM(salary)}` });
       } else {
-        const otHrs  = hrs - 8;
         const otPart = otHrs * 8;
-        lines.push({ label: "Rule",             value: "Normal day (>8 hrs) → daily rate + OT × RM8" });
+        lines.push({ label: "Rule",             value: "Normal day (with OT ≥1 hr) → daily rate + OT × RM8" });
         lines.push({ label: "Base Pay (8 hrs)", value: fmtRM(dailyRate) });
         lines.push({ label: "Overtime Hours",   value: `${otHrs} hrs` });
         lines.push({ label: "OT Pay",           value: `${otHrs} × RM8 = ${fmtRM(otPart)}` });
@@ -90,23 +98,29 @@ function buildBreakdown(item) {
     lines.push({ label: "Employment Type", value: "Hourly" });
     lines.push({ label: "Standard Rate",   value: "RM 8.00 / hr" });
     lines.push({ label: "Hours Worked",    value: `${hrs} hrs` });
+    lines.push({ label: "Overtime Hours",  value: `${otHrs} hrs` });
     lines.push({ label: "Public Holiday",  value: isPH ? "Yes" : "No" });
     lines.push({ label: "─────────────", value: "" });
 
     if (isPH) {
-      if (hrs <= 8) {
-        lines.push({ label: "Rule",        value: "Public holiday (≤8 hrs) → RM16/hr" });
-        lines.push({ label: "Calculation", value: `${hrs} hrs × RM16 = ${fmtRM(salary)}` });
+      if (otHrs === 0) {
+        lines.push({ label: "Rule",        value: "Public holiday (no qualifying OT) → RM16/hr" });
+        lines.push({ label: "Calculation", value: `${regHrs} hrs × RM16 = ${fmtRM(salary)}` });
       } else {
-        const otHrs  = hrs - 8;
-        lines.push({ label: "Rule",         value: "Public holiday (>8 hrs) → first 8 × RM16, rest × RM8" });
+        lines.push({ label: "Rule",         value: "Public holiday (with OT ≥1 hr) → first 8 × RM16, rest × RM8" });
         lines.push({ label: "PH Pay (8 hrs)", value: `8 × RM16 = RM 128.00` });
         lines.push({ label: "OT Pay",        value: `${otHrs} hrs × RM8 = RM ${(otHrs * 8).toFixed(2)}` });
         lines.push({ label: "Calculation",   value: `RM 128.00 + RM ${(otHrs*8).toFixed(2)} = ${fmtRM(salary)}` });
       }
     } else {
-      lines.push({ label: "Rule",        value: "Normal day → hrs × RM8" });
-      lines.push({ label: "Calculation", value: `${hrs} hrs × RM8 = ${fmtRM(salary)}` });
+      if (otHrs === 0) {
+        lines.push({ label: "Rule",        value: "Normal day → hrs × RM8" });
+        lines.push({ label: "Calculation", value: `${regHrs} hrs × RM8 = ${fmtRM(salary)}` });
+      } else {
+        lines.push({ label: "Rule",        value: "Normal day (with OT ≥1 hr) → (8 + OT) × RM8" });
+        lines.push({ label: "OT Pay",      value: `${otHrs} hrs × RM8 = RM ${(otHrs * 8).toFixed(2)}` });
+        lines.push({ label: "Calculation", value: `(8 + ${otHrs}) × RM8 = ${fmtRM(salary)}` });
+      }
     }
   }
 
