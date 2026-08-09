@@ -7,6 +7,7 @@ function UserTable({ onRowClick, onCafeChange }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(31);
   const [cdb, setCdb] = useState("mixue");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchData = useCallback(() => {
@@ -42,6 +43,7 @@ function UserTable({ onRowClick, onCafeChange }) {
 
   const setCafe = (val) => {
     setCdb(val);
+    setCurrentPage(1);
     if (onCafeChange) {
       onCafeChange(val);
     }
@@ -139,11 +141,22 @@ function UserTable({ onRowClick, onCafeChange }) {
     { key: "created_at", label: "Created At" },
   ];
 
+  // Active / inactive filter. Users saved before the is_active column existed
+  // have a blank value; they are treated as inactive-unknown and only show
+  // under "All".
+  const filteredData =
+    statusFilter === "all"
+      ? data
+      : data.filter((user) => user.is_active === statusFilter);
+
   // Calculate pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = data.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(data.length / recordsPerPage);
+  const currentRecords = filteredData.slice(
+    indexOfFirstRecord,
+    indexOfLastRecord,
+  );
+  const totalPages = Math.ceil(filteredData.length / recordsPerPage);
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -185,9 +198,15 @@ function UserTable({ onRowClick, onCafeChange }) {
           {/* Controls row */}
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div>
-              Showing {indexOfFirstRecord + 1} to{" "}
-              {Math.min(indexOfLastRecord, data.length)} of {data.length}{" "}
-              records
+              Showing{" "}
+              {filteredData.length === 0 ? 0 : indexOfFirstRecord + 1} to{" "}
+              {Math.min(indexOfLastRecord, filteredData.length)} of{" "}
+              {filteredData.length} records
+              {statusFilter !== "all" && (
+                <span className="badge bg-primary ms-2">
+                  {statusFilter === "yes" ? "Active only" : "Inactive only"}
+                </span>
+              )}
             </div>
             <div className="d-flex align-items-center gap-3">
               {/* Manual refresh button */}
@@ -198,6 +217,23 @@ function UserTable({ onRowClick, onCafeChange }) {
               >
                 <i className="fas fa-sync-alt"></i> Refresh
               </button>
+
+              <div className="d-flex align-items-center">
+                <label className="me-2">Status:</label>
+                <select
+                  className="form-select form-select-sm"
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  style={{ width: "auto" }}
+                >
+                  <option value="all">All ({data.length})</option>
+                  <option value="yes">Active ({activeCount})</option>
+                  <option value="no">Inactive ({inactiveCount})</option>
+                </select>
+              </div>
 
               <div className="d-flex align-items-center">
                 <label className="me-2">Select Cafe:</label>
@@ -304,7 +340,16 @@ function UserTable({ onRowClick, onCafeChange }) {
                     >
                       No records found
                       <br />
-                      <small>Click "Add New User" to get started</small>
+                      {statusFilter === "all" ? (
+                        <small>Click "Add New User" to get started</small>
+                      ) : (
+                        <small>
+                          No{" "}
+                          {statusFilter === "yes" ? "active" : "inactive"} users
+                          for this cafe — switch Status back to "All" to see
+                          everyone.
+                        </small>
+                      )}
                     </td>
                   </tr>
                 )}

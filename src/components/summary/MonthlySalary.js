@@ -122,6 +122,18 @@ function MonthlySalary({ month, year }) {
     fetchData();
   }, [fetchData]);
 
+  const sumHours = (rows) =>
+    (rows || []).reduce(
+      (total, row) => total + (parseFloat(row.hours_worked) || 0),
+      0,
+    );
+
+  const formatHours = (value) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(parseFloat(value || 0));
+
   const computeTakeHome = (emp) => {
     const basic = parseFloat(emp.basic_salary || 0);
     const overtime = parseFloat(emp.overtime_pay || 0);
@@ -473,7 +485,15 @@ function MonthlySalary({ month, year }) {
                                             >
                                               Total Overtime
                                             </td>
-                                            <td></td>
+                                            <td
+                                              className="text-center fw-bold"
+                                              style={{ fontSize: "13px" }}
+                                            >
+                                              {formatHours(
+                                                sumHours(emp.overtime_details),
+                                              )}{" "}
+                                              hrs
+                                            </td>
                                             <td
                                               className="text-center fw-bold"
                                               style={{ fontSize: "13px" }}
@@ -562,11 +582,20 @@ function MonthlySalary({ month, year }) {
                                           ))}
                                           <tr className="border-top">
                                             <td
-                                              colSpan={3}
+                                              colSpan={2}
                                               className="fw-bold"
                                               style={{ fontSize: "13px" }}
                                             >
                                               Total PH
+                                            </td>
+                                            <td
+                                              className="text-center fw-bold"
+                                              style={{ fontSize: "13px" }}
+                                            >
+                                              {formatHours(
+                                                sumHours(emp.ph_details),
+                                              )}{" "}
+                                              hrs
                                             </td>
                                             <td
                                               className="text-end fw-bold text-secondary"
@@ -794,6 +823,56 @@ function MonthlySalary({ month, year }) {
                                         No deductions for this period.
                                       </p>
                                     )}
+                                  </div>
+                                </div>
+
+                                {/* Overall total for this employee */}
+                                <div className="border-top mt-3 pt-2">
+                                  <div className="d-flex flex-wrap align-items-center justify-content-end gap-3">
+                                    <span style={{ fontSize: "13px" }}>
+                                      Total worked:{" "}
+                                      <strong>
+                                        {formatHours(emp.worked_hours)} hrs
+                                      </strong>
+                                      {emp.worked_days ? (
+                                        <span className="text-muted">
+                                          {" "}
+                                          over {emp.worked_days} day
+                                          {emp.worked_days > 1 ? "s" : ""}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                    <span style={{ fontSize: "13px" }}>
+                                      Basic{" "}
+                                      <strong>
+                                        RM {formatCurrency(emp.basic_salary)}
+                                      </strong>{" "}
+                                      + OT{" "}
+                                      <strong className="text-info">
+                                        RM {formatCurrency(emp.overtime_pay)}
+                                      </strong>{" "}
+                                      + PH{" "}
+                                      <strong className="text-secondary">
+                                        RM {formatCurrency(emp.ph_premium)}
+                                      </strong>{" "}
+                                      + Allowances{" "}
+                                      <strong className="text-success">
+                                        RM{" "}
+                                        {formatCurrency(emp.total_allowances)}
+                                      </strong>{" "}
+                                      &minus; Deductions{" "}
+                                      <strong className="text-danger">
+                                        RM{" "}
+                                        {formatCurrency(emp.total_deductions)}
+                                      </strong>
+                                    </span>
+                                    <span
+                                      className="badge bg-warning text-dark"
+                                      style={{ fontSize: "14px" }}
+                                    >
+                                      Total Take Home: RM{" "}
+                                      {formatCurrency(takeHome)}
+                                    </span>
                                   </div>
                                 </div>
                               </td>

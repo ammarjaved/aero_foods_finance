@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { clearSession } from "./session";
 
 function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [activeSection, setActiveSection] = useState("");
@@ -8,9 +9,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("message");
-    localStorage.removeItem("activeSidebarSection");
+    clearSession();
     navigate("/login");
   };
 
@@ -72,6 +71,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/reconciliation", label: "Bank Reconciliation" },
     { href: "/materials", label: "Materials" },
     { href: "/stockin", label: "Stock In" },
+    { href: "/stock-left", label: "Stock Left" },
+    { href: "/reorder", label: "Reorder Alerts" },
     { href: "/Expenses", label: "Expenditure" },
     { href: "/EmpTimeSheet", label: "Emp-TimeSheet" },
     { href: "/Audit", label: "Audit" },
@@ -85,6 +86,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/reconciliation-yus", label: "Bank Reconciliation" },
     { href: "/materials-yus", label: "Materials" },
     { href: "/stockin-yus", label: "Stock In" },
+    { href: "/vg-sales-yus", label: "VG Sales" },
     { href: "/Expenses-yus", label: "Expenditure" },
   ];
 
@@ -130,6 +132,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/reconciliation-mixue-sogo", label: "Bank Reconciliation" },
     { href: "/materials-mixue-sogo", label: "Materials" },
     { href: "/stockin-mixue-sogo", label: "Stock In" },
+    { href: "/stock-left-mixue-sogo", label: "Stock Left" },
+    { href: "/reorder-mixue-sogo", label: "Reorder Alerts" },
     { href: "/Expenses-mixue-sogo", label: "Expenditure" },
     {
       href: "https://ws.sogo.com.my/Login.asp?Msg1=Invalid+user+name+or+pass+code%21",

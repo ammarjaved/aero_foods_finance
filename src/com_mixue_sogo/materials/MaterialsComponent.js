@@ -3,10 +3,17 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import TableMaterials from "./TableMaterials";
 
+// Materials always belong to the 1st of their month — adding one on 8 Aug
+// still records it against 1 Aug. Mirrors the same rule in materials.php.
+const monthStart = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+};
+
 function MaterialsComponent() {
   const [formData, setFormData] = useState({
-    month_date: new Date().toISOString().split("T")[0],
-    day: new Date().getDate(),
+    month_date: monthStart(),
+    day: 1,
     month: new Date().getMonth() + 1, // Fixed: getMonth() returns 0-11, need to add 1
     year: new Date().getFullYear(), // Fixed: use getFullYear() instead of getYear()
     code: "",
@@ -232,8 +239,8 @@ function MaterialsComponent() {
   const resetForm = () => {
     // Reset form data to initial empty state
     setFormData({
-      month_date: new Date().toISOString().split("T")[0],
-      day: new Date().getDate(),
+      month_date: monthStart(),
+      day: 1,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
       code: "",
@@ -265,8 +272,8 @@ function MaterialsComponent() {
 
     // Set the form data with the record values
     setFormData({
-      month_date: record.month_date || new Date().toISOString().split("T")[0],
-      day: record.day || new Date().getDate(),
+      month_date: record.month_date || monthStart(),
+      day: record.day || 1,
       month: record.month || new Date().getMonth() + 1,
       year: record.year || new Date().getFullYear(),
       code: record.code || "",

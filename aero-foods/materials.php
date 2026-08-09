@@ -56,6 +56,130 @@ switch ($method) {
         break;
 }
 
+/**
+ * Propagate one material forward to every month from $fromMonthDate onward.
+ *
+ * The `material` table is a per-month catalog snapshot (one row per code per
+ * month) and `fetch_materials.php` reads a single month at a time, so a
+ * material is invisible in any month that has no row for it. Writing only the
+ * edited month is what made new/edited materials appear in that month alone.
+ *
+ * Forward only — months BEFORE $fromMonthDate are never touched, so historical
+ * sheets keep the prices they were costed at.
+ *
+ * Upper bound is the later of (a) today's month and (b) the newest month
+ * present in `material`. (a) closes the gap up to the current sheet — nothing
+ * else in this codebase rolls the catalog into a new month. (b) covers months
+ * already created ahead of today.
+ *
+ * Existing forward rows are OVERWRITTEN, including unit_price: the newest
+ * invoice/edit is treated as the current truth from its month onward.
+ *
+ * Months are compared with date_trunc because the two writers disagree on the
+ * day component — the invoice import stores the 1st (snapshotDate) while this
+ * endpoint stores whatever day the user picked.
+ *
+ * @return int number of month-rows written (updated + inserted)
+ */
+function propagateMaterialForward($conn, $material, $fromMonthDate, $updatedBy) {
+    $code        = $material['code'];
+    $name        = $material['name'] ?? '';
+    $description = $material['description'] ?? '';
+    $category    = $material['category'] ?? 'Equipment';
+    $unitPrice   = (float)($material['unit_price'] ?? 0);
+    $packet      = (float)($material['packet'] ?? 0);
+    $unit        = $material['unit'] ?? '';
+    // `day` is not a calendar day — live values run 0..7 and are near-constant
+    // within a month (it tags the batch a row was created in). Carry the
+    // material's own value rather than inventing one.
+    $day         = (int)($material['day'] ?? 1);
+
+    // NOTE: every placeholder below is used EXACTLY ONCE per statement, and each
+    // execute() array matches its statement's placeholders exactly. PDO_PGSQL
+    // rewrites named parameters to positional ones and rejects both a repeated
+    // name and a stray extra key. (The `:price` / `:price2` pair in
+    // stock_in_pdf_import.php is the same workaround.)
+
+    // 1) Overwrite every EXISTING row for this code from the given month on.
+    $updateStmt = $conn->prepare("UPDATE material SET
+            name        = :name,
+            description = :description,
+            category    = :category,
+            unit_price  = :unit_price,
+            packet      = :packet,
+            unit        = :unit,
+            updated_at  = NOW(),
+            updated_by  = :updated_by
+        WHERE code = :code
+          AND date_trunc('month', month_date) >= date_trunc('month', CAST(:from_month AS date))");
+    $updateStmt->execute([
+        ':name'        => $name,
+        ':description' => $description,
+        ':category'    => $category,
+        ':unit_price'  => $unitPrice,
+        ':packet'      => $packet,
+        ':unit'        => $unit,
+        ':updated_by'  => $updatedBy,
+        ':code'        => $code,
+        ':from_month'  => $fromMonthDate,
+    ]);
+    $written = $updateStmt->rowCount();
+
+    // 2) Create rows for the months in the window that have none yet.
+    $insertStmt = $conn->prepare("INSERT INTO material (
+            month_date, day, month, year,
+            code, name, description, category,
+            unit_price, packet, unit, sort_key,
+            created_at, updated_at, created_by, updated_by
+        )
+        SELECT
+            m.month_date,
+            :day,
+            EXTRACT(MONTH FROM m.month_date),
+            EXTRACT(YEAR  FROM m.month_date),
+            :code_ins, :name, :description, :category,
+            :unit_price, :packet, :unit,
+            (SELECT s.sort_key FROM material s
+              WHERE s.code = :code_sk ORDER BY s.month_date DESC LIMIT 1),
+            NOW(), NOW(), :created_by, :updated_by
+        FROM (
+            SELECT generate_series(
+                date_trunc('month', CAST(:from_month_a AS date)),
+                GREATEST(
+                    date_trunc('month', CURRENT_DATE),
+                    COALESCE(
+                        (SELECT date_trunc('month', MAX(month_date)) FROM material),
+                        date_trunc('month', CAST(:from_month_b AS date))
+                    )
+                ),
+                interval '1 month'
+            )::date AS month_date
+        ) m
+        WHERE NOT EXISTS (
+            SELECT 1 FROM material x
+            WHERE x.code = :code_chk
+              AND date_trunc('month', x.month_date) = m.month_date
+        )");
+    $insertStmt->execute([
+        ':code_ins'     => $code,
+        ':day'          => $day,
+        ':name'         => $name,
+        ':description'  => $description,
+        ':category'     => $category,
+        ':unit_price'   => $unitPrice,
+        ':packet'       => $packet,
+        ':unit'         => $unit,
+        ':created_by'   => $updatedBy,
+        ':updated_by'   => $updatedBy,
+        ':from_month_a' => $fromMonthDate,
+        ':from_month_b' => $fromMonthDate,
+        ':code_chk'     => $code,
+        ':code_sk'      => $code,
+    ]);
+
+    return $written + $insertStmt->rowCount();
+}
+
 // Function to handle GET requests (retrieve materials)
 function handleGetRequest($conn) {
     try {
@@ -93,8 +217,21 @@ function handlePostRequest($conn) {
             return;
         }
     }
+
+    // A material always belongs to the 1st of its month: adding one on 8 Aug
+    // still records it against 1 Aug. The invoice import already writes the 1st
+    // (see stock_in_pdf_import.php), so both writers agree on the day component.
+    $monthTs = !empty($data['month_date']) ? strtotime($data['month_date']) : false;
+    if ($monthTs === false) {
+        $monthTs = time();
+    }
+    $data['month_date'] = date('Y-m-01', $monthTs);
+    $data['day']        = 1;
+    $data['month']      = (int) date('n', $monthTs);
+    $data['year']       = (int) date('Y', $monthTs);
     
     try {
+        $conn->beginTransaction();
         // INSERT operation
         $sql = "INSERT INTO material (
             month_date, 
@@ -153,16 +290,30 @@ function handlePostRequest($conn) {
         // Get the ID of the inserted record
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $recordId = $result['id'];
-        
+
+        // Carry the new material into every later month, not just this one.
+        $monthsWritten = propagateMaterialForward(
+            $conn,
+            $data,
+            $data['month_date'] ?? date('Y-m-d'),
+            $data['created_by'] ?? ''
+        );
+
+        $conn->commit();
+
         // Send success response
         http_response_code(201); // Created
         echo json_encode([
             'success' => true,
             'message' => 'Material created successfully',
-            'id' => $recordId
+            'id' => $recordId,
+            'months_written' => $monthsWritten
         ]);
-        
+
     } catch (PDOException $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
         http_response_code(500);
         echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
     }
@@ -183,6 +334,7 @@ function handlePutRequest($conn) {
     }
     
     try {
+        $conn->beginTransaction();
         // UPDATE operation
         $sql = "UPDATE material SET
             month_date = :month_date,
@@ -223,24 +375,39 @@ function handlePutRequest($conn) {
         
         // Check if any rows were affected
         if ($stmt->rowCount() === 0) {
+            $conn->rollBack();
             http_response_code(404);
             echo json_encode(['error' => 'Material not found']);
             return;
         }
-        
+
         // Get the ID of the updated record
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $recordId = $result['id'];
-        
+
+        // Apply the same edit to this month and every later one.
+        $monthsWritten = propagateMaterialForward(
+            $conn,
+            $data,
+            $data['month_date'] ?? date('Y-m-d'),
+            $data['updated_by'] ?? ''
+        );
+
+        $conn->commit();
+
         // Send success response
         http_response_code(200); // OK
         echo json_encode([
             'success' => true,
             'message' => 'Material updated successfully',
-            'id' => $recordId
+            'id' => $recordId,
+            'months_written' => $monthsWritten
         ]);
-        
+
     } catch (PDOException $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
         http_response_code(500);
         echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
     }

@@ -10,6 +10,7 @@ function TableMaterials({ onRowClick, setCatG }) {
   const [filteredData, setFilteredData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const date = new Date();
   const monthIndex = date.getMonth();
@@ -36,12 +37,11 @@ function TableMaterials({ onRowClick, setCatG }) {
     const categoryValue = e.target.value;
     localStorage.setItem("category", categoryValue);
     setCategory(categoryValue);
+    // filteredData is recomputed by the applyFilters effect (also resets page)
+  };
 
-    const filteredItems = data.filter(
-      (item) => item.category === categoryValue,
-    );
-
-    setFilteredData(filteredItems);
+  const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
   };
 
   // Subscribe to a custom event for new records
@@ -69,11 +69,11 @@ function TableMaterials({ onRowClick, setCatG }) {
     };
   }, []);
 
-  // Apply filters when data or filter values change
+  // Apply filters when data, category, or search text change
   useEffect(() => {
     applyFilters();
     setCatG(categories);
-  }, [data, filterValues]);
+  }, [data, category, searchText]);
 
   const getDistinctCategories = (arr) => {
     if (!Array.isArray(arr)) return [];
@@ -126,20 +126,31 @@ function TableMaterials({ onRowClick, setCatG }) {
     );
   };
 
-  // Apply filters to the data
+  // Apply filters to the data (category + free text search)
   const applyFilters = () => {
     let filtered = [...data];
 
-    // Apply each filter if it has a value
-    Object.entries(filterValues).forEach(([key, value]) => {
-      if (value && value.trim() !== "") {
-        filtered = filtered.filter(
-          (record) =>
-            record[key] &&
-            record[key].toString().toLowerCase().includes(value.toLowerCase()),
-        );
-      }
-    });
+    // Category filter (exact match)
+    if (category && category.trim() !== "") {
+      filtered = filtered.filter(
+        (record) =>
+          record.category &&
+          record.category.toString().toLowerCase() === category.toLowerCase(),
+      );
+    }
+
+    // Free text search across all fields
+    if (searchText && searchText.trim() !== "") {
+      const term = searchText.toLowerCase();
+      filtered = filtered.filter((record) =>
+        Object.values(record).some(
+          (val) =>
+            val !== null &&
+            val !== undefined &&
+            val.toString().toLowerCase().includes(term),
+        ),
+      );
+    }
 
     setFilteredData(filtered);
     setCurrentPage(1); // Reset to first page when filtering
@@ -156,6 +167,8 @@ function TableMaterials({ onRowClick, setCatG }) {
   // Clear all filters
   const clearFilters = () => {
     setFilterValues({});
+    setCategory("");
+    setSearchText("");
   };
 
   // Toggle filter panel
@@ -256,9 +269,12 @@ function TableMaterials({ onRowClick, setCatG }) {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = Object.values(filterValues).some(
-    (value) => value && value.trim() !== "",
-  );
+  const hasActiveFilters =
+    Object.values(filterValues).some(
+      (value) => value && value.trim() !== "",
+    ) ||
+    (category && category.trim() !== "") ||
+    (searchText && searchText.trim() !== "");
 
   return (
     <div className="container-fluid mt-2">
@@ -385,7 +401,22 @@ function TableMaterials({ onRowClick, setCatG }) {
                           </option>
                         ))}
                       </select>
-                      <label htmlFor="monthSelect">Category</label>
+                      <label htmlFor="categorySelect">Category</label>
+                    </div>
+                  </div>
+                  <div className="col">
+                    <div className="form-floating" style={{ marginTop: 5 }}>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="searchInput"
+                        placeholder="Search..."
+                        value={searchText}
+                        onChange={handleSearchChange}
+                      />
+                      <label htmlFor="searchInput">
+                        Search (code, name, description...)
+                      </label>
                     </div>
                   </div>
                 </div>

@@ -34,13 +34,12 @@ function Table({ onRowClick }) {
     const monthvalue = localStorage.getItem("month");
     const yearvalue = localStorage.getItem("year");
 
-    if (monthvalue) {
-      fetchData(monthvalue, yearvalue);
-      setSelectedMonth(monthvalue);
-      setSelectedYear(yearvalue);
-    } else {
-      fetchData(selectedMonth, selectedYear);
-    }
+    // A stored month with no stored year used to call fetchData(month, null),
+    // which reached the endpoint as the literal string "year=null" and came
+    // back as a 500 error object. Each value falls back on its own now.
+    fetchData(monthvalue || selectedMonth, yearvalue || selectedYear);
+    if (monthvalue) setSelectedMonth(monthvalue);
+    if (yearvalue) setSelectedYear(yearvalue);
 
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
@@ -65,6 +64,16 @@ function Table({ onRowClick }) {
     )
       .then((response) => response.json())
       .then((fetchedData) => {
+        // Errors come back as an object ({error: ...}), not an array. Storing
+        // one made the render crash on filteredData.slice() and took the whole
+        // screen down, so anything that is not a list is treated as no rows.
+        if (!Array.isArray(fetchedData)) {
+          console.error("Unexpected response from fetchData.php:", fetchedData);
+          setData([]);
+          setFilteredData([]);
+          setLoading(false);
+          return;
+        }
         setData(fetchedData);
         setFilteredData(fetchedData);
         setLoading(false);

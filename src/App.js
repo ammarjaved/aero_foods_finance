@@ -1,4 +1,12 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { enforceAuthVersion } from "./session";
 import LoginForm from "./LoginForm";
 import Dashboard from "./components/daily-sheet/Dashboard";
 import DashboardYus from "./com_abe/daily-sheet/Dashboard";
@@ -44,6 +52,8 @@ import MonthlyMaterialsAmzLyp from "./com_amz_lyp/materials/MonthlyMaterials";
 import MonthlyMaterialsOjim from "./ojim/materials/MonthlyMaterials";
 import MonthlyMaterialsMixueSogo from "./com_mixue_sogo/materials/MonthlyMaterials";
 
+import VgSalesYus from "./com_abe/vg-sales/VgSales";
+
 import StockIn from "./components/stock-in/StockIn";
 import StockInYus from "./com_abe/stock-in/StockIn";
 import StockInAmz from "./com_amz/stock-in/StockIn";
@@ -51,6 +61,10 @@ import StockInAmzLyp from "./com_amz_lyp/stock-in/StockIn";
 
 import StockInOjim from "./ojim/stock-in/StockIn";
 import StockInMixueSogo from "./com_mixue_sogo/stock-in/StockIn";
+import StockLeft from "./components/stock-left/StockLeft";
+import StockLeftMixueSogo from "./com_mixue_sogo/stock-left/StockLeft";
+import Reorder from "./components/reorder/Reorder";
+import ReorderMixueSogo from "./com_mixue_sogo/reorder/Reorder";
 
 import Summary from "./components/summary/Summary";
 import ChatApp from "./components/summary/ChatApp";
@@ -74,9 +88,33 @@ import LandingOjim from "./ojim/Landing";
 import LandingMixueSogo from "./com_mixue_sogo/Landing";
 import TimeAnalysis from "./components/timeshete-analysis/TimeAnalysis";
 import Payable from "./components/payable/Payable";
+// Kicks the user back to the login screen whenever the server's session
+// version no longer matches the one this browser logged in with.
+function SessionGate() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    enforceAuthVersion().then((expired) => {
+      if (expired && !cancelled) {
+        navigate("/login", { replace: true });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, navigate]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter basename="/aero_foods_finance">
+      <SessionGate />
       <Routes>
         <Route path="/login" element={<LoginForm />} />
 
@@ -133,12 +171,21 @@ function App() {
         <Route path="/materials-ojim" element={<MonthlyMaterialsOjim />} />
         <Route path="/materials-mixue-sogo" element={<MonthlyMaterialsMixueSogo />} />
 
+        <Route path="/vg-sales-yus" element={<VgSalesYus />} />
+
         <Route path="/stockin" element={<StockIn />} />
         <Route path="/stockin-yus" element={<StockInYus />} />
         <Route path="/stockin-amz" element={<StockInAmz />} />
         <Route path="/stockin-amz-lyp" element={<StockInAmzLyp />} />
         <Route path="/stockin-ojim" element={<StockInOjim />} />
         <Route path="/stockin-mixue-sogo" element={<StockInMixueSogo />} />
+        <Route path="/stock-left" element={<StockLeft />} />
+        <Route
+          path="/stock-left-mixue-sogo"
+          element={<StockLeftMixueSogo />}
+        />
+        <Route path="/reorder" element={<Reorder />} />
+        <Route path="/reorder-mixue-sogo" element={<ReorderMixueSogo />} />
 
         <Route path="/summary" element={<Summary />} />
         <Route path="/chatapp" element={<ChatApp />} />

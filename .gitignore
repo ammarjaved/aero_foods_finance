@@ -7,10 +7,10 @@
 
 # testing
 /coverage
-
+/.playwright-mcp/
 # production
 /build
-
+/sql
 # misc
 .DS_Store
 .env
@@ -30,3 +30,4 @@ aero-foods/audit_images/
 *.xlsx
 *.xls
 *.csv
+*.pdf

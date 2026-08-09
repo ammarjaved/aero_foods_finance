@@ -93,6 +93,17 @@ function handlePostRequest($conn) {
             return;
         }
     }
+
+    // A material always belongs to the 1st of its month: adding one on 8 Aug
+    // still records it against 1 Aug.
+    $monthTs = !empty($data['month_date']) ? strtotime($data['month_date']) : false;
+    if ($monthTs === false) {
+        $monthTs = time();
+    }
+    $data['month_date'] = date('Y-m-01', $monthTs);
+    $data['day']        = 1;
+    $data['month']      = (int) date('n', $monthTs);
+    $data['year']       = (int) date('Y', $monthTs);
     
     try {
         // INSERT operation

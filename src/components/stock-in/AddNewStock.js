@@ -7,7 +7,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import BootstrapChip from "../core/BootstrapChip";
 
-function AddNewStock({ data, materials }) {
+function AddNewStock({ data, materials, onSaved }) {
   console.log("DATA", data);
   console.log("MATERIALS", materials);
 
@@ -212,7 +212,9 @@ function AddNewStock({ data, materials }) {
 
   const organizeMaterials = () => {
     const categoriesWithCounts = getDistinctCategories(materials);
-    setCategories(categoriesWithCounts);
+    setCategories(
+      categoriesWithCounts.filter((c) => c.category !== "Discontinue")
+    );
 
     const distinctCategories = [
       ...new Set(materials.map((item) => item.category).filter(Boolean)),
@@ -476,6 +478,7 @@ function AddNewStock({ data, materials }) {
                           // Reset all form states after successful save
                           if (data.message && data.message.toLowerCase().includes('success')) {
                             resetFormStates();
+                            if (onSaved) onSaved();
                           }
                         })
                         .catch((err) => {

@@ -18,6 +18,15 @@ function TimeFormComponentOjim() {
     image_recipt: "",
   });
 
+  const [names, setNames] = useState([]);
+
+  useEffect(() => {
+    fetch("http://121.121.232.54:88/ojim-cafe/fetchNames.php")
+      .then((response) => response.json())
+      .then((data) => setNames(Array.isArray(data) ? data : []))
+      .catch((error) => console.error("Error fetching names:", error));
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [mapKey, setMapKey] = useState(Date.now());
@@ -336,14 +345,12 @@ function TimeFormComponentOjim() {
                     className="form-control"
                     required
                   >
-                    <option value="Janna">Janna</option>
-                    <option value="Lia">Lia</option>
-                    <option value="Khai">Khai</option>
-                    <option value="Danial">Danial</option>
-                    <option value="Remi">Remi</option>
-                    <option value="Ahmad">Ahmad</option>
-                    <option value="Iman">Iman</option>
-                    <option value="Zikri">Zikri</option>
+                    <option value="">Select Name</option>
+                    {names.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

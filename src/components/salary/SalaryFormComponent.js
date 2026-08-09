@@ -99,6 +99,7 @@ function SalaryFormComponent() {
               "dac",
               "dac_lyp",
               "ojim",
+              "mixue_sogo",
               "sds_hq",
             ];
             if (floatKeys.includes(key)) {

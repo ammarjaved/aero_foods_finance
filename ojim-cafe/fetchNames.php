@@ -13,7 +13,7 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Fetch data from employees table
-    $query = "SELECT short_name FROM public.employees";
+    $query = "SELECT short_name FROM public.employees WHERE LOWER(COALESCE(is_active, 'yes')) = 'yes' ORDER BY short_name";
     $stmt = $conn->prepare($query);
     $stmt->execute();
     $data = $stmt->fetchAll(PDO::FETCH_COLUMN); // Fetch as simple array of names

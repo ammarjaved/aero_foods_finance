@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { fetchAuthVersion, storeAuthVersion } from './session';
 
 // Create a theme with red background and white text
 const theme = createTheme({
@@ -93,7 +94,10 @@ const LoginForm = () => {
       const data = await response.json();
       console.log(data);
       if (data.status === 'success') {
-        localStorage.setItem('token', data.Token);
+        // Stamp this session with the server's current version so the app can
+        // force a re-login later by bumping aero-foods/auth_version.txt
+        storeAuthVersion(await fetchAuthVersion());
+        localStorage.setItem('token', data.token || data.Token);
         localStorage.setItem('user', user); // Store username for display
         navigate('/landing'); // Redirect to dashboard
       } else {

@@ -4,6 +4,8 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Non-fatal: some brands loaded, others did not. The table still renders.
+  const [warning, setWarning] = useState(null);
   const [selectedCafe, setSelectedCafe] = useState("aero_foods_finance");
 
   const cafes = [
@@ -13,21 +15,62 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
     { value: "amazon_cafe_finance", label: "D' Amazon Cafe" },
     { value: "amazon_cafe_finance_lyp", label: "D' Amazon Cafe LYP" },
     { value: "abe_yus_finance", label: "Abe Yus" },
+    { value: "combined", label: "Combined All Cafe" },
   ];
+
+  const allCafeDBs = cafes.filter((c) => c.value !== "combined");
+  const isCombined = selectedCafe === "combined";
 
   useEffect(() => {
     fetchData();
   }, [month, selectedCafe, year]);
 
+  const fetchOneCafe = async (cafe) => {
+    const response = await fetch(
+      `http://121.121.232.54:88/aero-foods/timesheet_sb.php?month=${month}&db=${cafe.value}&year=${year}`,
+    );
+    const result = await response.json();
+    return (Array.isArray(result) ? result : []).map((row) => ({
+      ...row,
+      cafe: cafe.label,
+    }));
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+    setWarning(null);
     try {
-      const response = await fetch(
-        `http://121.121.232.54:88/aero-foods/timesheet_sb.php?month=${month}&db=${selectedCafe}&year=${year}`,
-      );
-      const result = await response.json();
-      setData(Array.isArray(result) ? result : []);
+      if (isCombined) {
+        // Pull every cafe in parallel. One unreachable cafe must not blank out
+        // the whole sheet, so a failed brand contributes no rows and is named
+        // in a warning instead.
+        const settled = await Promise.all(
+          allCafeDBs.map((cafe) =>
+            fetchOneCafe(cafe).catch((err) => {
+              console.error(`Failed to load ${cafe.label}:`, err);
+              return { failed: cafe.label };
+            }),
+          ),
+        );
+
+        const failed = settled
+          .filter((r) => r && r.failed)
+          .map((r) => r.failed);
+        const rows = settled.filter(Array.isArray).flat();
+
+        setData(rows);
+        if (failed.length > 0) {
+          setWarning(
+            `Could not load: ${failed.join(", ")}. The totals below exclude ${
+              failed.length > 1 ? "those brands" : "that brand"
+            }.`,
+          );
+        }
+      } else {
+        const cafe = cafes.find((c) => c.value === selectedCafe);
+        setData(await fetchOneCafe(cafe || { value: selectedCafe, label: "" }));
+      }
     } catch (err) {
       setError("Failed to fetch data");
       console.error(err);
@@ -44,6 +87,7 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
         employees: [],
         tableData: {},
         totals: { byDate: {}, byEmployee: {} },
+        columnMeta: {},
       };
     }
 
@@ -52,9 +96,28 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
         ...new Set(data.map((item) => item?.month_date).filter(Boolean)),
       ].sort();
 
-      const employees = [
-        ...new Set(data.map((item) => item?.name).filter(Boolean)),
-      ].sort();
+      // Combined view: the same name can exist at more than one brand (and may
+      // be two different people), so each brand gets its own column rather than
+      // silently summing them into one. Single-brand view is keyed by name as
+      // before.
+      const columnId = (item) =>
+        isCombined ? `${item.cafe}||${item.name}` : item.name;
+
+      const columnMeta = {};
+      data.forEach((item) => {
+        if (!item || !item.name) return;
+        columnMeta[columnId(item)] = {
+          name: item.name,
+          cafe: item.cafe || "",
+        };
+      });
+
+      const employees = Object.keys(columnMeta).sort((a, b) => {
+        if (isCombined && columnMeta[a].cafe !== columnMeta[b].cafe) {
+          return columnMeta[a].cafe.localeCompare(columnMeta[b].cafe);
+        }
+        return columnMeta[a].name.localeCompare(columnMeta[b].name);
+      });
 
       const tableData = {};
       const totals = { byDate: {}, byEmployee: {} };
@@ -69,19 +132,19 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
       data.forEach((item) => {
         if (!item || !item.month_date || !item.name) return;
 
-        const key = `${item.month_date}_${item.name}`;
+        const key = `${item.month_date}_${columnId(item)}`;
         const hours = parseFloat(item.total_hr) || 0;
-        tableData[key] = hours;
+        tableData[key] = (tableData[key] || 0) + hours;
 
         if (totals.byDate[item.month_date] !== undefined) {
           totals.byDate[item.month_date] += hours;
         }
-        if (totals.byEmployee[item.name] !== undefined) {
-          totals.byEmployee[item.name] += hours;
+        if (totals.byEmployee[columnId(item)] !== undefined) {
+          totals.byEmployee[columnId(item)] += hours;
         }
       });
 
-      return { dates, employees, tableData, totals };
+      return { dates, employees, tableData, totals, columnMeta };
     } catch (err) {
       console.error("Error processing data:", err);
       return {
@@ -89,6 +152,7 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
         employees: [],
         tableData: {},
         totals: { byDate: {}, byEmployee: {} },
+        columnMeta: {},
       };
     }
   };
@@ -99,7 +163,35 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
     employees = [],
     tableData = {},
     totals = { byDate: {}, byEmployee: {} },
+    columnMeta = {},
   } = processedData;
+
+  // Per-brand totals for the combined view.
+  const cafeTotals = employees.reduce((acc, emp) => {
+    const cafe = columnMeta[emp]?.cafe || "";
+    acc[cafe] = (acc[cafe] || 0) + (totals.byEmployee[emp] || 0);
+    return acc;
+  }, {});
+
+  // Contiguous runs of columns belonging to the same brand, for the grouped
+  // header band. employees is already sorted by cafe then name.
+  const cafeGroups = employees.reduce((groups, emp) => {
+    const cafe = columnMeta[emp]?.cafe || "";
+    const last = groups[groups.length - 1];
+    if (last && last.cafe === cafe) {
+      last.count += 1;
+    } else {
+      groups.push({ cafe, count: 1 });
+    }
+    return groups;
+  }, []);
+
+  // True for the first column of each brand, used to draw the divider line.
+  const startsBrand = (idx) =>
+    isCombined &&
+    (idx === 0 ||
+      (columnMeta[employees[idx - 1]]?.cafe || "") !==
+        (columnMeta[employees[idx]]?.cafe || ""));
 
   const calculateGrandTotal = () => {
     try {
@@ -228,6 +320,12 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
         </div>
       )}
 
+      {warning && (
+        <div className="alert alert-warning" role="alert">
+          {warning}
+        </div>
+      )}
+
       {!loading && !error && (!data || data.length === 0) && (
         <div className="alert alert-info text-center" role="alert">
           No data available for this month
@@ -240,11 +338,39 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
             <div className="table-responsive">
               <table className="table table-bordered table-hover mb-0">
                 <thead className="table-primary">
+                  {/* Combined view: band the staff columns by brand, so each
+                      cafe's people are grouped and labelled separately. */}
+                  {isCombined && (
+                    <tr>
+                      <th className="text-start fw-semibold">Brand</th>
+                      {cafeGroups.map((group, idx) => (
+                        <th
+                          key={`${group.cafe}-${idx}`}
+                          colSpan={group.count}
+                          className="text-center fw-bold border-start border-2"
+                        >
+                          {group.cafe}
+                          <div
+                            className="fw-normal"
+                            style={{ fontSize: "11px" }}
+                          >
+                            {(cafeTotals[group.cafe] || 0).toFixed(2)} hrs
+                          </div>
+                        </th>
+                      ))}
+                      <th className="text-center bg-primary bg-opacity-25"></th>
+                    </tr>
+                  )}
                   <tr>
                     <th className="text-start fw-semibold">Row Labels</th>
-                    {employees.map((emp) => (
-                      <th key={emp} className="text-center fw-semibold">
-                        {emp}
+                    {employees.map((emp, idx) => (
+                      <th
+                        key={emp}
+                        className={`text-center fw-semibold${
+                          startsBrand(idx) ? " border-start border-2" : ""
+                        }`}
+                      >
+                        {columnMeta[emp]?.name || emp}
                       </th>
                     ))}
                     {/* <th className="text-center fw-semibold">(blank)</th> */}
@@ -257,11 +383,16 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
                   {dates.map((date, idx) => (
                     <tr key={date}>
                       <td className="fw-medium">{formatDate(date)}</td>
-                      {employees.map((emp) => {
+                      {employees.map((emp, idx) => {
                         const key = `${date}_${emp}`;
                         const hours = tableData[key];
                         return (
-                          <td key={emp} className="text-center">
+                          <td
+                            key={emp}
+                            className={`text-center${
+                              startsBrand(idx) ? " border-start border-2" : ""
+                            }`}
+                          >
                             {hours > 0 ? hours : ""}
                           </td>
                         );
@@ -284,8 +415,13 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
                   </tr>
                   <tr className="table-primary fw-bold">
                     <td>Grand Total</td>
-                    {employees.map((emp) => (
-                      <td key={emp} className="text-center">
+                    {employees.map((emp, idx) => (
+                      <td
+                        key={emp}
+                        className={`text-center${
+                          startsBrand(idx) ? " border-start border-2" : ""
+                        }`}
+                      >
                         {totals.byEmployee && totals.byEmployee[emp]
                           ? totals.byEmployee[emp].toFixed(2)
                           : "0.00"}
@@ -298,6 +434,23 @@ const TimesheetSB = ({ month = 11, year = new Date().getFullYear() }) => {
               </table>
             </div>
           </div>
+
+          {isCombined && (
+            <div className="card-footer bg-white">
+              <div className="d-flex flex-wrap align-items-center gap-3">
+                <span className="fw-semibold">Hours by brand:</span>
+                {allCafeDBs.map((cafe) => (
+                  <span key={cafe.value} className="badge bg-light text-dark">
+                    {cafe.label}:{" "}
+                    <strong>{(cafeTotals[cafe.label] || 0).toFixed(2)}</strong>
+                  </span>
+                ))}
+                <span className="badge bg-primary ms-auto">
+                  All brands: <strong>{grandTotal.toFixed(2)}</strong>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

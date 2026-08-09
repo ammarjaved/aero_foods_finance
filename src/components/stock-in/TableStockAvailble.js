@@ -145,9 +145,9 @@ function TableStockAvailable() {
       });
   };
 
-  const handleNewRecord = (event) => {
-    const newRecord = event.detail;
-    setData((prevData) => [newRecord, ...prevData]);
+  const handleNewRecord = () => {
+    // Reload stock availability from the server after new stock is added.
+    fetchData(selectedMonth);
   };
 
   const handleRecordUpdate = (event) => {

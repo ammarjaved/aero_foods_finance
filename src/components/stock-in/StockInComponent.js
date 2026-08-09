@@ -6,6 +6,7 @@ import Tabs from "react-bootstrap/Tabs";
 import StockInDash from "./StickInDash";
 import StockInDetails from "./StockInDetails";
 import AddNewStock from "./AddNewStock";
+import UploadInvoicePdf from "./UploadInvoicePdf";
 
 function StockInComponent() {
   const [stockInData, setStockInData] = useState([]);
@@ -30,6 +31,14 @@ function StockInComponent() {
     } catch (error) {
       setStockInData([]);
     }
+  };
+
+  // Called after any stock is added (form or PDF import). Notifies the
+  // self-fetching tables (Stock Availability / Stock In tabs) to reload
+  // so new data appears without a page refresh.
+  const refreshAll = () => {
+    fetchData();
+    window.dispatchEvent(new CustomEvent("newRecordAdded"));
   };
 
   const fetchMaterials = async () => {
@@ -75,7 +84,18 @@ function StockInComponent() {
             <StockInDetails data={stockInData} materials={materials} />
           </Tab>
           <Tab eventKey="new" title="Add New Stock">
-            <AddNewStock data={stockInData} materials={materials} />
+            <AddNewStock
+              data={stockInData}
+              materials={materials}
+              onSaved={refreshAll}
+            />
+          </Tab>
+          <Tab eventKey="upload" title="Upload Invoice">
+            <UploadInvoicePdf
+              materials={materials}
+              apiBaseUrl="http://121.121.232.54:88/aero-foods"
+              onImported={refreshAll}
+            />
           </Tab>
         </Tabs>
 

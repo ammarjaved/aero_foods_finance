@@ -556,6 +556,7 @@ function SalaryTable({ onRowClick }) {
                         "dac",
                         "dac_lyp",
                         "ojim",
+                        "mixue_sogo",
                         "sds_hq",
                       ].map((field) => {
                         const total = calculateColumnTotal(field);

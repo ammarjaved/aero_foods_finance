@@ -124,8 +124,14 @@ try {
                 $phPay     = 0;
                 $phDetails = [];
                 $basePay   = 0; // hourly staff: regular worked pay (first 8 hrs/day @ RM8)
+                $workedHrs = 0; // every hour logged this month, OT day or not
+                $workedDays = 0;
                 foreach ($rows as $r) {
                     $hrs        = floatval($r['total_hr']);
+                    $workedHrs += $hrs;
+                    if ($hrs > 0) {
+                        $workedDays++;
+                    }
                     $date       = date('Y-m-d', strtotime($r['month_date']));
                     $isPH       = isset($publicHolidays[$date]);
                     $isExtraDay = false;
@@ -190,6 +196,8 @@ try {
                     'ph_pay'     => $phPay,
                     'ph_details' => $phDetails,
                     'base_pay'   => $basePay,
+                    'worked_hours' => $workedHrs,
+                    'worked_days'  => $workedDays,
                 ];
             }
         } catch (Exception $e) {
@@ -294,7 +302,8 @@ try {
         $ot      = isset($otMap[$empNorm])
                      ? $otMap[$empNorm]
                      : ['pay' => 0, 'hours' => 0, 'details' => [],
-                        'ph_pay' => 0, 'ph_details' => [], 'base_pay' => 0];
+                        'ph_pay' => 0, 'ph_details' => [], 'base_pay' => 0,
+                        'worked_hours' => 0, 'worked_days' => 0];
 
         // Monthly staff keep their fixed stored basic. Hourly staff have no
         // stored basic, so their basic is the regular worked pay computed above
@@ -309,6 +318,8 @@ try {
             'employee_name'    => $empName,
             'employment_type'  => $emp['employment_type'],
             'basic_salary'     => $basicOut,
+            'worked_hours'     => round($ot['worked_hours'], 2),
+            'worked_days'      => $ot['worked_days'],
             'overtime_hours'   => round($ot['hours'], 2),
             'overtime_pay'     => round($ot['pay'], 2),
             'overtime_details' => $ot['details'],

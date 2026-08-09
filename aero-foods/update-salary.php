@@ -34,7 +34,17 @@ try {
     
     $results = [];
     $pdo->beginTransaction();
-    
+
+    // Amount columns are double precision: an empty string from the form is not
+    // a valid number, so send NULL instead of ''.
+    $amount = function ($record, $key) {
+        if (!isset($record[$key])) {
+            return null;
+        }
+        $value = $record[$key];
+        return ($value === '' || $value === null) ? null : $value;
+    };
+
     foreach ($input as $record) {
         // Validate required fields (only amount fields and user tracking)
         $requiredFields = ['mixue', 'abeyus', 'dac','ojim', 'sds_hq'];
@@ -44,29 +54,31 @@ try {
         
         if ($isUpdate) {
             // UPDATE operation
-            $sql = "UPDATE salary SET 
-                        mixue = :mixue,
-                        abeyus = :abeyus,
-                        dac = :dac,
-						dac_lyp = :dac_lyp,
-                        ojim=:ojim,
-                        sds_hq = :sds_hq,
-                        updated_by = :updated_by,
-                        created_by = CURRENT_TIMESTAMP
+            $sql = "UPDATE salary SET
+                        mixue      = :mixue,
+                        abeyus     = :abeyus,
+                        dac        = :dac,
+                        dac_lyp    = :dac_lyp,
+                        ojim       = :ojim,
+                        mixue_sogo = :mixue_sogo,
+                        sds_hq     = :sds_hq,
+                        updated_by = :updated_by
                     WHERE id = :id";
-            
+
             $stmt = $pdo->prepare($sql);
-            
-            // Bind parameters
-            $stmt->bindParam(':id', $record['id'], PDO::PARAM_INT);
-            $stmt->bindParam(':mixue', $record['mixue'], PDO::PARAM_STR);
-            $stmt->bindParam(':abeyus', $record['abeyus'], PDO::PARAM_STR);
-            $stmt->bindParam(':dac', $record['dac'], PDO::PARAM_STR);
-			 $stmt->bindParam(':dac_lyp', $record['dac_lyp'], PDO::PARAM_STR);
-            $stmt->bindParam(':ojim', $record['ojim'], PDO::PARAM_STR);
-            $stmt->bindParam(':sds_hq', $record['sds_hq'], PDO::PARAM_STR);
-            $stmt->bindParam(':updated_by', $record['updated_by'], PDO::PARAM_STR);
-            
+
+            // Bind parameters. bindValue (not bindParam) because these come from
+            // a closure return, and NULLs must bind as NULL rather than ''.
+            $stmt->bindValue(':id', $record['id'], PDO::PARAM_INT);
+            $stmt->bindValue(':mixue',      $amount($record, 'mixue'));
+            $stmt->bindValue(':abeyus',     $amount($record, 'abeyus'));
+            $stmt->bindValue(':dac',        $amount($record, 'dac'));
+            $stmt->bindValue(':dac_lyp',    $amount($record, 'dac_lyp'));
+            $stmt->bindValue(':ojim',       $amount($record, 'ojim'));
+            $stmt->bindValue(':mixue_sogo', $amount($record, 'mixue_sogo'));
+            $stmt->bindValue(':sds_hq',     $amount($record, 'sds_hq'));
+            $stmt->bindValue(':updated_by', $record['updated_by'], PDO::PARAM_STR);
+
             $stmt->execute();
             
             if ($stmt->rowCount() > 0) {
@@ -84,10 +96,13 @@ try {
             // Note: For insert, you would need month and year, but since your form doesn't send them,
             // you might need to get them from somewhere else or modify this logic
             
+            // Column list matches the salary table exactly: the amount column is
+            // abeyus (not "abe-yus"), and there are no created_at / updated_at
+            // columns. Getting either wrong made every new-record save fail.
             $sql = "INSERT INTO salary
-                        (month, year, mixue, \"abe-yus\",dac,dac_lyp,ojim, sds_hq, created_by, updated_by, created_at, updated_at)
-                    VALUES 
-                        (:month, :year, :mixue, :abe_yus, :dac,:dac_lyp,:ojim ,:sds_hq, :created_by, :updated_by, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        (month, year, mixue, abeyus, dac, dac_lyp, ojim, mixue_sogo, sds_hq, created_by, updated_by)
+                    VALUES
+                        (:month, :year, :mixue, :abeyus, :dac, :dac_lyp, :ojim, :mixue_sogo, :sds_hq, :created_by, :updated_by)
                     RETURNING id";
             
             $stmt = $pdo->prepare($sql);
@@ -102,18 +117,18 @@ try {
             }
             
             // Bind parameters
-            $stmt->bindParam(':month', $month, PDO::PARAM_STR);
-            $stmt->bindParam(':year', $year, PDO::PARAM_STR);
-            $stmt->bindParam(':mixue', $record['mixue'], PDO::PARAM_STR);
-            $stmt->bindParam(':abeyus', $record['abeyus'], PDO::PARAM_STR);
-            $stmt->bindParam(':dac', $record['dac'], PDO::PARAM_STR);
-			 $stmt->bindParam(':dac_lyp', $record['dac_lyp'], PDO::PARAM_STR);
-            $stmt->bindParam(':ojim', $record['ojim'], PDO::PARAM_STR);
+            $stmt->bindValue(':month', $month, PDO::PARAM_STR);
+            $stmt->bindValue(':year', $year, PDO::PARAM_STR);
+            $stmt->bindValue(':mixue',      $amount($record, 'mixue'));
+            $stmt->bindValue(':abeyus',     $amount($record, 'abeyus'));
+            $stmt->bindValue(':dac',        $amount($record, 'dac'));
+            $stmt->bindValue(':dac_lyp',    $amount($record, 'dac_lyp'));
+            $stmt->bindValue(':ojim',       $amount($record, 'ojim'));
+            $stmt->bindValue(':mixue_sogo', $amount($record, 'mixue_sogo'));
+            $stmt->bindValue(':sds_hq',     $amount($record, 'sds_hq'));
+            $stmt->bindValue(':created_by', $record['created_by'], PDO::PARAM_STR);
+            $stmt->bindValue(':updated_by', $record['updated_by'], PDO::PARAM_STR);
 
-            $stmt->bindParam(':sds_hq', $record['sds_hq'], PDO::PARAM_STR);
-            $stmt->bindParam(':created_by', $record['created_by'], PDO::PARAM_STR);
-            $stmt->bindParam(':updated_by', $record['updated_by'], PDO::PARAM_STR);
-            
             $stmt->execute();
             $newId = $stmt->fetchColumn();
             
