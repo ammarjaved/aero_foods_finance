@@ -39,12 +39,32 @@ try {
         throw new Exception("Email and password are required");
     }
     
-    // Prepare and execute query
-    $stmt = $conn->prepare("SELECT id, password, is_admin FROM users WHERE username ='$username'");
+    // Prepare and execute query - join with employees to check is_active status
+    $stmt = $conn->prepare("SELECT u.id, u.password, u.is_admin, e.is_active 
+                            FROM users u 
+                            LEFT JOIN employees e ON LOWER(TRIM(e.short_name)) = LOWER(TRIM(u.username))
+                            WHERE u.username = '$username'");
 	//$stmt->execute([':username' => $username]);
     $stmt->execute();
 	$user = $stmt->fetch(PDO::FETCH_ASSOC);
 	
+    // Check if user exists
+    if (!$user) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Invalid username or password"
+        ]);
+        exit;
+    }
+
+    // Check if user is inactive
+    if (isset($user['is_active']) && strtolower(trim($user['is_active'])) === 'no') {
+        echo json_encode([
+            "status" => "error",
+            "message" => "This account is inactive. Please contact administrator."
+        ]);
+        exit;
+    }
   
     
     if ($password==$user['password']) {
