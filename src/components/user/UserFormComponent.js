@@ -63,6 +63,9 @@ function UserFormComponent() {
         submitData.id = formData.id;
       }
       submitData.db = formData.db;
+      
+      console.log("Submitting user data:", submitData);
+      
       const response = await fetch(
         "http://121.121.232.54:88/aero-foods/update-user.php",
         {
@@ -75,6 +78,7 @@ function UserFormComponent() {
       );
 
       const result = await response.json();
+      console.log("Server response:", result);
 
       if (response.ok) {
         const successMessage = isEditing
@@ -111,6 +115,7 @@ function UserFormComponent() {
   };
 
   const handleRowClick = async (record, db) => {
+    console.log("Opening user for edit:", record);
     resetForm();
     setFormData({
       id: record.id,
@@ -121,6 +126,11 @@ function UserFormComponent() {
       employment_type: record.employment_type || "Hours",
       basic_salary: record.basic_salary || "",
       db: db,
+    });
+    console.log("Form data set to:", {
+      id: record.id,
+      is_admin: record.is_admin,
+      is_active: record.is_active || "yes",
     });
     setCurrentCafe(db);
     setIsEditing(true);
