@@ -25,6 +25,14 @@ yarn-error.log*
 
 # uploaded images (stored on server, not in git)
 aero-foods/audit_images/
+aero-foods/images/
+abe-yus/images/
+ojim-cafe/images/
+images/
+uploads/images/
+amazon-cafe/images/
+amazon-cafe-lyp/images/
+mixue-sogo/images/
 
 # spreadsheet files
 *.xlsx
