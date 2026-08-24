@@ -92,7 +92,7 @@ def get_or_create_agent(session_id: str) -> Agent:
         return sessions[session_id]["agent"]
 
     # Create new agent with fresh conversation memory
-    os.environ.setdefault("ANTHROPIC_API_KEY", "<REDACTED>")
+    # ANTHROPIC_API_KEY should be set in environment or .env file
     model = AnthropicModel(
         model_id="claude-sonnet-4-5",
         max_tokens=4096,

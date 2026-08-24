@@ -63,7 +63,7 @@ Default assumptions unless user specifies:
 #     region_name="us-east-1"
 # )
 
-os.environ.setdefault("ANTHROPIC_API_KEY", "<REDACTED>")
+# ANTHROPIC_API_KEY should be set in environment or .env file
 model = AnthropicModel(
     model_id="claude-sonnet-4-5",  # or claude-3-5-haiku-20241022 (cheaper)
     max_tokens=4096
