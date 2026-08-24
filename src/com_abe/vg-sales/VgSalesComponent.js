@@ -55,9 +55,12 @@ const COLUMNS = [
   { key: "gross_value", label: "Gross Value (RM)", type: "money" },
   { key: "disc_value", label: "Disc Value (RM)", type: "money" },
   { key: "net_value", label: "Net Value Incl Tax (MYR)", type: "money" },
-  { key: "pcs", label: "Pcs", type: "number" },
-  { key: "pcs_sold", label: "Pcs Sold", type: "number" },
-  { key: "supply", label: "Supply" },
+  // These three are not stored per sales line. Pcs and Supply come from the
+  // item master (Menu Items screen) and Pcs Sold is Qty Sold × Pcs, computed by
+  // vg_sales.php. Editing an item updates every row that uses its code.
+  { key: "pcs", label: "Pcs", type: "number", fromMaster: true },
+  { key: "pcs_sold", label: "Pcs Sold", type: "number", fromMaster: true },
+  { key: "supply", label: "Supply", fromMaster: true },
 ];
 
 const PAGE_SIZE = 100;
@@ -326,7 +329,7 @@ function VgSalesComponent() {
 
   return (
     <div className="container-fluid py-3">
-      <h3 className="text-danger mb-3">VG Sales Orders</h3>
+      <h3 className="text-danger mb-3">Sales Orders</h3>
 
       {error && (
         <Alert variant="danger" dismissible onClose={() => setError("")}>
@@ -382,7 +385,9 @@ function VgSalesComponent() {
           )}
           <Form.Text className="text-muted d-block mt-2">
             Uploading a file with a name that already exists replaces that
-            file's rows instead of adding them twice.
+            file's rows instead of adding them twice. Item codes the master has
+            never seen are added to <strong>Menu Items</strong> using the sheet's
+            own Pcs and Supply; codes already there are left untouched.
           </Form.Text>
         </Card.Body>
       </Card>
@@ -440,6 +445,10 @@ function VgSalesComponent() {
               {selectedFile.uploaded_by ? ` by ${selectedFile.uploaded_by}` : ""} ·
               sheet {selectedFile.sheet_name} · showing {filteredRows.length} of{" "}
               {rows.length} row(s)
+              <div>
+                * Pcs and Supply come from the Menu Items master; Pcs Sold is Qty
+                Sold × Pcs.
+              </div>
             </div>
           )}
         </Card.Body>
@@ -470,6 +479,15 @@ function VgSalesComponent() {
                       {COLUMNS.map((c) => (
                         <th key={c.key} className="text-nowrap">
                           {c.label}
+                          {c.fromMaster && (
+                            <span
+                              className="ms-1"
+                              title="From the Menu Items master"
+                              style={{ opacity: 0.75 }}
+                            >
+                              *
+                            </span>
+                          )}
                         </th>
                       ))}
                     </tr>

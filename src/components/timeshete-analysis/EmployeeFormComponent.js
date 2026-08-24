@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { canEdit } from "../../roles";
 
 const TimesheetFormComponent = ({ show, onClose, onSave, editData = null }) => {
+  const allowEdit = canEdit();
   const [saving, setSaving] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [employeeForms, setEmployeeForms] = useState([]);
@@ -470,26 +472,28 @@ const TimesheetFormComponent = ({ show, onClose, onSave, editData = null }) => {
                 onClick={onClose}
               >
                 <i className="bi bi-x-circle me-2"></i>
-                Cancel
+                {allowEdit ? "Cancel" : "Close"}
               </button>
-              <button
-                type="button"
-                className="btn btn-primary flex-fill"
-                disabled={saving}
-                onClick={handleSubmit}
-              >
-                {saving ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-check-circle me-2"></i>
-                    {editData ? "Update" : "Save All"}
-                  </>
-                )}
-              </button>
+              {allowEdit && (
+                <button
+                  type="button"
+                  className="btn btn-primary flex-fill"
+                  disabled={saving}
+                  onClick={handleSubmit}
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-check-circle me-2"></i>
+                      {editData ? "Update" : "Save All"}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

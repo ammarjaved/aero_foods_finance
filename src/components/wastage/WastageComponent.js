@@ -768,7 +768,7 @@ function WastageComponent() {
               style={{ backgroundColor: "#e80000" }}
               className="card-header  text-white d-flex justify-content-between align-items-center"
             >
-              <h2 className="mb-0">Daily Wastage</h2>
+              <h2 className="mb-0">Daily Wastage (Mixue Jakel)</h2>
             </div>
           </div>
           <div className="card-body">

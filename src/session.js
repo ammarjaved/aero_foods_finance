@@ -33,6 +33,7 @@ export const storeAuthVersion = (version) => {
 export const clearSession = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  localStorage.removeItem("role");
   localStorage.removeItem("message");
   localStorage.removeItem("activeSidebarSection");
   localStorage.removeItem(VERSION_KEY);

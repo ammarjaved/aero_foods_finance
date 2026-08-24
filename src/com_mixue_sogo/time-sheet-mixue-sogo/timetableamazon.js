@@ -1,7 +1,9 @@
 ﻿import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { canEdit } from "../../roles";
 
 function TimetableAmazon({ onRowClick, onFilter, sortFilter, isFetch }) {
+  const allowEdit = canEdit();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -433,9 +435,11 @@ function TimetableAmazon({ onRowClick, onFilter, sortFilter, isFetch }) {
     <div className="container-fluid mt-3">
       <div className="row" style={{ margin: 10 }}>
         <div className="col-12 d-flex justify-content-end">
-          <button className="btn btn-danger" onClick={handleCreate}>
-            Add New Record
-          </button>
+          {allowEdit && (
+            <button className="btn btn-danger" onClick={handleCreate}>
+              Add New Record
+            </button>
+          )}
         </div>
       </div>
 
@@ -756,7 +760,8 @@ function TimetableAmazon({ onRowClick, onFilter, sortFilter, isFetch }) {
                         </td>
                       ))}
                       <td>
-                        {editRowId === record.id ? (
+                        {allowEdit &&
+                          (editRowId === record.id ? (
                           <>
                             <button
                               className="btn btn-sm btn-success me-1"
@@ -786,7 +791,7 @@ function TimetableAmazon({ onRowClick, onFilter, sortFilter, isFetch }) {
                               Delete
                             </button>
                           </>
-                        )}
+                          ))}
                       </td>
                     </tr>
                   ))

@@ -99,6 +99,15 @@ const LoginForm = () => {
         storeAuthVersion(await fetchAuthVersion());
         localStorage.setItem('token', data.token || data.Token);
         localStorage.setItem('user', user); // Store username for display
+        // is_admin drives the menu and the view-only guard: "yes" = admin,
+        // "manager" = admin menu but read only, "no" = regular user. If the
+        // server has not been updated yet it sends no is_admin, and roles.js
+        // falls back to the old username check.
+        if (data.is_admin) {
+          localStorage.setItem('role', data.is_admin);
+        } else {
+          localStorage.removeItem('role');
+        }
         navigate('/landing'); // Redirect to dashboard
       } else {
         setError(data.message || 'Login failed');

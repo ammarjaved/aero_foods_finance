@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import Navbar from "../../Navbar";
 import Sidebar from "../../Sidebar";
+import { canEdit } from "../../roles";
 
 const ALL_DATABASES = [
   { value: "aero_foods_finance",       label: "Mixue Finance" },
@@ -33,6 +34,7 @@ const MONTHS = [
 ];
 
 const ReCalculate = () => {
+  const allowEdit = canEdit();
   const [formData, setFormData] = useState({
     year: new Date().getFullYear(),
     month: "",
@@ -276,7 +278,12 @@ const ReCalculate = () => {
                     {/* Update Button */}
                     <button
                       onClick={handleUpdate}
-                      disabled={loading}
+                      disabled={loading || !allowEdit}
+                      title={
+                        allowEdit
+                          ? undefined
+                          : "View-only accounts cannot run the updater"
+                      }
                       className={`btn w-100 py-2 d-flex align-items-center justify-content-center gap-2 ${
                         loading ? "btn-secondary" : "btn-primary"
                       }`}

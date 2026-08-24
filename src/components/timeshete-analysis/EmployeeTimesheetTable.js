@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import TimesheetFormComponent from "./EmployeeFormComponent";
 import ScheduleExporter from "./schedule-exporter";
+import { canEdit } from "../../roles";
 
 const EmployeeTimesheet = () => {
+  const allowEdit = canEdit();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -119,17 +121,23 @@ const EmployeeTimesheet = () => {
                 <i className="bi bi-people-fill text-primary me-2"></i>
                 Employee Timesheet
               </h2>
-              <p className="text-muted mb-0">Aero Foods - Click row to edit</p>
+              <p className="text-muted mb-0">
+                {allowEdit
+                  ? "Aero Foods - Click row to edit"
+                  : "Aero Foods - Click row to view"}
+              </p>
             </div>
             <div className="col-md-3 text-md-end">
               <small className="text-muted d-block">Total Records</small>
               <h3 className="text-primary mb-0">{filteredData.length}</h3>
             </div>
             <div className="col-md-3 text-md-end">
-              <button className="btn btn-primary" onClick={handleOpenAddModal}>
-                <i className="bi bi-plus-circle me-2"></i>
-                Add Entry
-              </button>
+              {allowEdit && (
+                <button className="btn btn-primary" onClick={handleOpenAddModal}>
+                  <i className="bi bi-plus-circle me-2"></i>
+                  Add Entry
+                </button>
+              )}
             </div>
           </div>
         </div>

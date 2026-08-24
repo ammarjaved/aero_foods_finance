@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import MBBCsvUploadComponent from "./MBBCsvUploadComponent";
+import { canEdit } from "../../roles";
 
 const API_URL = "http://121.121.232.54:88/aero-foods/expense_file.php";
 
@@ -24,6 +25,7 @@ const EXPENSE_TYPES = ["Rental", "Utilities", "Stock", "Logistik", "Claim", "Sal
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200, "All"];
 
 function ExpenseFileComponent() {
+  const allowEdit = canEdit();
   // ── Upload state ──────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading]       = useState(false);
@@ -545,7 +547,7 @@ function ExpenseFileComponent() {
               <button
                 className="btn btn-success w-100"
                 onClick={handleUpload}
-                disabled={!selectedFile || uploading}
+                disabled={!selectedFile || uploading || !allowEdit}
               >
                 {uploading ? (
                   <><span className="spinner-border spinner-border-sm me-2" />Uploading…</>
@@ -823,7 +825,7 @@ function ExpenseFileComponent() {
                 <button
                   className="btn btn-primary btn-sm me-2"
                   onClick={bulkUpdate}
-                  disabled={bulkSaving || (!bulkCompany && bulkExpenseType !== "SDS HQ")}
+                  disabled={!allowEdit || bulkSaving || (!bulkCompany && bulkExpenseType !== "SDS HQ")}
                 >
                   {bulkSaving
                     ? <span className="spinner-border spinner-border-sm" />
@@ -833,7 +835,7 @@ function ExpenseFileComponent() {
                 <button
                   className="btn btn-danger btn-sm"
                   onClick={deleteSelected}
-                  disabled={deletingRows}
+                  disabled={deletingRows || !allowEdit}
                 >
                   {deletingRows
                     ? <span className="spinner-border spinner-border-sm" />

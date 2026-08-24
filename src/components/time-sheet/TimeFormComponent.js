@@ -1,9 +1,11 @@
 // src/FormComponent.js
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { canEdit } from "../../roles";
 import TimeTable from "./timetable";
 
 function TimeFormComponent() {
+  const allowEdit = canEdit();
   const [formData, setFormData] = useState({
     name: "", // This could be employee name or shift identifier
     start_time: "", // Current time as start time
@@ -431,16 +433,20 @@ function TimeFormComponent() {
             </div>
 
             <div className="d-flex justify-content-end gap-2 mt-3">
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={deleteRecord}
-              >
-                Delete
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {isEditing ? "Update" : "Save"}
-              </button>
+              {allowEdit && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={deleteRecord}
+                  >
+                    Delete
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {isEditing ? "Update" : "Save"}
+                  </button>
+                </>
+              )}
             </div>
           </form>
         </div>

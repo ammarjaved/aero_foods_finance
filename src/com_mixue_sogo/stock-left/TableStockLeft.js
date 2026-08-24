@@ -11,6 +11,17 @@ const numberFmt = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+// Local YYYY-MM-DD for today (not toISOString, which shifts by timezone).
+const pad = (n) => String(n).padStart(2, "0");
+const now = new Date();
+const todayString = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+  now.getDate()
+)}`;
+
+// Matches "Discontinue", "Discontinued", odd casing and stray whitespace.
+const isDiscontinued = (category) =>
+  String(category || "").trim().toLowerCase().startsWith("discontinu");
+
 // Total packets remaining = boxes * packets-per-box + loose packets.
 const remainingPackets = (row) =>
   (Number(row.total_box) || 0) * (Number(row.packet) || 0) +
@@ -18,22 +29,26 @@ const remainingPackets = (row) =>
 
 function TableStockLeft({ data, materials, apiBaseUrl, onSaved }) {
   const [search, setSearch] = useState("");
-  const [monthFilter, setMonthFilter] = useState("");
+  const [asOfDate, setAsOfDate] = useState("");
   const [edits, setEdits] = useState({});
   const [savingCode, setSavingCode] = useState("");
 
   // Keep only the most recent stock-left entry per item (code), excluding
-  // discontinued materials. If monthFilter is set, only consider records
-  // from that month.
+  // discontinued materials. If asOfDate is set, only consider counts recorded
+  // on or before that date, so the table shows the position as at that day.
+  // Only ever show counts from the selected year - previous years are never
+  // brought forward.
+  const refYear = (asOfDate || todayString).slice(0, 4);
+
   const latest = useMemo(() => {
     const map = new Map();
     (data || [])
-      .filter((row) => row.category !== "Discontinue")
+      .filter((row) => !isDiscontinued(row.category))
       .filter(
         (row) =>
-          !monthFilter ||
-          String(row.month_date || "").startsWith(monthFilter)
+          !asOfDate || String(row.month_date || "").slice(0, 10) <= asOfDate
       )
+      .filter((row) => String(row.month_date || "").slice(0, 4) === refYear)
       .forEach((row) => {
       const key = row.code;
       const existing = map.get(key);
@@ -48,7 +63,7 @@ function TableStockLeft({ data, materials, apiBaseUrl, onSaved }) {
       }
     });
     return Array.from(map.values());
-  }, [data, monthFilter]);
+  }, [data, asOfDate, refYear]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -130,18 +145,20 @@ function TableStockLeft({ data, materials, apiBaseUrl, onSaved }) {
         </Col>
         <Col md={4}>
           <Form.Control
-            type="month"
-            value={monthFilter}
-            onChange={(e) => setMonthFilter(e.target.value)}
+            type="date"
+            value={asOfDate}
+            max={todayString}
+            title="Show the stock left position as at this date"
+            onChange={(e) => setAsOfDate(e.target.value)}
           />
         </Col>
         <Col md={3} className="d-flex align-items-center gap-2">
-          {monthFilter && (
+          {asOfDate && (
             <Badge
               bg="light"
               text="dark"
               style={{ cursor: "pointer" }}
-              onClick={() => setMonthFilter("")}
+              onClick={() => setAsOfDate("")}
             >
               Clear ✕
             </Badge>

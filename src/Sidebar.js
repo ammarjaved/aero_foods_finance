@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearSession } from "./session";
+import { canViewAdmin, isViewOnly } from "./roles";
 
 function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [activeSection, setActiveSection] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  // Administrators and view-only managers get the same menu; only the ability
+  // to change anything differs.
   const [isAdmin, setIsAdmin] = useState(false);
+  const [viewOnly, setViewOnly] = useState(false);
+  // Admin tools group. Deliberately not persisted - it always starts collapsed.
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const handleLogout = () => {
     clearSession();
@@ -18,8 +24,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     if (!token) {
       navigate("/login");
     } else {
-      const user = localStorage.getItem("user");
-      setIsAdmin(user === "admin");
+      setIsAdmin(canViewAdmin());
+      setViewOnly(isViewOnly());
     }
   }, [navigate]);
 
@@ -86,7 +92,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/reconciliation-yus", label: "Bank Reconciliation" },
     { href: "/materials-yus", label: "Materials" },
     { href: "/stockin-yus", label: "Stock In" },
-    { href: "/vg-sales-yus", label: "VG Sales" },
+    { href: "/vg-sales-yus", label: "Sales" },
+    { href: "/vg-items-yus", label: "Menu Items" },
     { href: "/Expenses-yus", label: "Expenditure" },
   ];
 
@@ -141,10 +148,28 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     },
   ];
 
+  // The admin-only items that used to sit flat under HQ Expenses.
+  const adminMenuItems = [
+    { href: "/recalculate", label: "Re-Calculate" },
+    { href: "/all-tng", label: "All-TNG" },
+    { href: "/all-bank-card", label: "All-Bank-Card" },
+    { href: "/payable", label: "Payable" },
+    { href: "/summary", label: "📊 Summary" },
+    { href: "/expense-file", label: "Expense File" },
+    { href: "/chatapp", label: "Predict Stock Ai" },
+    { href: "/Salary", label: "Salary" },
+    { href: "/User", label: "User Management" },
+    { href: "/payroll", label: "Payroll Management" },
+  ];
+
   // Function to check if current page matches the menu item
   const isCurrentPage = (href) => {
     return location.pathname === href;
   };
+
+  const adminHasActivePage = adminMenuItems.some((item) =>
+    isCurrentPage(item.href)
+  );
 
   const renderMenuItems = (items) =>
     items.map((item, index) => {
@@ -300,6 +325,24 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
       }}
     >
       <div className="p-3">
+        {/* View-only accounts see the full admin menu, so say so up front */}
+        {viewOnly && (
+          <div
+            style={{
+              marginBottom: "10px",
+              padding: "8px 12px",
+              backgroundColor: "rgba(0,0,0,0.25)",
+              borderRadius: "4px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "#fff",
+              textAlign: "center",
+            }}
+          >
+            👁 VIEW ONLY
+          </div>
+        )}
+
         {/* Current Page Indicator */}
         {location.pathname !== "/" && (
           <div
@@ -356,6 +399,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           {isCurrentPage("/ExpensesSDS") && "► "} HQ Expenses
         </div>
 
+        {/* Admin tools - collapsed by default, Logout stays outside */}
         <div
           className="nav flex-column"
           style={{
@@ -365,302 +409,54 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           }}
         >
           {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/recalculate")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/recalculate")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/recalculate") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/recalculate")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/recalculate")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/recalculate") && "► "} Re-Calculate
-            </div>
-          )}
+            <div className="mb-2">
+              <button
+                onClick={() => setAdminOpen(!adminOpen)}
+                style={{
+                  width: "100%",
+                  backgroundColor: adminHasActivePage
+                    ? "rgba(255,255,255,0.15)"
+                    : "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "4px",
+                  padding: "10px 15px",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                }}
+                className="text-start"
+              >
+                <span>
+                  {adminHasActivePage && "● "}
+                  Admin Tools
+                </span>
+                <span
+                  style={{
+                    transform: adminOpen ? "rotate(90deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s ease",
+                  }}
+                >
+                  ▶
+                </span>
+              </button>
 
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/all-tng")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/all-tng")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/all-tng") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/all-tng")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/all-tng")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/all-tng") && "► "} All-TNG
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/all-bank-card")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/all-bank-card")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/all-bank-card") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/all-bank-card")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/all-bank-card")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/all-bank-card") && "► "} All-Bank-Card
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/payable")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/payable")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/payable") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/payable")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/payable")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/payable") && "► "} Payable
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/summary")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/summary")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/summary") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/summary")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/summary")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/summary") && "► "}📊 Summary
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/expense-file")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/expense-file")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/expense-file") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/expense-file")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/expense-file")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/expense-file") && "► "} Expense File
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/chatapp")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/chatapp")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/chatapp") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/chatapp")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/chatapp")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/chatapp") && "► "} Predict Stock Ai
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/Salary")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/Salary")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/Salary") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/Salary")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/Salary")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/Salary") && "► "} Salary
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/User")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/User")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/User") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/User")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/User")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/User") && "► "} User Management
-            </div>
-          )}
-
-          {isAdmin && (
-            <div
-              onClick={() => handleNavigation("/payroll")}
-              style={{
-                borderBottom: "1px white solid",
-                cursor: "pointer",
-                backgroundColor: isCurrentPage("/payroll")
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                margin: "2px 0",
-                fontWeight: isCurrentPage("/payroll") ? "bold" : "normal",
-                transition: "background-color 0.2s ease",
-              }}
-              className="nav-link text-white py-2"
-              onMouseEnter={(e) => {
-                if (!isCurrentPage("/payroll")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isCurrentPage("/payroll")) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              {isCurrentPage("/payroll") && "► "} Payroll Management
+              <div
+                style={{
+                  maxHeight: adminOpen ? "1000px" : "0",
+                  overflow: "hidden",
+                  transition: "max-height 0.3s ease-in-out",
+                  backgroundColor: "rgba(0,0,0,0.1)",
+                  borderRadius: "0 0 4px 4px",
+                }}
+              >
+                <div className="nav flex-column" style={{ padding: "5px 0" }}>
+                  {renderMenuItems(adminMenuItems)}
+                </div>
+              </div>
             </div>
           )}
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AllowanceTable from "./AllowanceTable";
 import DeductionTable from "./DeductionTable";
+import { canEdit } from "../../roles";
 
 const API_BASE_URL = "http://121.121.232.54:88/aero-foods";
 
@@ -41,6 +42,7 @@ const ALL_CAFE_KEYS = [
 ];
 
 function PayrollManager() {
+  const allowEdit = canEdit();
   const [activeTab, setActiveTab] = useState("allowances");
   const [currentCafe, setCurrentCafe] = useState("mixue");
   const [employees, setEmployees] = useState([]);
@@ -410,9 +412,11 @@ function PayrollManager() {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h4 className="mb-0">Payroll Management</h4>
-              <button className="btn btn-primary" onClick={openNewForm}>
-                <i className="fas fa-plus"></i> Add New {activeTab === "allowances" ? "Allowance" : "Deduction"}
-              </button>
+              {allowEdit && (
+                <button className="btn btn-primary" onClick={openNewForm}>
+                  <i className="fas fa-plus"></i> Add New {activeTab === "allowances" ? "Allowance" : "Deduction"}
+                </button>
+              )}
             </div>
 
             <div className="card-body">
@@ -636,7 +640,7 @@ function PayrollManager() {
               </div>
 
               <div className="mt-4 d-flex justify-content-between">
-                {isEditing && allowanceForm.id && (
+                {allowEdit && isEditing && allowanceForm.id && (
                   <button
                     type="button"
                     className="btn btn-danger"
@@ -649,10 +653,12 @@ function PayrollManager() {
                   <button type="button" className="btn btn-secondary me-2" onClick={closeForm}>
                     Cancel
                   </button>
-                  <button type="button" className="btn btn-primary" onClick={handleAllowanceSubmit}>
-                    <i className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}></i>{" "}
-                    {isEditing ? "Update" : "Add"} Allowance
-                  </button>
+                  {allowEdit && (
+                    <button type="button" className="btn btn-primary" onClick={handleAllowanceSubmit}>
+                      <i className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}></i>{" "}
+                      {isEditing ? "Update" : "Add"} Allowance
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -838,7 +844,7 @@ function PayrollManager() {
               </div>
 
               <div className="mt-4 d-flex justify-content-between">
-                {isEditing && deductionForm.id && (
+                {allowEdit && isEditing && deductionForm.id && (
                   <button
                     type="button"
                     className="btn btn-danger"
@@ -851,10 +857,12 @@ function PayrollManager() {
                   <button type="button" className="btn btn-secondary me-2" onClick={closeForm}>
                     Cancel
                   </button>
-                  <button type="button" className="btn btn-primary" onClick={handleDeductionSubmit}>
-                    <i className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}></i>{" "}
-                    {isEditing ? "Update" : "Add"} Deduction
-                  </button>
+                  {allowEdit && (
+                    <button type="button" className="btn btn-primary" onClick={handleDeductionSubmit}>
+                      <i className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}></i>{" "}
+                      {isEditing ? "Update" : "Add"} Deduction
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

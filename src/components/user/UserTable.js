@@ -316,6 +316,10 @@ function UserTable({ onRowClick, onCafeChange }) {
                       <td>
                         {record.is_admin === "yes" ? (
                           <span className="badge bg-danger">Admin</span>
+                        ) : record.is_admin === "manager" ? (
+                          <span className="badge bg-warning text-dark">
+                            Manager (View Only)
+                          </span>
                         ) : (
                           <span className="badge bg-secondary">User</span>
                         )}

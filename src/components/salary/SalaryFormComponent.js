@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SalaryTable from "./SalaryTable";
+import { canEdit } from "../../roles";
 
 function SalaryFormComponent() {
   const defaultRecord = {
@@ -264,7 +265,8 @@ function SalaryFormComponent() {
     }
   };
 
-  const isDeleteEnabled = isEditing && editFormData.id;
+  const allowEdit = canEdit();
+  const isDeleteEnabled = allowEdit && isEditing && editFormData.id;
 
   // Month options
   const monthOptions = [
@@ -562,13 +564,15 @@ function SalaryFormComponent() {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {isEditing
-                    ? "Update"
-                    : `Save ${formRecords.length} Record${
-                        formRecords.length > 1 ? "s" : ""
-                      }`}
-                </button>
+                {allowEdit && (
+                  <button type="submit" className="btn btn-primary">
+                    {isEditing
+                      ? "Update"
+                      : `Save ${formRecords.length} Record${
+                          formRecords.length > 1 ? "s" : ""
+                        }`}
+                  </button>
+                )}
               </div>
             </div>
           </form>

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import UserTable from "./UserTable";
+import { canEdit } from "../../roles";
 
 function UserFormComponent() {
+  const allowEdit = canEdit();
   const [currentCafe, setCurrentCafe] = useState("mixue");
 
   const defaultRecord = {
@@ -173,7 +175,7 @@ function UserFormComponent() {
     }
   };
 
-  const isDeleteEnabled = isEditing && formData.id;
+  const isDeleteEnabled = allowEdit && isEditing && formData.id;
 
   return (
     <div className="container-fluid">
@@ -182,9 +184,15 @@ function UserFormComponent() {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h4 className="mb-0">User Management</h4>
-              <button className="btn btn-primary" onClick={openNewForm}>
-                <i className="fas fa-plus"></i> Add New User
-              </button>
+              {allowEdit ? (
+                <button className="btn btn-primary" onClick={openNewForm}>
+                  <i className="fas fa-plus"></i> Add New User
+                </button>
+              ) : (
+                <span className="badge bg-warning text-dark">
+                  <i className="fas fa-eye"></i> View only
+                </span>
+              )}
             </div>
             <div className="card-body">
               <UserTable
@@ -209,7 +217,9 @@ function UserFormComponent() {
       >
         <div className="p-4">
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3>{isEditing ? "Edit User" : "Add New User"}</h3>
+            <h3>
+              {!allowEdit ? "View User" : isEditing ? "Edit User" : "Add New User"}
+            </h3>
             <button
               className="btn btn-sm btn-outline-secondary"
               onClick={closeForm}
@@ -231,6 +241,7 @@ function UserFormComponent() {
                 className="form-control"
                 placeholder="Enter username"
                 autoComplete="off"
+                disabled={!allowEdit}
               />
               <small className="text-muted">
                 Username should be unique and easy to remember
@@ -246,7 +257,7 @@ function UserFormComponent() {
                 value={formData.db}
                 onChange={handleChange}
                 className="form-select"
-                disabled={isEditing}
+                disabled={isEditing || !allowEdit}
               >
                 <option value="">Select a cafe</option>
                 <option value="mixue">Mixue</option>
@@ -276,6 +287,7 @@ function UserFormComponent() {
                   className="form-control"
                   placeholder={isEditing ? "" : "Enter password"}
                   autoComplete="new-password"
+                  readOnly={!allowEdit}
                 />
                 <button
                   className="btn btn-outline-secondary"
@@ -305,12 +317,15 @@ function UserFormComponent() {
                 value={formData.is_admin}
                 onChange={handleChange}
                 className="form-select"
+                disabled={!allowEdit}
               >
                 <option value="no">Regular User</option>
                 <option value="yes">Administrator</option>
+                <option value="manager">Manager (View Only)</option>
               </select>
               <small className="text-muted">
-                Administrators have full access to all features
+                Administrators have full access to all features. A Manager sees
+                everything an Administrator sees but cannot add, edit or delete.
               </small>
             </div>
 
@@ -323,6 +338,7 @@ function UserFormComponent() {
                 value={formData.is_active}
                 onChange={handleChange}
                 className="form-select"
+                disabled={!allowEdit}
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -344,6 +360,7 @@ function UserFormComponent() {
                 value={formData.employment_type}
                 onChange={handleChange}
                 className="form-select"
+                disabled={!allowEdit}
               >
                 <option value="Hours">Hourly (RM 8.00/hr)</option>
                 <option value="Monthly">Monthly (Fixed Basic Salary)</option>
@@ -366,6 +383,7 @@ function UserFormComponent() {
                     placeholder="e.g. 1800.00"
                     min="0"
                     step="0.01"
+                    disabled={!allowEdit}
                   />
                 </div>
                 <small className="text-muted">
@@ -381,6 +399,10 @@ function UserFormComponent() {
               <br />
               {formData.is_admin === "yes" ? (
                 <span className="badge bg-danger me-1">Administrator</span>
+              ) : formData.is_admin === "manager" ? (
+                <span className="badge bg-warning text-dark me-1">
+                  Manager (View Only)
+                </span>
               ) : (
                 <span className="badge bg-secondary me-1">Regular User</span>
               )}
@@ -417,16 +439,20 @@ function UserFormComponent() {
                   className="btn btn-secondary me-2"
                   onClick={closeForm}
                 >
-                  Cancel
+                  {allowEdit ? "Cancel" : "Close"}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleSubmit}
-                >
-                  <i className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}></i>{" "}
-                  {isEditing ? "Update User" : "Add User"}
-                </button>
+                {allowEdit && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSubmit}
+                  >
+                    <i
+                      className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}
+                    ></i>{" "}
+                    {isEditing ? "Update User" : "Add User"}
+                  </button>
+                )}
               </div>
             </div>
           </div>

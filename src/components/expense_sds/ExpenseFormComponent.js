@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import ExpenseTable from "./ExpenseTable";
+import { canEdit } from "../../roles";
 
 const sevenDaysAgo = new Date();
 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -462,8 +463,11 @@ function ExpenseFormComponent() {
     }
   };
 
+  const allowEdit = canEdit();
   const isDeleteEnabled =
-    isEditing && (editFormData.company === "SDS HQ" || !editFormData.company);
+    allowEdit &&
+    isEditing &&
+    (editFormData.company === "SDS HQ" || !editFormData.company);
 
   const renderRecordForm = (record, index, isEditMode = false) => {
     const handleChange = isEditMode
@@ -651,9 +655,11 @@ function ExpenseFormComponent() {
     <div className="container-fluid p-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">SDS HQ</h2>
-        <button className="btn btn-primary" onClick={openNewForm}>
-          + Add New Record
-        </button>
+        {allowEdit && (
+          <button className="btn btn-primary" onClick={openNewForm}>
+            + Add New Record
+          </button>
+        )}
       </div>
 
       {/* Sliding Form */}
@@ -720,17 +726,19 @@ function ExpenseFormComponent() {
             >
               Cancel
             </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSubmit}
-            >
-              {isEditing
-                ? "Update"
-                : `Save ${formRecords.length} Record${
-                    formRecords.length > 1 ? "s" : ""
-                  }`}
-            </button>
+            {allowEdit && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSubmit}
+              >
+                {isEditing
+                  ? "Update"
+                  : `Save ${formRecords.length} Record${
+                      formRecords.length > 1 ? "s" : ""
+                    }`}
+              </button>
+            )}
           </div>
         </div>
       </div>

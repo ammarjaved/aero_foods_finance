@@ -2,8 +2,11 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import PayableTable from "./PayableTable";
+import { canEdit } from "../../roles";
 
 function PayableForm() {
+  const allowEdit = canEdit();
+
   // Initial default record
   const [defaultRecord] = useState(() => ({
     company: "",
@@ -385,9 +388,11 @@ function PayableForm() {
     <div className="container-fluid p-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Payment Records</h2>
-        <button className="btn btn-primary" onClick={openNewForm}>
-          + Add New Payment
-        </button>
+        {allowEdit && (
+          <button className="btn btn-primary" onClick={openNewForm}>
+            + Add New Payment
+          </button>
+        )}
       </div>
 
       {/* Sliding Form */}
@@ -436,7 +441,7 @@ function PayableForm() {
           )}
 
           <div className="d-flex gap-2 pt-3 border-top">
-            {isEditing && (
+            {isEditing && allowEdit && (
               <button
                 type="button"
                 className="btn btn-danger"
@@ -452,17 +457,19 @@ function PayableForm() {
             >
               Cancel
             </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSubmit}
-            >
-              {isEditing
-                ? "Update"
-                : `Save ${formRecords.length} Record${
-                    formRecords.length > 1 ? "s" : ""
-                  }`}
-            </button>
+            {allowEdit && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSubmit}
+              >
+                {isEditing
+                  ? "Update"
+                  : `Save ${formRecords.length} Record${
+                      formRecords.length > 1 ? "s" : ""
+                    }`}
+              </button>
+            )}
           </div>
         </div>
       </div>

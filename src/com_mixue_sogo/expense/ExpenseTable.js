@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { canEdit } from "../../roles";
 
 function ExpenseTable({ onRowClick }) {
   const [data, setData] = useState([]);
@@ -589,7 +590,8 @@ function ExpenseTable({ onRowClick }) {
                                   Approved
                                 </span>
                               ) : (
-                                (user === "admin" || user === "manager") && (
+                                (user === "admin" || user === "manager") &&
+                                canEdit() && (
                                   <div className="btn-group btn-group-sm">
                                     <button
                                       className="btn btn-success btn-sm"

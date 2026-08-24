@@ -11,7 +11,12 @@
 // Re-uploading the same file name REPLACES that file's rows rather than
 // doubling them — same re-run-safe rule as the invoice import.
 //
-// Tables: see sql/vg_sales_abe_yus.sql.
+// pcs and supply are NOT stored per sales line: they belong to the item, so
+// they are read from vg_item (maintained on the VG Items screen) and pcs_sold
+// is derived as qty_sold * vg_item.pcs when rows are fetched. An upload seeds
+// vg_item for any code it has never seen, using the sheet's own values.
+//
+// Tables: see sql/vg_sales_abe_yus.sql and sql/vg_item_abe_yus.sql.
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, DELETE, OPTIONS");
@@ -104,14 +109,20 @@ function handleRows($conn, $fileId) {
             return;
         }
 
-        $stmt = $conn->prepare("SELECT id, row_no, sales_date, store_code, store_name,
-                                       partner_code, partner_name, item_family_code,
-                                       division_code, item_code, item_name, unit_price,
-                                       qty_sold, gross_value, disc_value, net_value,
-                                       pcs, pcs_sold, supply
-                                FROM vg_sales_order
-                                WHERE file_id = :id
-                                ORDER BY row_no, id");
+        // pcs / supply come from the item master, and pcs_sold is derived from
+        // them. LEFT JOIN so a line whose code is not in vg_item still shows —
+        // it just has blank pcs / supply / pcs_sold rather than disappearing.
+        $stmt = $conn->prepare("SELECT o.id, o.row_no, o.sales_date, o.store_code, o.store_name,
+                                       o.partner_code, o.partner_name, o.item_family_code,
+                                       o.division_code, o.item_code, o.item_name, o.unit_price,
+                                       o.qty_sold, o.gross_value, o.disc_value, o.net_value,
+                                       i.pcs                    AS pcs,
+                                       i.supply                 AS supply,
+                                       (o.qty_sold * i.pcs)     AS pcs_sold
+                                FROM vg_sales_order o
+                                LEFT JOIN vg_item i ON i.item_code = o.item_code
+                                WHERE o.file_id = :id
+                                ORDER BY o.row_no, o.id");
         $stmt->execute([':id' => (int)$fileId]);
 
         echo json_encode([
@@ -175,19 +186,49 @@ function handleUpload($conn) {
                 file_id, row_no, sales_date, store_code, store_name,
                 partner_code, partner_name, item_family_code, division_code,
                 item_code, item_name, unit_price, qty_sold, gross_value,
-                disc_value, net_value, pcs, pcs_sold, supply
+                disc_value, net_value
              ) VALUES (
                 :file_id, :row_no, :sales_date, :store_code, :store_name,
                 :partner_code, :partner_name, :item_family_code, :division_code,
                 :item_code, :item_name, :unit_price, :qty_sold, :gross_value,
-                :disc_value, :net_value, :pcs, :pcs_sold, :supply
+                :disc_value, :net_value
              )"
         );
+
+        // Codes the master has never seen are seeded from the sheet's own
+        // pcs / supply so an upload is never blocked by a missing item. Codes
+        // that already exist are left exactly as they are — the VG Items
+        // screen stays the source of truth once a row is there.
+        $itemStmt = $conn->prepare(
+            "INSERT INTO vg_item (item_code, item_name, unit_price, pcs, supply,
+                                  created_at, updated_at, created_by, updated_by)
+             VALUES (:item_code, :item_name, :unit_price, :pcs, :supply,
+                     NOW(), NOW(), :created_by, :updated_by)
+             ON CONFLICT (item_code) DO NOTHING"
+        );
+        $itemsAdded = 0;
+        $seenCodes = [];
 
         $inserted = 0;
         $rowNo = 0;
         foreach ($rows as $r) {
             $rowNo++;
+
+            $itemCode = textOrNull($r['itemCode'] ?? null);
+            if ($itemCode !== null && !isset($seenCodes[$itemCode])) {
+                $seenCodes[$itemCode] = true;
+                $itemStmt->execute([
+                    ':item_code'  => $itemCode,
+                    ':item_name'  => textOrNull($r['itemName'] ?? null),
+                    ':unit_price' => numOrNull($r['unitPrice'] ?? null),
+                    ':pcs'        => numOrNull($r['pcs'] ?? null),
+                    ':supply'     => textOrNull($r['supply'] ?? null),
+                    ':created_by' => $uploadedBy,
+                    ':updated_by' => $uploadedBy,
+                ]);
+                $itemsAdded += $itemStmt->rowCount();
+            }
+
             $insStmt->execute([
                 ':file_id'          => $fileId,
                 ':row_no'           => (int)($r['rowNo'] ?? $rowNo),
@@ -198,16 +239,13 @@ function handleUpload($conn) {
                 ':partner_name'     => textOrNull($r['partnerName'] ?? null),
                 ':item_family_code' => textOrNull($r['itemFamilyCode'] ?? null),
                 ':division_code'    => textOrNull($r['divisionCode'] ?? null),
-                ':item_code'        => textOrNull($r['itemCode'] ?? null),
+                ':item_code'        => $itemCode,
                 ':item_name'        => textOrNull($r['itemName'] ?? null),
                 ':unit_price'       => numOrNull($r['unitPrice'] ?? null),
                 ':qty_sold'         => numOrNull($r['qtySold'] ?? null),
                 ':gross_value'      => numOrNull($r['grossValue'] ?? null),
                 ':disc_value'       => numOrNull($r['discValue'] ?? null),
                 ':net_value'        => numOrNull($r['netValue'] ?? null),
-                ':pcs'              => numOrNull($r['pcs'] ?? null),
-                ':pcs_sold'         => numOrNull($r['pcsSold'] ?? null),
-                ':supply'           => textOrNull($r['supply'] ?? null),
             ]);
             $inserted++;
         }
@@ -225,15 +263,21 @@ function handleUpload($conn) {
 
         $conn->commit();
 
+        $message = $replaced > 0
+            ? "Replaced $replaced existing row(s) with $inserted row(s) from $fileName."
+            : "Uploaded $inserted row(s) from $fileName.";
+        if ($itemsAdded > 0) {
+            $message .= " Added $itemsAdded new item(s) to the item master.";
+        }
+
         http_response_code(201);
         echo json_encode([
-            'success'  => true,
-            'message'  => $replaced > 0
-                ? "Replaced $replaced existing row(s) with $inserted row(s) from $fileName."
-                : "Uploaded $inserted row(s) from $fileName.",
-            'file_id'  => $fileId,
-            'inserted' => $inserted,
-            'replaced' => $replaced,
+            'success'     => true,
+            'message'     => $message,
+            'file_id'     => $fileId,
+            'inserted'    => $inserted,
+            'replaced'    => $replaced,
+            'items_added' => $itemsAdded,
         ]);
     } catch (PDOException $e) {
         if ($conn->inTransaction()) { $conn->rollBack(); }

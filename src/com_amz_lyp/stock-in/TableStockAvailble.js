@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function TableStockAvailable() {
@@ -18,12 +18,39 @@ function TableStockAvailable() {
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
-  const [selectedMonth, setSelectedMonth] = useState(monthNumber);
+  // Local YYYY-MM-DD for today (not toISOString, which shifts by timezone).
+  const pad = (n) => String(n).padStart(2, "0");
+  const todayString = `${date.getFullYear()}-${pad(monthNumber)}-${pad(
+    date.getDate()
+  )}`;
 
-  const handleMonthChange = (e) => {
-    const monthValue = e.target.value;
-    setSelectedMonth(monthValue);
-    fetchData(monthValue);
+  // Blank start means "everything ever received", which is the default view.
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState(todayString);
+
+  // Event driven reloads read the range from here, so they always use the
+  // currently selected dates rather than stale closure values.
+  const rangeRef = useRef({ start: "", end: todayString });
+
+  const handleStartDateChange = (e) => {
+    const value = e.target.value;
+    setStartDate(value);
+    rangeRef.current = { ...rangeRef.current, start: value };
+    fetchData(value, rangeRef.current.end);
+  };
+
+  const handleEndDateChange = (e) => {
+    const value = e.target.value || todayString;
+    setEndDate(value);
+    rangeRef.current = { ...rangeRef.current, end: value };
+    fetchData(rangeRef.current.start, value);
+  };
+
+  const resetDateRange = () => {
+    setStartDate("");
+    setEndDate(todayString);
+    rangeRef.current = { start: "", end: todayString };
+    fetchData("", todayString);
   };
 
   const handleCategoryChange = (e) => {
@@ -61,8 +88,7 @@ function TableStockAvailable() {
   };
 
   useEffect(() => {
-    const monthvalue = selectedMonth;
-    fetchData(monthvalue);
+    fetchData(rangeRef.current.start, rangeRef.current.end);
 
     window.addEventListener("newRecordAdded", handleNewRecord);
     window.addEventListener("recordUpdated", handleRecordUpdate);
@@ -129,10 +155,10 @@ function TableStockAvailable() {
     }
   }, [sortConfig]);
 
-  const fetchData = (month) => {
+  const fetchData = (start, end) => {
     setLoading(true);
-    // Fetch data from PHP backend
-    fetch("http://121.121.232.54:88/amazon-cafe-lyp/stock_avail.php")
+    // Fetch data from PHP backend, scoped to the selected "as of" date.
+    fetch(`http://121.121.232.54:88/amazon-cafe-lyp/stock_avail.php?start=${start}&end=${end}`)
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -210,10 +236,31 @@ function TableStockAvailable() {
       sortable: true,
     },
     {
+      key: "total_boxes",
+      label: "Stock In Boxes",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+      sortable: true,
+    },
+    {
+      key: "total_packets",
+      label: "Stock In Packets",
+      classHead: "bg-secondary text-light",
+      classBody: "bg-secondary text-light text-end",
+      sortable: true,
+    },
+    {
       key: "remaining_boxes",
       label: "Remaining Boxes",
       classHead: "bg-dark text-light",
       classBody: "bg-dark text-light",
+      sortable: true,
+    },
+    {
+      key: "remaining_packets",
+      label: "Remaining Packets",
+      classHead: "bg-success text-light",
+      classBody: "bg-success text-light text-end",
       sortable: true,
     },
     {
@@ -290,6 +337,42 @@ function TableStockAvailable() {
             </div>
             <div className="card-body">
               <div className="row">
+                <div className="col-md-3">
+                  <label className="form-label">Stock In From</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={startDate}
+                    max={endDate}
+                    onChange={handleStartDateChange}
+                  />
+                  <small className="text-muted">Blank = all time</small>
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">To</label>
+                  <div className="input-group">
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={endDate}
+                      max={todayString}
+                      onChange={handleEndDateChange}
+                    />
+                    {(startDate || endDate !== todayString) && (
+                      <button
+                        className="btn btn-outline-secondary"
+                        type="button"
+                        onClick={resetDateRange}
+                        title="Reset to all time"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <small className="text-muted">
+                    Remaining as at this date
+                  </small>
+                </div>
                 <div className="col-md-3">
                   <label className="form-label">Category</label>
                   <select
@@ -407,12 +490,21 @@ function TableStockAvailable() {
                             {record.name}
                           </td>
                           <td className={columns[1].classBody}>
-                            {record.remaining_boxes}
+                            {record.total_boxes}
                           </td>
                           <td className={columns[2].classBody}>
-                            {record.remaining_loose_packets}
+                            {record.total_packets}
                           </td>
                           <td className={columns[3].classBody}>
+                            {record.remaining_boxes}
+                          </td>
+                          <td className={columns[4].classBody}>
+                            {record.remaining_packets}
+                          </td>
+                          <td className={columns[5].classBody}>
+                            {record.remaining_loose_packets}
+                          </td>
+                          <td className={columns[6].classBody}>
                             {parseFloat(record.remaining_percentage) || 0}%
                           </td>
                         </tr>

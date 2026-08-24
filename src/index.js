@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { installWriteGuard } from './writeGuard';
+
+// Blocks every write request for view-only accounts, app wide.
+installWriteGuard();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

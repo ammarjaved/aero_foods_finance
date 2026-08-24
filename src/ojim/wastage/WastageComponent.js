@@ -215,7 +215,7 @@ function WastageComponent() {
               className="card-header text-white d-flex justify-content-between align-items-center"
               style={{ backgroundColor: "#e80000" }}
             >
-              <h2 className="mb-0">Daily Wastage</h2>
+              <h2 className="mb-0">Daily Wastage (Ojim Cafe)</h2>
               <button
                 className="btn btn-light"
                 onClick={() => setIsFormOpen(true)}

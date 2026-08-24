@@ -40,7 +40,7 @@ try {
     }
     
     // Prepare and execute query
-    $stmt = $conn->prepare("SELECT id, password FROM users WHERE username ='$username'");
+    $stmt = $conn->prepare("SELECT id, password, is_admin FROM users WHERE username ='$username'");
 	//$stmt->execute([':username' => $username]);
     $stmt->execute();
 	$user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -55,10 +55,24 @@ try {
         $updateStmt = $conn->prepare("UPDATE users SET token = :token WHERE id = :id");
         $updateStmt->execute(['token'=>$token, 'id'=>$user['id']]);
         
+        // is_admin is the role the web app gates on:
+        //   "yes"     -> administrator, full access
+        //   "manager" -> sees everything an administrator sees, read only
+        //   "no"      -> regular user
+        $role = isset($user['is_admin']) ? strtolower(trim($user['is_admin'])) : 'no';
+        if (!in_array($role, ['yes', 'no', 'manager'], true)) {
+            $role = 'no';
+        }
+        // The built-in "admin" account predates the role column being used.
+        if ($role !== 'manager' && strtolower(trim($username)) === 'admin') {
+            $role = 'yes';
+        }
+
         echo json_encode([
             "status" => "success",
             "message" => "Login successful",
-            "token" => $token
+            "token" => $token,
+            "is_admin" => $role
         ]);
     } else {
         echo json_encode([

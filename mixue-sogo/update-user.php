@@ -75,6 +75,11 @@ if($input['db']=='mixue'){
         if (!isset($record['is_admin'])) {
             throw new Exception("Missing required field: is_admin");
         }
+        // "yes" = administrator, "manager" = admin view but read only, "no" = regular user
+        $record['is_admin'] = strtolower(trim($record['is_admin']));
+        if (!in_array($record['is_admin'], ['yes', 'no', 'manager'], true)) {
+            throw new Exception("Invalid is_admin value: " . $record['is_admin']);
+        }
         // password is required only for new users
         $isUpdate = isset($record['id']) && !empty($record['id']);
         if (!$isUpdate && empty($record['password'])) {

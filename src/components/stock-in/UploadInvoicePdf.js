@@ -64,9 +64,23 @@ async function extractLines(pdf) {
   return lines;
 }
 
-// A line item is: <row#> <7-digit code> <description...> <qty> <unitPrice> <amount>
+// Item codes are 7 digits, optionally carrying an uppercase origin prefix —
+// e.g. plain 1020030 alongside MY1020001, which is a DISTINCT material in its
+// own right (13 MY-prefixed codes exist in the catalog). Matching bare \d{7}
+// silently dropped every prefixed line: \b needs a word boundary before the
+// digits, and "Y1" offers none. The prefix stays in the captured code because
+// it is part of the key.
+const CODE_PATTERN = /\b([A-Z]{0,3}\d{7})\b/;
+
+// An item row always opens with its table row number followed by the code:
+// "7 MY1020001 ...". Requiring that shape keeps stray 7-digit runs elsewhere
+// on the page from being mistaken for unreadable items — the company line
+// "MIXUE MALAYSIA SDN. BHD. (1460375-V)" is not a dropped line item.
+const ITEM_LINE_PATTERN = /^\d{1,3}\s+[A-Z]{0,3}\d{7}\b/;
+
+// A line item is: <row#> <code> <description...> <qty> <unitPrice> <amount>
 function parseItemRow(line) {
-  const codeMatch = line.match(/\b(\d{7})\b/);
+  const codeMatch = line.match(CODE_PATTERN);
   if (!codeMatch) return null;
   const code = codeMatch[1];
   const tokens = line.split(" ");
@@ -112,6 +126,7 @@ function UploadInvoicePdf({ materials, apiBaseUrl, onImported }) {
   const [fileName, setFileName] = useState("");
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState("");
+  const [unreadableLines, setUnreadableLines] = useState([]);
   const [rows, setRows] = useState([]);
   const [orderNumber, setOrderNumber] = useState("");
   const [date, setDate] = useState("");
@@ -129,6 +144,7 @@ function UploadInvoicePdf({ materials, apiBaseUrl, onImported }) {
     setParseError("");
     setResult(null);
     setRows([]);
+    setUnreadableLines([]);
     setParsing(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -138,9 +154,16 @@ function UploadInvoicePdf({ materials, apiBaseUrl, onImported }) {
 
       const seen = new Set();
       const parsed = [];
+      // A line shaped like an item row that will not parse is a real drop —
+      // surface it, because a short import used to be invisible.
+      const unreadable = [];
       lines.forEach((line) => {
         const item = parseItemRow(line);
-        if (!item || seen.has(item.code)) return;
+        if (!item) {
+          if (ITEM_LINE_PATTERN.test(line)) unreadable.push(line.trim());
+          return;
+        }
+        if (seen.has(item.code)) return;
         seen.add(item.code);
         const mat = matchMaterial(item.code);
         parsed.push({
@@ -160,6 +183,7 @@ function UploadInvoicePdf({ materials, apiBaseUrl, onImported }) {
       });
 
       setRows(parsed);
+      setUnreadableLines(unreadable);
       setOrderNumber(header.orderNumber);
       setDate(header.date || new Date().toISOString().split("T")[0]);
       if (parsed.length === 0) {
@@ -282,6 +306,22 @@ function UploadInvoicePdf({ materials, apiBaseUrl, onImported }) {
       </Card>
 
       {parseError && <Alert variant="danger">{parseError}</Alert>}
+
+      {unreadableLines.length > 0 && (
+        <Alert variant="warning">
+          <strong>
+            {unreadableLines.length} invoice line(s) could not be read and are
+            NOT included below:
+          </strong>
+          <ul className="mb-0 mt-2">
+            {unreadableLines.map((l, i) => (
+              <li key={i}>
+                <code>{l}</code>
+              </li>
+            ))}
+          </ul>
+        </Alert>
+      )}
 
       {result && (
         <Alert variant={result.status === "success" ? "success" : "danger"}>

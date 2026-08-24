@@ -53,6 +53,7 @@ import MonthlyMaterialsOjim from "./ojim/materials/MonthlyMaterials";
 import MonthlyMaterialsMixueSogo from "./com_mixue_sogo/materials/MonthlyMaterials";
 
 import VgSalesYus from "./com_abe/vg-sales/VgSales";
+import VgItemsYus from "./com_abe/vg-sales/VgItems";
 
 import StockIn from "./components/stock-in/StockIn";
 import StockInYus from "./com_abe/stock-in/StockIn";
@@ -172,6 +173,7 @@ function App() {
         <Route path="/materials-mixue-sogo" element={<MonthlyMaterialsMixueSogo />} />
 
         <Route path="/vg-sales-yus" element={<VgSalesYus />} />
+        <Route path="/vg-items-yus" element={<VgItemsYus />} />
 
         <Route path="/stockin" element={<StockIn />} />
         <Route path="/stockin-yus" element={<StockInYus />} />
