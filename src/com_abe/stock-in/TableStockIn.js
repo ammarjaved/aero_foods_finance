@@ -258,7 +258,7 @@ function TableStockIn() {
       const date = selectedDateDetails.month_date;
       await Promise.all(
         selectedDateDetails.items.map((it) =>
-          fetch("http://121.121.232.54:88/aero-foods/del_stock.php", {
+          fetch("http://121.121.232.54:88/abe-yus/del_stock.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: it.name, date }),
@@ -308,7 +308,7 @@ function TableStockIn() {
     setLoading(true);
     // Fetch data from PHP backend
     fetch(
-      "http://121.121.232.54:88/aero-foods/fetch_stockin.php?month=" + month
+      "http://121.121.232.54:88/abe-yus/fetch_stockin.php?month=" + month
     )
       .then((response) => response.json())
       .then((fetchedData) => {
