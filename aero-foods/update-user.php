@@ -140,30 +140,50 @@ if($input['db']=='mixue'){
             $stmt->execute();
             
             if ($stmt->rowCount() > 0) {
-                // Update employees: rename + update employment_type and basic_salary
+                // Update employees: rename + update employment_type, basic_salary, and is_active
                 $empType    = isset($record['employment_type']) ? trim($record['employment_type']) : null;
                 $basicSal   = isset($record['basic_salary'])    && $record['basic_salary'] !== '' ? floatval($record['basic_salary']) : null;
-                $isActive   = isset($record['is_active']) && $record['is_active'] !== '' ? strtolower(trim($record['is_active'])) : null;
+                $isActive   = isset($record['is_active']) && $record['is_active'] !== '' ? strtolower(trim($record['is_active'])) : 'yes';
 
-                $updateEmployeeSql = "UPDATE employees
-                                      SET short_name       = :new_username,
-                                          employment_type  = COALESCE(:emp_type, employment_type),
-                                          basic_salary     = COALESCE(:basic_sal, basic_salary),
-                                          is_active        = COALESCE(:is_active, is_active)
-                                      WHERE LOWER(TRIM(short_name)) = LOWER(TRIM(:old_username))";
-                $updateEmployeeStmt = $pdo->prepare($updateEmployeeSql);
-                $updateEmployeeStmt->bindParam(':new_username', $record['username'], PDO::PARAM_STR);
-                $updateEmployeeStmt->bindParam(':old_username', $oldUsername,        PDO::PARAM_STR);
-                $updateEmployeeStmt->bindParam(':emp_type',     $empType,            PDO::PARAM_STR);
-                $updateEmployeeStmt->bindParam(':basic_sal',    $basicSal,           PDO::PARAM_STR);
-                $updateEmployeeStmt->bindParam(':is_active',    $isActive,           PDO::PARAM_STR);
-                $updateEmployeeStmt->execute();
+                // First, check if employee record exists
+                $checkEmployeeSql = "SELECT COUNT(*) FROM employees WHERE LOWER(TRIM(short_name)) = LOWER(TRIM(:username))";
+                $checkEmployeeStmt = $pdo->prepare($checkEmployeeSql);
+                $checkEmployeeStmt->bindParam(':username', $oldUsername, PDO::PARAM_STR);
+                $checkEmployeeStmt->execute();
+                $employeeExists = $checkEmployeeStmt->fetchColumn() > 0;
+
+                if ($employeeExists) {
+                    // UPDATE existing employee record
+                    $updateEmployeeSql = "UPDATE employees
+                                          SET short_name       = :new_username,
+                                              employment_type  = COALESCE(:emp_type, employment_type),
+                                              basic_salary     = COALESCE(:basic_sal, basic_salary),
+                                              is_active        = :is_active
+                                          WHERE LOWER(TRIM(short_name)) = LOWER(TRIM(:old_username))";
+                    $updateEmployeeStmt = $pdo->prepare($updateEmployeeSql);
+                    $updateEmployeeStmt->bindParam(':new_username', $record['username'], PDO::PARAM_STR);
+                    $updateEmployeeStmt->bindParam(':old_username', $oldUsername,        PDO::PARAM_STR);
+                    $updateEmployeeStmt->bindParam(':emp_type',     $empType,            PDO::PARAM_STR);
+                    $updateEmployeeStmt->bindParam(':basic_sal',    $basicSal,           PDO::PARAM_STR);
+                    $updateEmployeeStmt->bindParam(':is_active',    $isActive,           PDO::PARAM_STR);
+                    $updateEmployeeStmt->execute();
+                } else {
+                    // INSERT new employee record (for manager users who don't have one yet)
+                    $insertEmployeeSql = "INSERT INTO employees (short_name, employment_type, basic_salary, is_active)
+                                          VALUES (:username, :emp_type, :basic_sal, :is_active)";
+                    $insertEmployeeStmt = $pdo->prepare($insertEmployeeSql);
+                    $insertEmployeeStmt->bindParam(':username',  $record['username'], PDO::PARAM_STR);
+                    $insertEmployeeStmt->bindParam(':emp_type',  $empType,            PDO::PARAM_STR);
+                    $insertEmployeeStmt->bindParam(':basic_sal', $basicSal,           PDO::PARAM_STR);
+                    $insertEmployeeStmt->bindParam(':is_active', $isActive,           PDO::PARAM_STR);
+                    $insertEmployeeStmt->execute();
+                }
 
                 $results[] = [
                     'id' => $record['id'],
                     'action' => 'updated',
                     'status' => 'success',
-                    'employee_rows_updated' => $updateEmployeeStmt->rowCount()
+                    'employee_action' => $employeeExists ? 'updated' : 'created'
                 ];
             } else {
                 throw new Exception('No record found with ID: ' . $record['id']);
