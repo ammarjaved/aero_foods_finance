@@ -338,13 +338,18 @@ function UserFormComponent() {
                 value={formData.is_active}
                 onChange={handleChange}
                 className="form-select"
-                disabled={!allowEdit}
+                disabled={!allowEdit && !isEditing}
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </select>
               <small className="text-muted">
                 Inactive employees are excluded from timesheets and payroll
+                {!allowEdit && isEditing && (
+                  <span className="text-info d-block">
+                    <i className="fas fa-info-circle"></i> Managers can toggle active/inactive status
+                  </span>
+                )}
               </small>
             </div>
 
@@ -451,6 +456,15 @@ function UserFormComponent() {
                       className={`fas ${isEditing ? "fa-save" : "fa-plus"}`}
                     ></i>{" "}
                     {isEditing ? "Update User" : "Add User"}
+                  </button>
+                )}
+                {!allowEdit && isEditing && (
+                  <button
+                    type="button"
+                    className="btn btn-warning"
+                    onClick={handleSubmit}
+                  >
+                    <i className="fas fa-save"></i> Update Active Status
                   </button>
                 )}
               </div>
