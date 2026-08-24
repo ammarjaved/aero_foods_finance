@@ -245,6 +245,37 @@ function TableStockIn() {
     setDeleteConfirm(null);
   };
 
+  const handleDeleteAll = async () => {
+    if (!selectedDateDetails || selectedDateDetails.items.length === 0) return;
+    if (
+      !window.confirm(
+        `Delete ALL ${selectedDateDetails.items.length} stock-in item(s) for ${selectedDateDetails.month_date}?`
+      )
+    ) {
+      return;
+    }
+    try {
+      const date = selectedDateDetails.month_date;
+      await Promise.all(
+        selectedDateDetails.items.map((it) =>
+          fetch("http://121.121.232.54:88/ojim-cafe/del_stock.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: it.name, date }),
+          })
+        )
+      );
+      alert("All records for this date were deleted.");
+      closeDetailPanel();
+      const m = localStorage.getItem("month") || selectedMonth;
+      fetchData(m);
+      window.dispatchEvent(new CustomEvent("recordDeleted", { detail: { date } }));
+    } catch (error) {
+      console.error("Error deleting all records:", error);
+      alert("Error deleting all records.");
+    }
+  };
+
   useEffect(() => {
     const monthvalue = localStorage.getItem("month");
     if (monthvalue) {
@@ -276,7 +307,9 @@ function TableStockIn() {
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch("http://121.121.232.54:88/ojim-cafe/fetch_stockin.php?month=" + month)
+    fetch(
+      "http://121.121.232.54:88/ojim-cafe/fetch_stockin.php?month=" + month
+    )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -289,9 +322,10 @@ function TableStockIn() {
       });
   };
 
-  const handleNewRecord = (event) => {
-    const newRecord = event.detail;
-    setData((prevData) => [newRecord, ...prevData]);
+  const handleNewRecord = () => {
+    // Reload from the server so aggregated stock-in totals stay correct.
+    const m = localStorage.getItem("month") || selectedMonth;
+    fetchData(m);
   };
 
   const handleRecordUpdate = (event) => {
@@ -496,21 +530,29 @@ function TableStockIn() {
                   </thead>
                   <tbody>
                     {currentRecords.length > 0 ? (
-                      currentRecords.map((record, index) => (
-                        <tr
-                          key={`${record.month_date}-${index}`}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleRowClick(record)}
-                          className="hover-row"
-                        >
-                          <td className={columns[0].classBody}>
-                            {record.month_date}
-                          </td>
-                          <td className={columns[1].classBody}>
-                            RM{record.total_price.toFixed(2)}
+                      <>
+                        {currentRecords.map((record, index) => (
+                          <tr
+                            key={`${record.month_date}-${index}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleRowClick(record)}
+                            className="hover-row"
+                          >
+                            <td className={columns[0].classBody}>
+                              {record.month_date}
+                            </td>
+                            <td className={columns[1].classBody}>
+                              RM{record.total_price.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="table-dark fw-bold">
+                          <td className="text-end">Total:</td>
+                          <td>
+                            RM{currentRecords.reduce((sum, record) => sum + record.total_price, 0).toFixed(2)}
                           </td>
                         </tr>
-                      ))
+                      </>
                     ) : (
                       <tr>
                         <td colSpan={columns.length} className="text-center">
@@ -619,12 +661,21 @@ function TableStockIn() {
                     <h5 className="mb-0">
                       Details for {selectedDateDetails?.month_date}
                     </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      onClick={closeDetailPanel}
-                      aria-label="Close"
-                    ></button>
+                    <div className="d-flex align-items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={handleDeleteAll}
+                      >
+                        🗑️ Delete All
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-close"
+                        onClick={closeDetailPanel}
+                        aria-label="Close"
+                      ></button>
+                    </div>
                   </div>
 
                   {selectedDateDetails && (
@@ -657,8 +708,8 @@ function TableStockIn() {
                               <th className="bg-success text-light">
                                 Stock In
                               </th>
-                              <th className="bg-danger text-light">
-                                Month Date
+                              <th className="bg-primary text-light">
+                                Price (RM)
                               </th>
                               <th className="bg-warning text-dark">Actions</th>
                             </tr>
@@ -702,24 +753,8 @@ function TableStockIn() {
                                     item.stock_in
                                   )}
                                 </td>
-                                <td className="bg-danger text-light">
-                                  {editingItem === item.month_date ? (
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      className="form-control form-control-sm"
-                                      value={editForm.month_date}
-                                      onChange={(e) =>
-                                        handleEditFormChange(
-                                          "month_date",
-                                          e.target.value
-                                        )
-                                      }
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  ) : (
-                                    item.month_date
-                                  )}
+                                <td className="bg-primary text-light text-end">
+                                  {parseFloat(item.total_value || 0).toFixed(2)}
                                 </td>
                                 <td className="bg-warning text-dark">
                                   {editingItem === item.name ? (
@@ -811,6 +846,13 @@ function TableStockIn() {
                                 </td>
                               </tr>
                             ))}
+                            <tr className="table-dark fw-bold">
+                              <td colSpan="2" className="text-end">Total:</td>
+                              <td className="text-end">
+                                {selectedDateDetails.items.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0).toFixed(2)}
+                              </td>
+                              <td></td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>

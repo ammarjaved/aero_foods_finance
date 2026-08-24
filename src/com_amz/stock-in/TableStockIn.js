@@ -14,16 +14,16 @@ function TableStockIn() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(true);
   const [selectedDateDetails, setSelectedDateDetails] = useState(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
-  
+
   // Edit functionality states
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({
-    name: '',
-    stock_in: '',
-    month_date: ''
+    name: "",
+    stock_in: "",
+    month_date: "",
   });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  
+
   const date = new Date();
   const monthIndex = date.getMonth();
   const monthNumber = monthIndex + 1;
@@ -37,7 +37,7 @@ function TableStockIn() {
         acc[dateKey] = {
           month_date: dateKey,
           total_price: 0,
-          items: []
+          items: [],
         };
       }
       acc[dateKey].total_price += parseFloat(item.total_value || 0);
@@ -45,7 +45,9 @@ function TableStockIn() {
       return acc;
     }, {});
 
-    return Object.values(grouped).sort((a, b) => new Date(b.month_date) - new Date(a.month_date));
+    return Object.values(grouped).sort(
+      (a, b) => new Date(b.month_date) - new Date(a.month_date)
+    );
   };
 
   const handleMonthChange = (e) => {
@@ -85,90 +87,92 @@ function TableStockIn() {
 
   // Edit functionality
   const handleEditClick = (item, e) => {
-    console.log(item)
+    console.log(item);
     e.stopPropagation();
     setEditingItem(item.name);
     setEditForm({
-      name: item.name || '',
-      stock_in: item.stock_in || '',
-      month_date: item.month_date || ''
+      name: item.name || "",
+      stock_in: item.stock_in || "",
+      month_date: item.month_date || "",
     });
   };
 
   const handleEditFormChange = (field, value) => {
-    setEditForm(prev => ({
+    setEditForm((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleSaveEdit = async (itemId) => {
     try {
-      const response = await fetch('http://121.121.232.54:88/amazon-cafe/update_stockin_trans.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: itemId,
-          stock_in: editForm.stock_in,
-          month_date: editForm.month_date
-        })
-      });
+      const response = await fetch(
+        "http://121.121.232.54:88/amazon-cafe/update_stockin_trans.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: itemId,
+            stock_in: editForm.stock_in,
+            month_date: editForm.month_date,
+          }),
+        }
+      );
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Update local data
-        alert("Data Updated successfully")
-        const updatedData = data.map(item => 
-          item.name === itemId 
-            ? { ...item, ...editForm }
-            : item
+        alert("Data Updated successfully");
+        const updatedData = data.map((item) =>
+          item.name === itemId ? { ...item, ...editForm } : item
         );
         setData(updatedData);
-        
+
         // Update filtered data
-        const updatedFilteredData = filteredData.map(item => 
-          item.name === itemId 
-            ? { ...item, ...editForm }
-            : item
+        const updatedFilteredData = filteredData.map((item) =>
+          item.name === itemId ? { ...item, ...editForm } : item
         );
         setFilteredData(updatedFilteredData);
-        
+
         // Update selected date details
         if (selectedDateDetails) {
-          const updatedItems = selectedDateDetails.items.map(item =>
-            item.name === itemId 
-              ? { ...item, ...editForm }
-              : item
+          const updatedItems = selectedDateDetails.items.map((item) =>
+            item.name === itemId ? { ...item, ...editForm } : item
           );
-          const newTotal = updatedItems.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0);
+          const newTotal = updatedItems.reduce(
+            (sum, item) => sum + parseFloat(item.total_value || 0),
+            0
+          );
           setSelectedDateDetails({
             ...selectedDateDetails,
             items: updatedItems,
-            total_price: newTotal
+            total_price: newTotal,
           });
         }
-        
+
         setEditingItem(null);
         fetchData(localStorage.getItem("month"));
         // Dispatch update event
-        window.dispatchEvent(new CustomEvent('recordUpdated', {
-          detail: { name: itemId, ...editForm }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("recordUpdated", {
+            detail: { name: itemId, ...editForm },
+          })
+        );
       } else {
-        alert('Error updating record: ' + result.message);
+        alert("Error updating record: " + result.message);
       }
     } catch (error) {
-      console.error('Error updating record:', error);
-      alert('Error updating record');
+      console.error("Error updating record:", error);
+      alert("Error updating record");
     }
   };
 
   const handleCancelEdit = () => {
     setEditingItem(null);
-    setEditForm({ name: '', stock_in: '', total_value: '' });
+    setEditForm({ name: "", stock_in: "", total_value: "" });
   };
 
   // Delete functionality
@@ -177,56 +181,99 @@ function TableStockIn() {
     setDeleteConfirm(item.name);
   };
 
-  const handleConfirmDelete = async (itemId,month_date) => {
+  const handleConfirmDelete = async (itemId, month_date) => {
     try {
-      const response = await fetch('http://121.121.232.54:88/amazon-cafe/del_stock.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: itemId,date:month_date })
-      });
+      const response = await fetch(
+        "http://121.121.232.54:88/amazon-cafe/del_stock.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: itemId, date: month_date }),
+        }
+      );
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Remove from local data
-        alert("Record deleted Successfully")
-        const updatedData = data.filter(item => item.name !== itemId);
+        alert("Record deleted Successfully");
+        const updatedData = data.filter((item) => item.name !== itemId);
         setData(updatedData);
-        
+
         // Remove from filtered data
-        const updatedFilteredData = filteredData.filter(item => item.name !== itemId);
+        const updatedFilteredData = filteredData.filter(
+          (item) => item.name !== itemId
+        );
         setFilteredData(updatedFilteredData);
-        
+
         // Update selected date details
         if (selectedDateDetails) {
-          const updatedItems = selectedDateDetails.items.filter(item => item.name !== itemId);
-          const newTotal = updatedItems.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0);
+          const updatedItems = selectedDateDetails.items.filter(
+            (item) => item.name !== itemId
+          );
+          const newTotal = updatedItems.reduce(
+            (sum, item) => sum + parseFloat(item.total_value || 0),
+            0
+          );
           setSelectedDateDetails({
             ...selectedDateDetails,
             items: updatedItems,
-            total_price: newTotal
+            total_price: newTotal,
           });
         }
-        
+
         setDeleteConfirm(null);
-        
+
         // Dispatch delete event
-        window.dispatchEvent(new CustomEvent('recordDeleted', {
-          detail: { name: itemId }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("recordDeleted", {
+            detail: { name: itemId },
+          })
+        );
       } else {
-        alert('Error deleting record: ' + result.message);
+        alert("Error deleting record: " + result.message);
       }
     } catch (error) {
-      console.error('Error deleting record:', error);
-      alert('Error deleting record');
+      console.error("Error deleting record:", error);
+      alert("Error deleting record");
     }
   };
 
   const handleCancelDelete = () => {
     setDeleteConfirm(null);
+  };
+
+  const handleDeleteAll = async () => {
+    if (!selectedDateDetails || selectedDateDetails.items.length === 0) return;
+    if (
+      !window.confirm(
+        `Delete ALL ${selectedDateDetails.items.length} stock-in item(s) for ${selectedDateDetails.month_date}?`
+      )
+    ) {
+      return;
+    }
+    try {
+      const date = selectedDateDetails.month_date;
+      await Promise.all(
+        selectedDateDetails.items.map((it) =>
+          fetch("http://121.121.232.54:88/amazon-cafe/del_stock.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: it.name, date }),
+          })
+        )
+      );
+      alert("All records for this date were deleted.");
+      closeDetailPanel();
+      const m = localStorage.getItem("month") || selectedMonth;
+      fetchData(m);
+      window.dispatchEvent(new CustomEvent("recordDeleted", { detail: { date } }));
+    } catch (error) {
+      console.error("Error deleting all records:", error);
+      alert("Error deleting all records.");
+    }
   };
 
   useEffect(() => {
@@ -275,9 +322,10 @@ function TableStockIn() {
       });
   };
 
-  const handleNewRecord = (event) => {
-    const newRecord = event.detail;
-    setData((prevData) => [newRecord, ...prevData]);
+  const handleNewRecord = () => {
+    // Reload from the server so aggregated stock-in totals stay correct.
+    const m = localStorage.getItem("month") || selectedMonth;
+    fetchData(m);
   };
 
   const handleRecordUpdate = (event) => {
@@ -333,12 +381,10 @@ function TableStockIn() {
       label: "Total Purchase",
       classHead: "bg-danger text-light",
       classBody: "bg-danger text-light",
-    }
+    },
   ];
 
-  const filterableColumns = [
-    { key: "month_date", label: "Month Date" },
-  ];
+  const filterableColumns = [{ key: "month_date", label: "Month Date" }];
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -386,8 +432,8 @@ function TableStockIn() {
                   aria-expanded={isFilterPanelOpen}
                   aria-controls="filterPanel"
                 >
-                  <span style={{ fontSize: '16px' }}>
-                    {isFilterPanelOpen ? '▼' : '▶'}
+                  <span style={{ fontSize: "16px" }}>
+                    {isFilterPanelOpen ? "▼" : "▶"}
                   </span>
                 </button>
                 <h5 className="mb-0">
@@ -465,17 +511,18 @@ function TableStockIn() {
 
           {/* Main content area */}
           <div className="row">
-            <div className={`col-12 ${isDetailPanelOpen ? 'col-lg-8' : ''} transition-all`}>
+            <div
+              className={`col-12 ${
+                isDetailPanelOpen ? "col-lg-8" : ""
+              } transition-all`}
+            >
               {/* Table */}
               <div className="table-responsive shadow rounded-3">
                 <table className="table table-striped table-hover table-bordered mb-0">
                   <thead>
                     <tr>
                       {columns.map((column) => (
-                        <th
-                          key={column.key}
-                          className={column.classHead}
-                        >
+                        <th key={column.key} className={column.classHead}>
                           {column.label}
                         </th>
                       ))}
@@ -483,21 +530,29 @@ function TableStockIn() {
                   </thead>
                   <tbody>
                     {currentRecords.length > 0 ? (
-                      currentRecords.map((record, index) => (
-                        <tr
-                          key={`${record.month_date}-${index}`}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleRowClick(record)}
-                          className="hover-row"
-                        >
-                          <td className={columns[0].classBody}>
-                            {record.month_date}
-                          </td>
-                          <td className={columns[1].classBody}>
-                            RM{record.total_price.toFixed(2)}
+                      <>
+                        {currentRecords.map((record, index) => (
+                          <tr
+                            key={`${record.month_date}-${index}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleRowClick(record)}
+                            className="hover-row"
+                          >
+                            <td className={columns[0].classBody}>
+                              {record.month_date}
+                            </td>
+                            <td className={columns[1].classBody}>
+                              RM{record.total_price.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="table-dark fw-bold">
+                          <td className="text-end">Total:</td>
+                          <td>
+                            RM{currentRecords.reduce((sum, record) => sum + record.total_price, 0).toFixed(2)}
                           </td>
                         </tr>
-                      ))
+                      </>
                     ) : (
                       <tr>
                         <td colSpan={columns.length} className="text-center">
@@ -512,7 +567,11 @@ function TableStockIn() {
               {/* Pagination controls - bottom */}
               <nav aria-label="Page navigation" className="mt-3">
                 <ul className="pagination justify-content-center">
-                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       className="page-link"
                       style={{ backgroundColor: "#F8D7DA" }}
@@ -528,12 +587,15 @@ function TableStockIn() {
                     if (
                       pageNumber === 1 ||
                       pageNumber === totalPages ||
-                      (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      (pageNumber >= currentPage - 1 &&
+                        pageNumber <= currentPage + 1)
                     ) {
                       return (
                         <li
                           key={pageNumber}
-                          className={`page-item ${currentPage === pageNumber ? "active" : ""}`}
+                          className={`page-item ${
+                            currentPage === pageNumber ? "active" : ""
+                          }`}
                         >
                           <button
                             style={{ backgroundColor: "#E80000" }}
@@ -546,7 +608,8 @@ function TableStockIn() {
                       );
                     } else if (
                       (pageNumber === 2 && currentPage > 3) ||
-                      (pageNumber === totalPages - 1 && currentPage < totalPages - 2)
+                      (pageNumber === totalPages - 1 &&
+                        currentPage < totalPages - 2)
                     ) {
                       return (
                         <li key={pageNumber} className="page-item disabled">
@@ -557,7 +620,11 @@ function TableStockIn() {
                     return null;
                   })}
 
-                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       style={{ backgroundColor: "#F8D7DA" }}
                       className="page-link"
@@ -571,20 +638,22 @@ function TableStockIn() {
             </div>
 
             {/* Detail Panel */}
-            <div className={`col-lg-4 ${isDetailPanelOpen ? '' : 'd-none'}`}>
+            <div className={`col-lg-4 ${isDetailPanelOpen ? "" : "d-none"}`}>
               <div
-                className={`detail-panel ${isDetailPanelOpen ? 'slide-in' : 'slide-out'}`}
+                className={`detail-panel ${
+                  isDetailPanelOpen ? "slide-in" : "slide-out"
+                }`}
                 style={{
-                  position: 'fixed',
-                  right: isDetailPanelOpen ? '0' : '-400px',
-                  top: '0',
-                  width: '400px',
-                  height: '100vh',
-                  backgroundColor: 'white',
-                  boxShadow: '-2px 0 10px rgba(0,0,0,0.1)',
+                  position: "fixed",
+                  right: isDetailPanelOpen ? "0" : "-400px",
+                  top: "0",
+                  width: "400px",
+                  height: "100vh",
+                  backgroundColor: "white",
+                  boxShadow: "-2px 0 10px rgba(0,0,0,0.1)",
                   zIndex: 1050,
-                  transition: 'right 0.3s ease-in-out',
-                  overflowY: 'auto'
+                  transition: "right 0.3s ease-in-out",
+                  overflowY: "auto",
                 }}
               >
                 <div className="p-3">
@@ -592,12 +661,21 @@ function TableStockIn() {
                     <h5 className="mb-0">
                       Details for {selectedDateDetails?.month_date}
                     </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      onClick={closeDetailPanel}
-                      aria-label="Close"
-                    ></button>
+                    <div className="d-flex align-items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={handleDeleteAll}
+                      >
+                        🗑️ Delete All
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-close"
+                        onClick={closeDetailPanel}
+                        aria-label="Close"
+                      ></button>
+                    </div>
                   </div>
 
                   {selectedDateDetails && (
@@ -607,9 +685,14 @@ function TableStockIn() {
                           <div className="card-body">
                             <h6 className="card-title">Summary</h6>
                             <p className="card-text">
-                              <strong>Date:</strong> {selectedDateDetails.month_date}<br/>
-                              <strong>Total Items:</strong> {selectedDateDetails.items.length}<br/>
-                              <strong>Total Value:</strong> RM{selectedDateDetails.total_price.toFixed(2)}
+                              <strong>Date:</strong>{" "}
+                              {selectedDateDetails.month_date}
+                              <br />
+                              <strong>Total Items:</strong>{" "}
+                              {selectedDateDetails.items.length}
+                              <br />
+                              <strong>Total Value:</strong> RM
+                              {selectedDateDetails.total_price.toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -619,9 +702,15 @@ function TableStockIn() {
                         <table className="table table-sm table-striped">
                           <thead>
                             <tr>
-                              <th className="bg-success text-light">Item Name</th>
-                              <th className="bg-success text-light">Stock In</th>
-                              <th className="bg-danger text-light">Month Date</th>
+                              <th className="bg-success text-light">
+                                Item Name
+                              </th>
+                              <th className="bg-success text-light">
+                                Stock In
+                              </th>
+                              <th className="bg-primary text-light">
+                                Price (RM)
+                              </th>
                               <th className="bg-warning text-dark">Actions</th>
                             </tr>
                           </thead>
@@ -634,7 +723,12 @@ function TableStockIn() {
                                       type="text"
                                       className="form-control form-control-sm"
                                       value={editForm.name}
-                                      onChange={(e) => handleEditFormChange('name', e.target.value)}
+                                      onChange={(e) =>
+                                        handleEditFormChange(
+                                          "name",
+                                          e.target.value
+                                        )
+                                      }
                                       onClick={(e) => e.stopPropagation()}
                                     />
                                   ) : (
@@ -647,30 +741,27 @@ function TableStockIn() {
                                       type="number"
                                       className="form-control form-control-sm"
                                       value={editForm.stock_in}
-                                      onChange={(e) => handleEditFormChange('stock_in', e.target.value)}
+                                      onChange={(e) =>
+                                        handleEditFormChange(
+                                          "stock_in",
+                                          e.target.value
+                                        )
+                                      }
                                       onClick={(e) => e.stopPropagation()}
                                     />
                                   ) : (
                                     item.stock_in
                                   )}
                                 </td>
-                                <td className="bg-danger text-light">
-                                  {editingItem === item.month_date ? (
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      className="form-control form-control-sm"
-                                      value={editForm.month_date}
-                                      onChange={(e) => handleEditFormChange('month_date', e.target.value)}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  ) : (
-                                    item.month_date 
-                                  )}
+                                <td className="bg-primary text-light text-end">
+                                  {parseFloat(item.total_value || 0).toFixed(2)}
                                 </td>
                                 <td className="bg-warning text-dark">
                                   {editingItem === item.name ? (
-                                    <div className="btn-group-vertical btn-group-sm" role="group">
+                                    <div
+                                      className="btn-group-vertical btn-group-sm"
+                                      role="group"
+                                    >
                                       <button
                                         type="button"
                                         className="btn btn-success btn-sm"
@@ -695,13 +786,19 @@ function TableStockIn() {
                                       </button>
                                     </div>
                                   ) : deleteConfirm === item.name ? (
-                                    <div className="btn-group-vertical btn-group-sm" role="group">
+                                    <div
+                                      className="btn-group-vertical btn-group-sm"
+                                      role="group"
+                                    >
                                       <button
                                         type="button"
                                         className="btn btn-danger btn-sm"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleConfirmDelete(item.name,item.month_date);
+                                          handleConfirmDelete(
+                                            item.name,
+                                            item.month_date
+                                          );
                                         }}
                                         title="Confirm Delete"
                                       >
@@ -720,11 +817,16 @@ function TableStockIn() {
                                       </button>
                                     </div>
                                   ) : (
-                                    <div className="btn-group-vertical btn-group-sm" role="group">
+                                    <div
+                                      className="btn-group-vertical btn-group-sm"
+                                      role="group"
+                                    >
                                       <button
                                         type="button"
                                         className="btn btn-primary btn-sm"
-                                        onClick={(e) => handleEditClick(item, e)}
+                                        onClick={(e) =>
+                                          handleEditClick(item, e)
+                                        }
                                         title="Edit"
                                       >
                                         ✏️
@@ -732,7 +834,9 @@ function TableStockIn() {
                                       <button
                                         type="button"
                                         className="btn btn-danger btn-sm"
-                                        onClick={(e) => handleDeleteClick(item, e)}
+                                        onClick={(e) =>
+                                          handleDeleteClick(item, e)
+                                        }
                                         title="Delete"
                                       >
                                         🗑️
@@ -742,6 +846,13 @@ function TableStockIn() {
                                 </td>
                               </tr>
                             ))}
+                            <tr className="table-dark fw-bold">
+                              <td colSpan="2" className="text-end">Total:</td>
+                              <td className="text-end">
+                                {selectedDateDetails.items.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0).toFixed(2)}
+                              </td>
+                              <td></td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>
@@ -757,13 +868,13 @@ function TableStockIn() {
             <div
               className="modal-backdrop"
               style={{
-                position: 'fixed',
+                position: "fixed",
                 top: 0,
                 left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                zIndex: 1040
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                zIndex: 1040,
               }}
               onClick={closeDetailPanel}
             ></div>

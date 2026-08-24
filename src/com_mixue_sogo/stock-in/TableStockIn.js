@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function TableStockIn() {
@@ -307,7 +307,9 @@ function TableStockIn() {
   const fetchData = (month) => {
     setLoading(true);
     // Fetch data from PHP backend
-    fetch("http://121.121.232.54:88/mixue-sogo/fetch_stockin.php?month=" + month)
+    fetch(
+      "http://121.121.232.54:88/mixue-sogo/fetch_stockin.php?month=" + month
+    )
       .then((response) => response.json())
       .then((fetchedData) => {
         setData(fetchedData);
@@ -528,21 +530,29 @@ function TableStockIn() {
                   </thead>
                   <tbody>
                     {currentRecords.length > 0 ? (
-                      currentRecords.map((record, index) => (
-                        <tr
-                          key={`${record.month_date}-${index}`}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleRowClick(record)}
-                          className="hover-row"
-                        >
-                          <td className={columns[0].classBody}>
-                            {record.month_date}
-                          </td>
-                          <td className={columns[1].classBody}>
-                            RM{record.total_price.toFixed(2)}
+                      <>
+                        {currentRecords.map((record, index) => (
+                          <tr
+                            key={`${record.month_date}-${index}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleRowClick(record)}
+                            className="hover-row"
+                          >
+                            <td className={columns[0].classBody}>
+                              {record.month_date}
+                            </td>
+                            <td className={columns[1].classBody}>
+                              RM{record.total_price.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="table-dark fw-bold">
+                          <td className="text-end">Total:</td>
+                          <td>
+                            RM{currentRecords.reduce((sum, record) => sum + record.total_price, 0).toFixed(2)}
                           </td>
                         </tr>
-                      ))
+                      </>
                     ) : (
                       <tr>
                         <td colSpan={columns.length} className="text-center">
@@ -836,6 +846,13 @@ function TableStockIn() {
                                 </td>
                               </tr>
                             ))}
+                            <tr className="table-dark fw-bold">
+                              <td colSpan="2" className="text-end">Total:</td>
+                              <td className="text-end">
+                                {selectedDateDetails.items.reduce((sum, item) => sum + parseFloat(item.total_value || 0), 0).toFixed(2)}
+                              </td>
+                              <td></td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>
