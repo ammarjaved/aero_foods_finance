@@ -89,6 +89,7 @@ import LandingOjim from "./ojim/Landing";
 import LandingMixueSogo from "./com_mixue_sogo/Landing";
 import TimeAnalysis from "./components/timeshete-analysis/TimeAnalysis";
 import Payable from "./components/payable/Payable";
+import Task from "./components/task/Task";
 // Kicks the user back to the login screen whenever the server's session
 // version no longer matches the one this browser logged in with.
 function SessionGate() {
@@ -214,6 +215,7 @@ function App() {
         <Route path="/Salary" element={<Salary />} />
         <Route path="/User" element={<User />} />
         <Route path="/payroll" element={<Payroll />} />
+        <Route path="/task" element={<Task />} />
 
         <Route path="/Audit" element={<Audit />} />
 

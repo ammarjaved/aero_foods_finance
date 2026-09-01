@@ -160,6 +160,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { href: "/Salary", label: "Salary" },
     { href: "/User", label: "User Management" },
     { href: "/payroll", label: "Payroll Management" },
+    { href: "/task", label: "Task Planner" },
   ];
 
   // Function to check if current page matches the menu item
@@ -446,7 +447,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
               <div
                 style={{
-                  maxHeight: adminOpen ? "1000px" : "0",
+                  maxHeight: adminOpen ? "1200px" : "0",
                   overflow: "hidden",
                   transition: "max-height 0.3s ease-in-out",
                   backgroundColor: "rgba(0,0,0,0.1)",
