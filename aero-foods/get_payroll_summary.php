@@ -49,26 +49,31 @@ try {
     $empStmt->execute();
     $employees = $empStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Compute overtime + public-holiday premium from log_sheet for the requested month.
-    // Rules mirror salary_summary.php:
-    //   - hours beyond 8 in a day are OT at RM8/hr flat (same on public holidays)
-    //   - monthly employees: days beyond 26 are paid entirely at RM8/hr (all OT, no PH check)
-    //   - PH premium (extra pay above a normal day, first 8 hrs):
-    //       monthly <=26 days: base is doubled -> premium = dailyRate*(hrs/8) capped at dailyRate
-    //       hourly: RM16/hr instead of RM8 -> premium = min(hrs,8) * 8
-    $otMap = []; // normalized name => ['pay', 'hours', 'details', 'ph_pay', 'ph_details']
+    // Employment type + contract basic from the brand DB, then overridden by
+    // the main DB (same source as salary_summary.php).
+    $typeMap  = [];
+    $basicMap = [];
+    foreach ($employees as $e) {
+        $k = strtolower(preg_replace('/\s+/', ' ', trim($e['short_name'])));
+        $typeMap[$k]  = strtolower(trim($e['employment_type']));
+        $basicMap[$k] = floatval($e['basic_salary']);
+    }
+
+    // Compute overtime + public-holiday premium + normal-hours pay from log_sheet.
+    //   - Normal hours (NH) = first 8 hrs of a non-PH day (PH NH is kept separate)
+    //   - OT = hours beyond 8, ignored when under 1 hour
+    //   - monthly employees: Basic Salary = contract monthly salary
+    //       hourly rate = RM8 flat for monthly and hourly staff
+    //       PH pay = PH hours x (hourly rate x 2)
+    //       extra days beyond 26: whole day at RM8/hr, no PH premium
+    //   - hourly: NH at RM8/hr; PH = PH hours x RM16 (rate 8 x 2)
+    $otMap = []; // normalized name => pay/hours/details
     if ($payMonth && $payYear) {
         try {
-            $typeMap  = [];
-            $basicMap = [];
-            foreach ($employees as $e) {
-                $k = strtolower(preg_replace('/\s+/', ' ', trim($e['short_name'])));
-                $typeMap[$k]  = strtolower(trim($e['employment_type']));
-                $basicMap[$k] = floatval($e['basic_salary']);
-            }
 
-            // Public holidays live in the main DB (same as salary_summary.php)
-            $publicHolidays = []; // 'YYYY-MM-DD' => holiday_name
+            // Public holidays + employment type/basic from the main DB
+            // (same source as salary_summary.php)
+            $publicHolidays = [];
             $otMonthStart = sprintf('%04d-%02d-01', $payYear, $payMonth);
             $otMonthEnd   = sprintf('%04d-%02d-%02d', $payYear, $payMonth,
                               date('t', mktime(0, 0, 0, $payMonth, 1, $payYear)));
@@ -76,8 +81,8 @@ try {
                 $mainConn = new PDO("pgsql:host=$host;port=$port;dbname=aero_foods_finance", $user, $password);
                 $mainConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $phStmt = $mainConn->prepare(
-                    "SELECT date_start::text AS date_start,
-                            date_end::text   AS date_end,
+                    "SELECT date_start::date::text AS date_start,
+                            date_end::date::text   AS date_end,
                             holiday_name
                      FROM public.public_holidays
                      WHERE date_start <= :max_date
@@ -85,11 +90,29 @@ try {
                 );
                 $phStmt->execute([':min_date' => $otMonthStart, ':max_date' => $otMonthEnd]);
                 foreach ($phStmt->fetchAll(PDO::FETCH_ASSOC) as $ph) {
-                    $cur = strtotime(substr($ph['date_start'], 0, 10));
-                    $end = strtotime(substr($ph['date_end'],   0, 10));
+                    $cur = DateTime::createFromFormat('Y-m-d', substr($ph['date_start'], 0, 10));
+                    $end = DateTime::createFromFormat('Y-m-d', substr($ph['date_end'], 0, 10));
+                    if (!$cur || !$end) {
+                        continue;
+                    }
                     while ($cur <= $end) {
-                        $publicHolidays[date('Y-m-d', $cur)] = $ph['holiday_name'];
-                        $cur = strtotime('+1 day', $cur);
+                        $publicHolidays[$cur->format('Y-m-d')] = $ph['holiday_name'];
+                        $cur->modify('+1 day');
+                    }
+                }
+                $mainEmpStmt = $mainConn->query(
+                    "SELECT short_name, employment_type, basic_salary
+                     FROM employees
+                     WHERE is_active = 'yes'"
+                );
+                foreach ($mainEmpStmt->fetchAll(PDO::FETCH_ASSOC) as $e) {
+                    $k = strtolower(preg_replace('/\s+/', ' ', trim($e['short_name'])));
+                    $typeMap[$k]  = strtolower(trim($e['employment_type']));
+                    if (isset($e['basic_salary']) && $e['basic_salary'] !== null && $e['basic_salary'] !== '') {
+                        $val = floatval($e['basic_salary']);
+                        if ($val > 0) {
+                            $basicMap[$k] = $val;
+                        }
                     }
                 }
                 $mainConn = null;
@@ -97,7 +120,7 @@ try {
                 $publicHolidays = [];
             }
 
-            $logSql = "SELECT name, month_date, total_hr
+            $logSql = "SELECT name, (month_date::date)::text AS month_date, total_hr
                        FROM public.log_sheet
                        WHERE EXTRACT(MONTH FROM month_date) = :pay_month
                          AND EXTRACT(YEAR FROM month_date) = :pay_year
@@ -116,15 +139,22 @@ try {
 
             foreach ($grouped as $k => $rows) {
                 $empType   = isset($typeMap[$k]) ? $typeMap[$k] : 'hourly';
+                // HQ staff: fixed monthly salary, timesheet is not used.
+                if (strpos($empType, 'hq') === 0) {
+                    continue;
+                }
                 $basic     = isset($basicMap[$k]) ? $basicMap[$k] : 0;
                 $dayCount  = 0;
                 $otPay     = 0;
                 $otHours   = 0;
                 $otDetails = [];
                 $phPay     = 0;
+                $phHours   = 0;
                 $phDetails = [];
-                $basePay   = 0; // hourly staff: regular worked pay (first 8 hrs/day @ RM8)
-                $workedHrs = 0; // every hour logged this month, OT day or not
+                $basePay   = 0; // non-PH NH pay (hourly: NH x RM8; monthly unused for basic)
+                $normalHours = 0;
+                $normalDetails = [];
+                $workedHrs = 0;
                 $workedDays = 0;
                 foreach ($rows as $r) {
                     $hrs        = floatval($r['total_hr']);
@@ -132,45 +162,74 @@ try {
                     if ($hrs > 0) {
                         $workedDays++;
                     }
-                    $date       = date('Y-m-d', strtotime($r['month_date']));
+                    $date       = substr(trim($r['month_date']), 0, 10);
                     $isPH       = isset($publicHolidays[$date]);
                     $isExtraDay = false;
                     $dayPhPay   = 0;
-                    if ($empType === 'monthly') {
+                    $dayBasePay = 0;
+                    $otHrs      = ($hrs > 8) ? ($hrs - 8) : 0;
+                    if ($otHrs < 1) {
+                        $otHrs = 0;
+                    }
+                    $regHrs     = min($hrs, 8);
+                    $isMonthly  = (strpos($empType, 'month') === 0);
+                    // Hourly rate is a flat RM8 for both monthly and hourly
+                    // staff (used for OT and public holiday pay). PH rate is 2x.
+                    $hourlyRate = 8;
+                    $phRate     = $hourlyRate * 2;
+
+                    if ($isMonthly) {
                         $dayCount++;
+                        $dailyRate = $basic / 26;
                         if ($dayCount <= 26) {
-                            $dayOtHours = max(0, $hrs - 8);
-                            if ($isPH) {
-                                // base pay is doubled on a PH -> premium equals the normal base
-                                $dailyRate = $basic / 26;
-                                $dayPhPay  = ($hrs <= 8) ? $dailyRate * ($hrs / 8) : $dailyRate;
+                            if ($otHrs == 0) {
+                                $dayNhPay = $dailyRate * ($regHrs / 8);
+                            } else {
+                                $dayNhPay = $dailyRate;
                             }
+                            if ($isPH) {
+                                $phHours   += $regHrs;
+                                $dayPhPay   = $regHrs * $phRate;
+                                $dayBasePay = 0;
+                            } else {
+                                $normalHours += $regHrs;
+                                $dayBasePay   = $dayNhPay;
+                            }
+                            $dayOtHours = $otHrs;
                         } else {
-                            // extra day beyond 26: flat RM8/hr, no PH premium (as in salary_summary)
                             $isExtraDay = true;
-                            $dayOtHours = $hrs;
+                            $dayOtHours = ($hrs < 1) ? 0 : $hrs;
+                            $dayBasePay = 0;
                         }
                     } else {
-                        $dayOtHours = max(0, $hrs - 8);
-                        // regular worked pay: first 8 hrs/day at RM8 flat
-                        // (this is what the day-by-day salary_summary.php counts;
-                        //  hourly staff have no fixed basic, so it lives here)
-                        $basePay += min($hrs, 8) * 8;
+                        $dayOtHours = $otHrs;
+                        $dayNhPay   = $regHrs * $hourlyRate;
                         if ($isPH) {
-                            // RM16/hr instead of RM8 for the first 8 hrs
-                            $dayPhPay = min($hrs, 8) * 8;
+                            $phHours   += $regHrs;
+                            $dayPhPay   = $regHrs * $phRate;
+                            $dayBasePay = 0;
+                        } else {
+                            $normalHours += $regHrs;
+                            $dayBasePay   = $dayNhPay;
                         }
                     }
-                    // Overtime counts only when it reaches a full hour; anything
-                    // under 1 hour is ignored (not paid or counted as overtime).
-                    if ($dayOtHours < 1) {
-                        $dayOtHours = 0;
-                    }
+
+                    $basePay += $dayBasePay;
                     $dayOtPay = $dayOtHours * 8;
                     $otHours += $dayOtHours;
                     $otPay   += $dayOtPay;
                     $phPay   += $dayPhPay;
 
+                    if (!$isPH && $dayBasePay > 0) {
+                        $normalDetails[] = [
+                            'date'              => $date,
+                            'hours_worked'      => $hrs,
+                            'normal_hours'      => round($regHrs, 2),
+                            'normal_pay'        => round($dayBasePay, 2),
+                            'is_public_holiday' => false,
+                            'holiday_name'      => null,
+                        ];
+                    }
                     if ($dayOtPay > 0) {
                         $otDetails[] = [
                             'date'         => $date,
@@ -185,19 +244,25 @@ try {
                             'date'         => $date,
                             'holiday_name' => $publicHolidays[$date],
                             'hours_worked' => $hrs,
+                            'normal_hours' => round($regHrs, 2),
+                            'hourly_rate'  => round($hourlyRate, 4),
+                            'ph_rate'      => round($phRate, 4),
                             'premium'      => round($dayPhPay, 2),
                         ];
                     }
                 }
                 $otMap[$k] = [
-                    'pay'        => $otPay,
-                    'hours'      => $otHours,
-                    'details'    => $otDetails,
-                    'ph_pay'     => $phPay,
-                    'ph_details' => $phDetails,
-                    'base_pay'   => $basePay,
-                    'worked_hours' => $workedHrs,
-                    'worked_days'  => $workedDays,
+                    'pay'           => $otPay,
+                    'hours'         => $otHours,
+                    'details'       => $otDetails,
+                    'ph_pay'        => $phPay,
+                    'ph_hours'      => $phHours,
+                    'ph_details'    => $phDetails,
+                    'base_pay'      => $basePay,
+                    'normal_hours'  => $normalHours,
+                    'normal_details'=> $normalDetails,
+                    'worked_hours'  => $workedHrs,
+                    'worked_days'   => $workedDays,
                 ];
             }
         } catch (Exception $e) {
@@ -302,27 +367,40 @@ try {
         $ot      = isset($otMap[$empNorm])
                      ? $otMap[$empNorm]
                      : ['pay' => 0, 'hours' => 0, 'details' => [],
-                        'ph_pay' => 0, 'ph_details' => [], 'base_pay' => 0,
+                        'ph_pay' => 0, 'ph_hours' => 0, 'ph_details' => [],
+                        'base_pay' => 0,
+                        'normal_hours' => 0, 'normal_details' => [],
                         'worked_hours' => 0, 'worked_days' => 0];
 
-        // Monthly staff keep their fixed stored basic. Hourly staff have no
-        // stored basic, so their basic is the regular worked pay computed above
-        // (first 8 hrs/day at RM8), making the Monthly Salary take-home match
-        // the day-by-day salary summary instead of showing zero.
-        $empTypeNorm = strtolower(trim($emp['employment_type']));
-        $basicOut    = ($empTypeNorm === 'monthly')
-                         ? floatval($emp['basic_salary'])
-                         : round($ot['base_pay'], 2);
+        $empTypeOut = isset($typeMap[$empNorm]) && $typeMap[$empNorm] !== ''
+            ? $typeMap[$empNorm]
+            : $emp['employment_type'];
+        $contractBasic = isset($basicMap[$empNorm]) && $basicMap[$empNorm] > 0
+            ? round($basicMap[$empNorm], 2)
+            : round(floatval($emp['basic_salary']), 2);
+        // HQ staff: full contract salary, no timesheet (treated as monthly).
+        $isHqEmp      = (strpos(strtolower(trim($empTypeOut)), 'hq') === 0);
+        $isMonthlyEmp = $isHqEmp || (strpos(strtolower(trim($empTypeOut)), 'month') === 0);
+        // Monthly: contract monthly salary in Basic. Hourly: non-PH NH x RM8.
+        $basicOut = $isMonthlyEmp ? $contractBasic : round($ot['base_pay'], 2);
+        // Flat RM8/hr for both monthly and hourly staff (OT and PH pay).
+        $hourlyRateOut = 8;
 
         $summary[] = [
             'employee_name'    => $empName,
-            'employment_type'  => $emp['employment_type'],
+            'employment_type'  => $empTypeOut,
+            'is_hq'            => $isHqEmp,
+            'contract_basic'   => $contractBasic,
             'basic_salary'     => $basicOut,
+            'hourly_rate'      => $hourlyRateOut,
+            'normal_hours'     => round($ot['normal_hours'], 2),
+            'normal_details'   => $ot['normal_details'],
             'worked_hours'     => round($ot['worked_hours'], 2),
             'worked_days'      => $ot['worked_days'],
             'overtime_hours'   => round($ot['hours'], 2),
             'overtime_pay'     => round($ot['pay'], 2),
             'overtime_details' => $ot['details'],
+            'ph_hours'         => round($ot['ph_hours'], 2),
             'ph_premium'       => round($ot['ph_pay'], 2),
             'ph_details'       => $ot['ph_details'],
             'allowances'       => $allowances,

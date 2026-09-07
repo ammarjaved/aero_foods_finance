@@ -50,7 +50,7 @@ function UserFormComponent() {
         is_admin: formData.is_admin,
         is_active: formData.is_active,
         employment_type: formData.employment_type,
-        basic_salary: formData.employment_type === "Monthly" && formData.basic_salary !== ""
+        basic_salary: (formData.employment_type === "Monthly" || formData.employment_type === "HQ") && formData.basic_salary !== ""
           ? parseFloat(formData.basic_salary)
           : null,
       };
@@ -374,10 +374,12 @@ function UserFormComponent() {
               >
                 <option value="Hours">Hourly (RM 8.00/hr)</option>
                 <option value="Monthly">Monthly (Fixed Basic Salary)</option>
+                <option value="HQ">HQ (Fixed Salary, no timesheet)</option>
               </select>
             </div>
 
-            {formData.employment_type === "Monthly" && (
+            {(formData.employment_type === "Monthly" ||
+              formData.employment_type === "HQ") && (
               <div className="mb-4">
                 <label className="form-label">
                   Basic Salary (RM) <span className="text-danger">*</span>
@@ -397,7 +399,9 @@ function UserFormComponent() {
                   />
                 </div>
                 <small className="text-muted">
-                  Daily rate = Basic ÷ 26 &nbsp;|&nbsp; OT = RM 8.00/hr
+                  {formData.employment_type === "HQ"
+                    ? "Full salary paid every month, timesheet not checked"
+                    : "Daily rate = Basic ÷ 26 | OT = RM 8.00/hr"}
                 </small>
               </div>
             )}
@@ -421,12 +425,16 @@ function UserFormComponent() {
               ) : (
                 <span className="badge bg-dark me-1">Inactive</span>
               )}
-              {formData.employment_type === "Monthly" ? (
+              {formData.employment_type === "HQ" ? (
+                <span className="badge bg-dark me-1">HQ</span>
+              ) : formData.employment_type === "Monthly" ? (
                 <span className="badge bg-primary me-1">Monthly</span>
               ) : (
                 <span className="badge bg-info text-dark me-1">Hourly</span>
               )}
-              {formData.employment_type === "Monthly" && formData.basic_salary
+              {formData.employment_type === "HQ" && formData.basic_salary
+                ? ` · Salary RM ${parseFloat(formData.basic_salary || 0).toFixed(2)}`
+                : formData.employment_type === "Monthly" && formData.basic_salary
                 ? ` · Basic RM ${parseFloat(formData.basic_salary || 0).toFixed(2)} · Daily RM ${(parseFloat(formData.basic_salary || 0) / 26).toFixed(4)}`
                 : formData.employment_type === "hourly"
                 ? " · RM 8.00/hr"

@@ -7,6 +7,7 @@ import StockInDash from "./StickInDash";
 import StockInDetails from "./StockInDetails";
 import AddNewStock from "./AddNewStock";
 import UploadInvoicePdf from "./UploadInvoicePdf";
+import StockMonthlySummary from "./StockMonthlySummary";
 
 function StockInComponent() {
   const [stockInData, setStockInData] = useState([]);
@@ -96,6 +97,9 @@ function StockInComponent() {
               apiBaseUrl="http://121.121.232.54:88/mixue-sogo"
               onImported={refreshAll}
             />
+          </Tab>
+          <Tab eventKey="monthly" title="Stock Monthly Summary">
+            <StockMonthlySummary apiBaseUrl="http://121.121.232.54:88/mixue-sogo" />
           </Tab>
         </Tabs>
 

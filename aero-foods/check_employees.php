@@ -13,6 +13,7 @@ $dbMap = [
     'amz'     => 'amazon_cafe_finance',
     'ojim'    => 'ojim_finance',
     'amz-lyp' => 'amazon_cafe_finance_lyp',
+    'mixue-sogo' => 'mixue_sogo',
 ];
 
 $cafeKey = $_GET['db'] ?? 'mixue';

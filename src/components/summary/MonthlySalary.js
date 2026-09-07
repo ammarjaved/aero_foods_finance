@@ -19,10 +19,21 @@ function MonthlySalary({ month, year }) {
     },
     { value: "ojim_finance", label: "Ojim Cafe", key: "ojim" },
     { value: "mixue_sogo", label: "Mixue Sogo", key: "mixue-sogo" },
+    { value: "hq", label: "HQ", key: "hq" },
     { value: "combined", label: "Combined All Cafe", key: "combined" },
   ];
 
-  const allCafeDBs = cafes.filter((c) => c.value !== "combined");
+  // HQ is not a database: HQ staff live in their cafe DB with
+  // employment_type "HQ" and are pulled out into their own tab.
+  const allCafeDBs = cafes.filter(
+    (c) => c.value !== "combined" && c.value !== "hq",
+  );
+
+  const isHqEmp = (emp) =>
+    !!emp.is_hq ||
+    String(emp.employment_type || "")
+      .toLowerCase()
+      .startsWith("hq");
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -60,7 +71,7 @@ function MonthlySalary({ month, year }) {
     try {
       let merged = [];
 
-      if (selectedCafe === "combined") {
+      if (selectedCafe === "combined" || selectedCafe === "hq") {
         const results = await Promise.all(
           allCafeDBs.map((cafe) =>
             fetch(
@@ -83,6 +94,7 @@ function MonthlySalary({ month, year }) {
         results.forEach(({ result, cafeLabel }) => {
           if (result && result.results && Array.isArray(result.results)) {
             result.results.forEach((emp) => {
+              if (selectedCafe === "hq" && !isHqEmp(emp)) return;
               merged.push({ ...emp, cafe: cafeLabel });
             });
           }
@@ -101,10 +113,13 @@ function MonthlySalary({ month, year }) {
           return;
         }
         if (result && result.results && Array.isArray(result.results)) {
-          merged = result.results.map((emp) => ({
-            ...emp,
-            cafe: cafeObj ? cafeObj.label : "",
-          }));
+          // HQ staff are shown under the HQ tab, not their cafe tab.
+          merged = result.results
+            .filter((emp) => !isHqEmp(emp))
+            .map((emp) => ({
+              ...emp,
+              cafe: cafeObj ? cafeObj.label : "",
+            }));
         }
       }
 
@@ -134,10 +149,82 @@ function MonthlySalary({ month, year }) {
       maximumFractionDigits: 2,
     }).format(parseFloat(value || 0));
 
+  // HQ staff always get the full contract salary (no timesheet).
+  const isMonthlyEmp = (emp) =>
+    isHqEmp(emp) ||
+    String(emp.employment_type || "")
+      .toLowerCase()
+      .startsWith("month");
+
+  const sumField = (rows, field) =>
+    (rows || []).reduce(
+      (total, row) => total + (parseFloat(row[field]) || 0),
+      0,
+    );
+
+  const getPhHours = (emp) => {
+    if (emp.ph_hours != null && emp.ph_hours !== "") {
+      return parseFloat(emp.ph_hours) || 0;
+    }
+    return sumField(emp.ph_details, "normal_hours");
+  };
+
+  const getNormalHours = (emp) => {
+    const nh = parseFloat(emp.normal_hours || 0);
+    if (emp.ph_hours != null && emp.ph_hours !== "") {
+      return nh;
+    }
+    return Math.max(0, nh - getPhHours(emp));
+  };
+
+  const getHourlyRate = (emp) => {
+    if (emp.hourly_rate != null && emp.hourly_rate !== "") {
+      const fromApi = parseFloat(emp.hourly_rate);
+      if (fromApi > 0) return fromApi;
+    }
+    // Flat RM8/hr for both monthly and hourly staff (PH pay = 2x this).
+    return 8;
+  };
+
+  const getPhPay = (emp) => {
+    const rate = getHourlyRate(emp);
+    const details = emp.ph_details || [];
+    if (details.length > 0) {
+      return details.reduce((s, p) => {
+        const hrs = parseFloat(p.normal_hours || 0);
+        return s + hrs * rate * 2;
+      }, 0);
+    }
+    return getPhHours(emp) * rate * 2;
+  };
+
+  const getRowPhPay = (emp, row) => {
+    const hrs = parseFloat(row.normal_hours || 0);
+    return hrs * getHourlyRate(emp) * 2;
+  };
+
+  const getNormalDetails = (emp) =>
+    (emp.normal_details || []).filter((n) => !n.is_public_holiday);
+
+  const getBasicSalary = (emp) => {
+    if (isMonthlyEmp(emp)) {
+      return parseFloat(emp.contract_basic || emp.basic_salary || 0);
+    }
+    const raw = parseFloat(emp.basic_salary || 0);
+    const phHrs = getPhHours(emp);
+    const apiPh = parseFloat(emp.ph_premium || 0);
+    const oneX = phHrs * 8;
+    // Old API kept PH 1x in basic and extra 1x in PH. PH is now hours x rate x 2.
+    if (phHrs > 0 && apiPh > 0 && Math.abs(apiPh - oneX) < 0.2) {
+      return Math.max(0, raw - oneX);
+    }
+    return raw;
+  };
+
   const computeTakeHome = (emp) => {
-    const basic = parseFloat(emp.basic_salary || 0);
+    const basic = getBasicSalary(emp);
     const overtime = parseFloat(emp.overtime_pay || 0);
-    const phPremium = parseFloat(emp.ph_premium || 0);
+    const phPremium = getPhPay(emp);
     const allow = parseFloat(emp.total_allowances || 0);
     const deduct = parseFloat(emp.total_deductions || 0);
     return basic + overtime + phPremium + allow - deduct;
@@ -149,9 +236,11 @@ function MonthlySalary({ month, year }) {
 
   const totals = data.reduce(
     (acc, emp) => {
-      acc.basic += parseFloat(emp.basic_salary || 0);
+      acc.basic += getBasicSalary(emp);
+      acc.normalHours += getNormalHours(emp);
       acc.overtime += parseFloat(emp.overtime_pay || 0);
-      acc.phPremium += parseFloat(emp.ph_premium || 0);
+      acc.phHours += getPhHours(emp);
+      acc.phPremium += getPhPay(emp);
       acc.allowances += parseFloat(emp.total_allowances || 0);
       acc.deductions += parseFloat(emp.total_deductions || 0);
       acc.takeHome += computeTakeHome(emp);
@@ -159,7 +248,9 @@ function MonthlySalary({ month, year }) {
     },
     {
       basic: 0,
+      normalHours: 0,
       overtime: 0,
+      phHours: 0,
       phPremium: 0,
       allowances: 0,
       deductions: 0,
@@ -167,7 +258,7 @@ function MonthlySalary({ month, year }) {
     },
   );
 
-  const isCombined = selectedCafe === "combined";
+  const isCombined = selectedCafe === "combined" || selectedCafe === "hq";
   const numFixedCols = isCombined ? 4 : 3;
 
   if (loading && data.length === 0) {
@@ -229,6 +320,18 @@ function MonthlySalary({ month, year }) {
           {/* Summary Cards */}
           <div className="row g-3 mb-4">
             <div className="col-md">
+              <div className="card" style={{ borderColor: "#17a2b8" }}>
+                <div className="card-body text-center">
+                  <h6 className="card-subtitle mb-2 text-muted">
+                    Total NH (excl. PH)
+                  </h6>
+                  <h5 className="card-title fw-bold" style={{ color: "#17a2b8" }}>
+                    {formatHours(totals.normalHours)} hrs
+                  </h5>
+                </div>
+              </div>
+            </div>
+            <div className="col-md">
               <div className="card border-primary">
                 <div className="card-body text-center">
                   <h6 className="card-subtitle mb-2 text-muted">
@@ -258,9 +361,12 @@ function MonthlySalary({ month, year }) {
                   <h6 className="card-subtitle mb-2 text-muted">
                     Total PH
                   </h6>
-                  <h5 className="card-title text-secondary fw-bold">
-                    RM {formatCurrency(totals.phPremium)}
+                  <h5 className="card-title text-secondary fw-bold mb-0">
+                    {formatHours(totals.phHours)} hrs
                   </h5>
+                  <div className="text-secondary fw-semibold">
+                    RM {formatCurrency(totals.phPremium)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -314,6 +420,9 @@ function MonthlySalary({ month, year }) {
                       {isCombined && <th style={{ width: "10%" }}>Cafe</th>}
                       <th style={{ width: "13%" }}>Employee</th>
                       <th style={{ width: "8%" }}>Emp. Type</th>
+                      <th className="text-end" style={{ width: "8%" }}>
+                        Normal Hrs
+                      </th>
                       <th className="text-end" style={{ width: "10%" }}>
                         Basic Salary
                       </th>
@@ -321,7 +430,7 @@ function MonthlySalary({ month, year }) {
                         Overtime
                       </th>
                       <th className="text-end" style={{ width: "10%" }}>
-                        PH
+                        PH Hrs / PH
                       </th>
                       <th className="text-end" style={{ width: "10%" }}>
                         Allowances
@@ -339,6 +448,14 @@ function MonthlySalary({ month, year }) {
                       const rowKey = `${emp.employee_name}-${emp.cafe}-${idx}`;
                       const takeHome = computeTakeHome(emp);
                       const isExpanded = !!expandedRows[rowKey];
+                      const monthly = isMonthlyEmp(emp);
+                      const basicSalary = getBasicSalary(emp);
+                      const normalHours = getNormalHours(emp);
+                      const phHours = getPhHours(emp);
+                      const phPay = getPhPay(emp);
+                      const hourlyRate = getHourlyRate(emp);
+                      const phRate = hourlyRate * 2;
+                      const normalDetails = getNormalDetails(emp);
                       return (
                         <React.Fragment key={rowKey}>
                           <tr
@@ -368,8 +485,7 @@ function MonthlySalary({ month, year }) {
                               {emp.employee_name}
                             </td>
                             <td>
-                              {emp.employment_type === "Monthly" ||
-                              emp.employment_type === "monthly" ? (
+                              {monthly ? (
                                 <span className="badge bg-primary">Monthly</span>
                               ) : (
                                 <span className="badge bg-info text-dark">
@@ -377,8 +493,21 @@ function MonthlySalary({ month, year }) {
                                 </span>
                               )}
                             </td>
-                            <td className="text-end">
-                              RM {formatCurrency(emp.basic_salary)}
+                            <td
+                              className="text-end"
+                              title="First 8 hours per day, excluding public holidays"
+                            >
+                              {formatHours(normalHours)} hrs
+                            </td>
+                            <td
+                              className="text-end"
+                              title={
+                                monthly
+                                  ? `Monthly contract salary RM ${formatCurrency(basicSalary)}`
+                                  : undefined
+                              }
+                            >
+                              RM {formatCurrency(basicSalary)}
                             </td>
                             <td
                               className="text-end text-info"
@@ -398,7 +527,8 @@ function MonthlySalary({ month, year }) {
                                   : undefined
                               }
                             >
-                              RM {formatCurrency(emp.ph_premium)}
+                              <div>{formatHours(phHours)} hrs</div>
+                              <div>RM {formatCurrency(phPay)}</div>
                             </td>
                             <td className="text-end text-success">
                               RM {formatCurrency(emp.total_allowances)}
@@ -413,8 +543,114 @@ function MonthlySalary({ month, year }) {
                           {isExpanded && (
                             <tr style={{ backgroundColor: "#f8f9fa" }}>
                               <td></td>
-                              <td colSpan={isCombined ? 10 : 9}>
+                              <td colSpan={isCombined ? 11 : 10}>
                                 <div className="row g-3">
+                                  {/* Normal hours list */}
+                                  <div className="col-md-6">
+                                    <h6 className="fw-bold mb-2" style={{ color: "#17a2b8" }}>
+                                      <i className="fas fa-user-clock me-1"></i>
+                                      Normal Hours (excl. PH)
+                                    </h6>
+                                    {normalDetails.length > 0 ? (
+                                      <table className="table table-sm table-borderless mb-0">
+                                        <thead>
+                                          <tr className="border-bottom">
+                                            <th style={{ fontSize: "12px" }}>
+                                              Date
+                                            </th>
+                                            <th className="text-center" style={{ fontSize: "12px" }}>
+                                              Worked
+                                            </th>
+                                            <th className="text-center" style={{ fontSize: "12px" }}>
+                                              NH
+                                            </th>
+                                            {!monthly && (
+                                              <th className="text-end" style={{ fontSize: "12px" }}>
+                                                NH Pay
+                                              </th>
+                                            )}
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {normalDetails.map((n, ni) => (
+                                            <tr key={`nh-${rowKey}-${ni}`}>
+                                              <td style={{ fontSize: "13px" }}>
+                                                {n.date
+                                                  ? new Date(n.date).toLocaleDateString(
+                                                      "en-GB",
+                                                    )
+                                                  : "—"}
+                                              </td>
+                                              <td
+                                                className="text-center"
+                                                style={{ fontSize: "13px" }}
+                                              >
+                                                {n.hours_worked} hrs
+                                              </td>
+                                              <td
+                                                className="text-center"
+                                                style={{ fontSize: "13px" }}
+                                              >
+                                                {n.normal_hours} hrs
+                                              </td>
+                                              {!monthly && (
+                                                <td
+                                                  className="text-end fw-semibold"
+                                                  style={{ fontSize: "13px" }}
+                                                >
+                                                  RM {formatCurrency(n.normal_pay)}
+                                                </td>
+                                              )}
+                                            </tr>
+                                          ))}
+                                          <tr className="border-top">
+                                            <td
+                                              className="fw-bold"
+                                              style={{ fontSize: "13px" }}
+                                            >
+                                              Total Normal Hrs
+                                            </td>
+                                            <td></td>
+                                            <td
+                                              className="text-center fw-bold"
+                                              style={{ fontSize: "13px" }}
+                                            >
+                                              {formatHours(normalHours)} hrs
+                                            </td>
+                                            {!monthly && (
+                                              <td
+                                                className="text-end fw-bold"
+                                                style={{ fontSize: "13px" }}
+                                              >
+                                                RM{" "}
+                                                {formatCurrency(
+                                                  sumField(
+                                                    normalDetails,
+                                                    "normal_pay",
+                                                  ),
+                                                )}
+                                              </td>
+                                            )}
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    ) : (
+                                      <p
+                                        className="text-muted"
+                                        style={{ fontSize: "13px" }}
+                                      >
+                                        No normal hours for this period.
+                                      </p>
+                                    )}
+                                    <p
+                                      className="text-muted mb-0"
+                                      style={{ fontSize: "11px" }}
+                                    >
+                                      {monthly
+                                        ? "First 8 hrs/day on non-public-holiday days. Monthly Basic Salary is the contract monthly amount."
+                                        : "First 8 hrs/day on non-public-holiday days. Hourly staff: NH × RM8."}
+                                    </p>
+                                  </div>
                                   {/* Overtime list */}
                                   <div className="col-md-6">
                                     <h6 className="text-info fw-bold mb-2">
@@ -546,7 +782,13 @@ function MonthlySalary({ month, year }) {
                                               Holiday
                                             </th>
                                             <th className="text-center" style={{ fontSize: "12px" }}>
-                                              Worked
+                                              PH Hrs
+                                            </th>
+                                            <th className="text-end" style={{ fontSize: "12px" }}>
+                                              /hr
+                                            </th>
+                                            <th className="text-end" style={{ fontSize: "12px" }}>
+                                              PH Rate
                                             </th>
                                             <th className="text-end" style={{ fontSize: "12px" }}>
                                               PH Pay
@@ -555,7 +797,10 @@ function MonthlySalary({ month, year }) {
                                         </thead>
                                         <tbody>
                                           {emp.ph_details.map((p, pi) => (
-                                            <tr key={`ph-${rowKey}-${pi}`}>
+                                            <tr
+                                              key={`ph-${rowKey}-${pi}`}
+                                              style={{ backgroundColor: "#fff3cd" }}
+                                            >
                                               <td style={{ fontSize: "13px" }}>
                                                 {p.date
                                                   ? new Date(p.date).toLocaleDateString(
@@ -570,13 +815,28 @@ function MonthlySalary({ month, year }) {
                                                 className="text-center"
                                                 style={{ fontSize: "13px" }}
                                               >
-                                                {p.hours_worked} hrs
+                                                {p.normal_hours} hrs
+                                              </td>
+                                              <td
+                                                className="text-end"
+                                                style={{ fontSize: "13px" }}
+                                              >
+                                                RM {formatCurrency(hourlyRate)}
+                                              </td>
+                                              <td
+                                                className="text-end"
+                                                style={{ fontSize: "13px" }}
+                                              >
+                                                RM {formatCurrency(phRate)}
                                               </td>
                                               <td
                                                 className="text-end fw-semibold text-secondary"
                                                 style={{ fontSize: "13px" }}
                                               >
-                                                RM {formatCurrency(p.premium)}
+                                                RM{" "}
+                                                {formatCurrency(
+                                                  getRowPhPay(emp, p),
+                                                )}
                                               </td>
                                             </tr>
                                           ))}
@@ -586,23 +846,21 @@ function MonthlySalary({ month, year }) {
                                               className="fw-bold"
                                               style={{ fontSize: "13px" }}
                                             >
-                                              Total PH
+                                              Total PH (hrs × rate × 2)
                                             </td>
                                             <td
                                               className="text-center fw-bold"
                                               style={{ fontSize: "13px" }}
                                             >
-                                              {formatHours(
-                                                sumHours(emp.ph_details),
-                                              )}{" "}
-                                              hrs
+                                              {formatHours(phHours)} hrs
                                             </td>
+                                            <td></td>
+                                            <td></td>
                                             <td
                                               className="text-end fw-bold text-secondary"
                                               style={{ fontSize: "13px" }}
                                             >
-                                              RM{" "}
-                                              {formatCurrency(emp.ph_premium)}
+                                              RM {formatCurrency(phPay)}
                                             </td>
                                           </tr>
                                         </tbody>
@@ -619,11 +877,10 @@ function MonthlySalary({ month, year }) {
                                       className="text-muted mb-0"
                                       style={{ fontSize: "11px" }}
                                     >
-                                      Extra pay above a normal day for the
-                                      first 8 hrs of a public holiday: monthly
-                                      staff get double the daily rate, hourly
-                                      staff RM16/hr instead of RM8/hr. OT
-                                      beyond 8 hrs stays RM8/hr and is listed
+                                      PH pay = PH hours × (hourly rate × 2).
+                                      Monthly /hr = Basic ÷ 26 ÷ 8 (differs per
+                                      person). Hourly staff /hr = RM8, so PH
+                                      rate = RM16. OT beyond 8 hrs stays RM8
                                       under Overtime.
                                     </p>
                                   </div>
@@ -841,11 +1098,21 @@ function MonthlySalary({ month, year }) {
                                           {emp.worked_days > 1 ? "s" : ""}
                                         </span>
                                       ) : null}
+                                      {" · "}
+                                      NH{" "}
+                                      <strong>
+                                        {formatHours(normalHours)} hrs
+                                      </strong>
+                                      {" · "}
+                                      PH{" "}
+                                      <strong>
+                                        {formatHours(phHours)} hrs
+                                      </strong>
                                     </span>
                                     <span style={{ fontSize: "13px" }}>
                                       Basic{" "}
                                       <strong>
-                                        RM {formatCurrency(emp.basic_salary)}
+                                        RM {formatCurrency(basicSalary)}
                                       </strong>{" "}
                                       + OT{" "}
                                       <strong className="text-info">
@@ -853,7 +1120,7 @@ function MonthlySalary({ month, year }) {
                                       </strong>{" "}
                                       + PH{" "}
                                       <strong className="text-secondary">
-                                        RM {formatCurrency(emp.ph_premium)}
+                                        RM {formatCurrency(phPay)}
                                       </strong>{" "}
                                       + Allowances{" "}
                                       <strong className="text-success">
@@ -889,13 +1156,17 @@ function MonthlySalary({ month, year }) {
                         TOTAL ({data.length} employees)
                       </td>
                       <td className="text-end">
+                        {formatHours(totals.normalHours)} hrs
+                      </td>
+                      <td className="text-end">
                         RM {formatCurrency(totals.basic)}
                       </td>
                       <td className="text-end">
                         RM {formatCurrency(totals.overtime)}
                       </td>
                       <td className="text-end">
-                        RM {formatCurrency(totals.phPremium)}
+                        <div>{formatHours(totals.phHours)} hrs</div>
+                        <div>RM {formatCurrency(totals.phPremium)}</div>
                       </td>
                       <td className="text-end">
                         RM {formatCurrency(totals.allowances)}
@@ -915,8 +1186,10 @@ function MonthlySalary({ month, year }) {
 
           <p className="text-muted mt-2" style={{ fontSize: "13px" }}>
             <i className="fas fa-info-circle me-1"></i>
-            Click any employee row to expand and view the day-by-day overtime,
-            individual allowances and deductions for the selected month.
+            Click any employee row to expand and view normal hours, overtime,
+            public-holiday hours and pay, allowances and deductions. Monthly
+            Basic Salary is the contract monthly amount. Public holiday pay
+            is PH hours × (that person's hourly rate × 2).
           </p>
         </>
       )}

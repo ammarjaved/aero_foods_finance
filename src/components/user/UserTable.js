@@ -298,7 +298,9 @@ function UserTable({ onRowClick, onCafeChange }) {
                       <td>{record.id}</td>
                       <td className="fw-bold">{record.username}</td>
                       <td>
-                        {record.employment_type === "Monthly" ? (
+                        {record.employment_type === "HQ" ? (
+                          <span className="badge bg-dark">HQ</span>
+                        ) : record.employment_type === "Monthly" ? (
                           <span className="badge bg-primary">Monthly</span>
                         ) : record.employment_type === "Hours" ? (
                           <span className="badge bg-info text-dark">Hourly</span>
@@ -307,7 +309,8 @@ function UserTable({ onRowClick, onCafeChange }) {
                         )}
                       </td>
                       <td>
-                        {record.employment_type === "Monthly" && record.basic_salary
+                        {(record.employment_type === "Monthly" ||
+                          record.employment_type === "HQ") && record.basic_salary
                           ? `RM ${parseFloat(record.basic_salary).toFixed(2)}`
                           : record.employment_type === "Hours"
                           ? "RM 8.00/hr"
